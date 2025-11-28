@@ -40,13 +40,13 @@ Below is a structured checklist you can turn into issues.
 
 ## Backend - Cart & Checkout
 - [x] Cart + CartItem models + migrations.
-- [ ] Guest cart support (session_id).
+- [x] Guest cart support (session_id).
 - [x] GET /cart (guest or user).
 - [x] POST /cart/items add.
 - [x] PATCH /cart/items/{id} update qty.
 - [x] DELETE /cart/items/{id} remove.
 - [x] Stock validation in cart endpoints.
-- [ ] Merge guest cart into user cart on login.
+- [x] Merge guest cart into user cart on login.
 
 ## Backend - Orders, Payment, Addresses
 - [ ] Address model + migration; CRUD /me/addresses.

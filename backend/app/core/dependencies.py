@@ -37,6 +37,25 @@ async def get_current_user(
     return user
 
 
+async def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    session: AsyncSession = Depends(get_session),
+) -> User | None:
+    if credentials is None:
+        return None
+    payload = decode_token(credentials.credentials)
+    if not payload or payload.get("type") != "access":
+        return None
+
+    try:
+        user_id = UUID(str(payload.get("sub")))
+    except Exception:
+        return None
+
+    result = await session.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+
 async def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != UserRole.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
