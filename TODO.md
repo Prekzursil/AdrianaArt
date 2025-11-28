@@ -53,11 +53,11 @@ Below is a structured checklist you can turn into issues.
 - [x] Admin import products CSV with dry-run validation.
 - [x] Product slug history/redirects on slug change.
 - [x] Server-side pagination metadata (total pages/items).
-- [ ] Sort options: newest, price asc/desc, name asc/desc.
-- [ ] Backorder/preorder flag + estimated restock date.
-- [ ] Per-product shipping dimensions/weight fields.
-- [ ] Per-product metadata for SEO (meta title/description).
-- [ ] Rich text/markdown validation for product descriptions.
+- [x] Sort options: newest, price asc/desc, name asc/desc.
+- [x] Backorder/preorder flag + estimated restock date.
+- [x] Per-product shipping dimensions/weight fields.
+- [x] Per-product metadata for SEO (meta title/description).
+- [x] Rich text/markdown validation for product descriptions.
 - [ ] Admin audit log for product mutations.
 - [ ] Price and currency validation helpers.
 - [ ] Product feed (JSON/CSV) for marketing channels.

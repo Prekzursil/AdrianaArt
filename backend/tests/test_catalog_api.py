@@ -380,3 +380,78 @@ def test_slug_history_recently_viewed_and_csv(test_app: Dict[str, object]) -> No
     body = import_res.json()
     assert body["errors"] == []
     assert body["created"] >= 0
+
+
+def test_preorder_shipping_meta_and_sort(test_app: Dict[str, object]) -> None:
+    client: TestClient = test_app["client"]  # type: ignore[assignment]
+    SessionLocal = test_app["session_factory"]  # type: ignore[assignment]
+    admin_token = create_admin_token(SessionLocal, email="metaadmin@example.com")
+
+    res = client.post(
+        "/api/v1/catalog/categories",
+        json={"slug": "logistics", "name": "Logistics"},
+        headers=auth_headers(admin_token),
+    )
+    category_id = res.json()["id"]
+
+    res = client.post(
+        "/api/v1/catalog/products",
+        json={
+            "category_id": category_id,
+            "slug": "ship-a",
+            "name": "Ship A",
+            "base_price": 10,
+            "currency": "USD",
+            "stock_quantity": 0,
+            "allow_backorder": True,
+            "restock_at": "2030-01-01T00:00:00Z",
+            "weight_grams": 500,
+            "width_cm": 10.5,
+            "height_cm": 5.5,
+            "depth_cm": 3.0,
+            "meta_title": "Meta A",
+            "meta_description": "Meta desc",
+        },
+        headers=auth_headers(admin_token),
+    )
+    assert res.status_code == 201, res.text
+    body = res.json()
+    assert body["allow_backorder"] is True
+    assert body["restock_at"] is not None
+    assert body["weight_grams"] == 500
+    assert float(body["width_cm"]) == 10.5
+    assert body["meta_title"] == "Meta A"
+
+    # sorting by name desc should put Ship B first
+    client.post(
+        "/api/v1/catalog/products",
+        json={
+            "category_id": category_id,
+            "slug": "ship-b",
+            "name": "Ship B",
+            "base_price": 20,
+            "currency": "USD",
+            "stock_quantity": 1,
+        },
+        headers=auth_headers(admin_token),
+    )
+    sorted_res = client.get("/api/v1/catalog/products", params={"sort": "name_desc"})
+    assert sorted_res.status_code == 200
+    names = [p["name"] for p in sorted_res.json()["items"]]
+    assert names[0] == "Ship B"
+
+    # rich text validation blocks scripts
+    bad_res = client.post(
+        "/api/v1/catalog/products",
+        json={
+            "category_id": category_id,
+            "slug": "bad-rich",
+            "name": "Bad",
+            "base_price": 1,
+            "currency": "USD",
+            "stock_quantity": 1,
+            "long_description": "<script>alert(1)</script>",
+        },
+        headers=auth_headers(admin_token),
+    )
+    assert bad_res.status_code == 422
