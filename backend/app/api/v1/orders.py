@@ -1,7 +1,9 @@
+import csv
+import io
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -11,7 +13,9 @@ from app.db.session import get_session
 from app.models.address import Address
 from app.models.cart import Cart
 from app.models.order import OrderStatus
+from app.schemas.cart import CartRead
 from app.schemas.order import OrderRead, OrderCreate, OrderUpdate, ShippingMethodCreate, ShippingMethodRead, OrderEventRead
+from app.services import cart as cart_service
 from app.services import order as order_service
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -151,6 +155,58 @@ async def admin_packing_slip(
     return PlainTextResponse(content, media_type="application/pdf")
 
 
+@router.post("/admin/{order_id}/capture-payment", response_model=OrderRead)
+async def admin_capture_payment(
+    order_id: UUID,
+    intent_id: str | None = None,
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_admin),
+) -> OrderRead:
+    order = await order_service.get_order_by_id(session, order_id)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    return await order_service.capture_payment(session, order, intent_id=intent_id)
+
+
+@router.post("/admin/{order_id}/void-payment", response_model=OrderRead)
+async def admin_void_payment(
+    order_id: UUID,
+    intent_id: str | None = None,
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_admin),
+) -> OrderRead:
+    order = await order_service.get_order_by_id(session, order_id)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    return await order_service.void_payment(session, order, intent_id=intent_id)
+
+
+@router.get("/admin/export")
+async def admin_export_orders(
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_admin),
+):
+    orders = await order_service.list_orders(session)
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["id", "reference_code", "status", "total_amount", "currency", "user_id", "created_at"])
+    for order in orders:
+        writer.writerow(
+            [
+                order.id,
+                order.reference_code,
+                order.status.value,
+                order.total_amount,
+                order.currency,
+                order.user_id,
+                order.created_at,
+            ]
+        )
+    buffer.seek(0)
+    headers = {"Content-Disposition": "attachment; filename=orders.csv"}
+    return StreamingResponse(iter([buffer.getvalue()]), media_type="text/csv", headers=headers)
+
+
 @router.post("/shipping-methods", response_model=ShippingMethodRead, status_code=status.HTTP_201_CREATED)
 async def create_shipping_method(
     payload: ShippingMethodCreate,
@@ -171,3 +227,13 @@ async def get_order(order_id: UUID, current_user=Depends(get_current_user), sess
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
     return order
+
+
+@router.post("/{order_id}/reorder", response_model=CartRead)
+async def reorder_order(
+    order_id: UUID,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> CartRead:
+    cart = await cart_service.reorder_from_order(session, current_user.id, order_id)
+    return await cart_service.serialize_cart(cart)

@@ -26,7 +26,7 @@ def test_app() -> Dict[str, object]:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-    asyncio.get_event_loop().run_until_complete(init_models())
+    asyncio.run(init_models())
 
     async def override_get_session():
         async with SessionLocal() as session:
@@ -53,7 +53,7 @@ def create_admin_token(session_factory, email="admin@example.com"):
 
             return issue_tokens_for_user(user)["access_token"]
 
-    return asyncio.get_event_loop().run_until_complete(create_admin())
+    return asyncio.run(create_admin())
 
 
 def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
@@ -516,5 +516,5 @@ def test_featured_collections_feed_and_audit(test_app: Dict[str, object]) -> Non
             result = await session.execute(select(ProductAuditLog))
             return len(result.scalars().all())
 
-    count = asyncio.get_event_loop().run_until_complete(audit_count())
+    count = asyncio.run(audit_count())
     assert count >= 1

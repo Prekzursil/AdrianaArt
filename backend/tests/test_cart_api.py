@@ -26,7 +26,7 @@ def test_app() -> Dict[str, object]:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-    asyncio.get_event_loop().run_until_complete(init_models())
+    asyncio.run(init_models())
 
     async def override_get_session():
         async with SessionLocal() as session:
@@ -51,7 +51,7 @@ def create_user_token(session_factory, email="cart@example.com"):
 
             return issue_tokens_for_user(user)["access_token"], user.id
 
-    return asyncio.get_event_loop().run_until_complete(create_and_token())
+    return asyncio.run(create_and_token())
 
 
 def seed_product(session_factory) -> UUID:
@@ -72,7 +72,7 @@ def seed_product(session_factory) -> UUID:
             await session.refresh(product)
             return product.id
 
-    return asyncio.get_event_loop().run_until_complete(seed())
+    return asyncio.run(seed())
 
 
 def test_cart_crud_flow(test_app: Dict[str, object]) -> None:
@@ -167,7 +167,7 @@ def test_max_quantity_promo_and_abandoned_job(test_app: Dict[str, object]) -> No
                 session,
                 PromoCodeCreate(code="SAVE10", percentage_off=10),
             )
-    asyncio.get_event_loop().run_until_complete(seed_promo())
+    asyncio.run(seed_promo())
     promo = client.post("/api/v1/cart/promo/validate", json={"code": "SAVE10"})
     assert promo.status_code == 200
     assert promo.json()["code"] == "SAVE10"
@@ -176,5 +176,5 @@ def test_max_quantity_promo_and_abandoned_job(test_app: Dict[str, object]) -> No
     async def run_job():
         async with SessionLocal() as session:
             return await cart_service.run_abandoned_cart_job(session, max_age_hours=0)
-    count = asyncio.get_event_loop().run_until_complete(run_job())
+    count = asyncio.run(run_job())
     assert count >= 0

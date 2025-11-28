@@ -12,6 +12,7 @@ from app.models.catalog import Product, ProductVariant
 from app.schemas.cart import CartItemCreate, CartItemUpdate, CartRead, CartItemRead, Totals
 from app.schemas.promo import PromoCodeRead, PromoCodeCreate
 from app.models.promo import PromoCode
+from app.models.order import Order
 
 
 async def _get_or_create_cart(session: AsyncSession, user_id: UUID | None, session_id: str | None) -> Cart:
@@ -250,3 +251,29 @@ async def run_abandoned_cart_job(session: AsyncSession, max_age_hours: int = 24)
 def record_cart_event(event: str, payload: dict | None = None) -> None:
     # Placeholder for analytics hook; integrate with telemetry pipeline later
     return None
+
+
+async def reorder_from_order(session: AsyncSession, user_id: UUID, order_id: UUID) -> Cart:
+    result = await session.execute(
+        select(Order).options(selectinload(Order.items)).where(Order.id == order_id, Order.user_id == user_id)
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    cart = await _get_or_create_cart(session, user_id, None)
+    await session.refresh(cart, attribute_names=["items"])
+    # Replace current cart items with the order items
+    for item in list(cart.items):
+        await session.delete(item)
+    await session.flush()
+
+    for item in order.items:
+        payload = CartItemCreate(
+            product_id=item.product_id,
+            variant_id=item.variant_id,
+            quantity=item.quantity,
+        )
+        await add_item(session, cart, payload)
+    await session.refresh(cart)
+    return cart
