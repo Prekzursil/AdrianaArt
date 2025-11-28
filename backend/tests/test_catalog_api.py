@@ -65,27 +65,45 @@ def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
         headers=auth_headers(admin_token),
     )
     assert res.status_code == 201, res.text
+    category_id = res.json()["id"]
 
     # Create product
-    res = client.post(
+    first = client.post(
         "/api/v1/catalog/products",
         json={
-            "category_id": res.json()["id"],
+            "category_id": category_id,
             "slug": "white-cup",
             "name": "White Cup",
             "base_price": 10.5,
             "currency": "USD",
             "stock_quantity": 3,
             "images": [{"url": "http://example.com/cup.jpg", "alt_text": "Cup", "sort_order": 1}],
+            "variants": [{"name": "Large", "additional_price_delta": 2.5, "stock_quantity": 2}],
         },
         headers=auth_headers(admin_token),
     )
-    assert res.status_code == 201, res.text
+    assert first.status_code == 201, first.text
+
+    second = client.post(
+        "/api/v1/catalog/products",
+        json={
+            "category_id": category_id,
+            "slug": "blue-cup",
+            "name": "Blue Cup",
+            "base_price": 25.0,
+            "currency": "USD",
+            "stock_quantity": 10,
+            "is_featured": True,
+            "short_description": "Bright blue",
+        },
+        headers=auth_headers(admin_token),
+    )
+    assert second.status_code == 201, second.text
 
     # Public list
     res = client.get("/api/v1/catalog/products")
     assert res.status_code == 200
-    assert len(res.json()) == 1
+    assert len(res.json()) == 2
     assert res.json()[0]["slug"] == "white-cup"
 
     # Public detail
@@ -93,6 +111,7 @@ def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
     assert res.status_code == 200
     assert res.json()["slug"] == "white-cup"
     assert res.json()["images"][0]["url"].endswith("cup.jpg")
+    assert res.json()["variants"][0]["name"] == "Large"
 
     # Update product
     res = client.patch(
@@ -102,3 +121,18 @@ def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
     )
     assert res.status_code == 200
     assert res.json()["stock_quantity"] == 10
+
+    # Filters: category + featured + price + search
+    res = client.get("/api/v1/catalog/products", params={"category_slug": "cups", "is_featured": True})
+    assert res.status_code == 200
+    assert len(res.json()) == 1
+    assert res.json()[0]["slug"] == "blue-cup"
+
+    res = client.get("/api/v1/catalog/products", params={"min_price": 20, "max_price": 30})
+    assert len(res.json()) == 1 and res.json()[0]["slug"] == "blue-cup"
+
+    res = client.get("/api/v1/catalog/products", params={"search": "white"})
+    assert len(res.json()) == 1 and res.json()[0]["slug"] == "white-cup"
+
+    res = client.get("/api/v1/catalog/products", params={"limit": 1, "offset": 1})
+    assert len(res.json()) == 1

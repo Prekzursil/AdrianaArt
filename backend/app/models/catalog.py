@@ -54,10 +54,10 @@ class Product(Base):
 
     category: Mapped[Category] = relationship("Category", back_populates="products", lazy="joined")
     images: Mapped[list["ProductImage"]] = relationship(
-        "ProductImage",
-        back_populates="product",
-        cascade="all, delete-orphan",
-        lazy="selectin",
+        "ProductImage", back_populates="product", cascade="all, delete-orphan", lazy="selectin"
+    )
+    variants: Mapped[list["ProductVariant"]] = relationship(
+        "ProductVariant", back_populates="product", cascade="all, delete-orphan", lazy="selectin"
     )
 
 
@@ -74,3 +74,18 @@ class ProductImage(Base):
     )
 
     product: Mapped[Product] = relationship("Product", back_populates="images")
+
+
+class ProductVariant(Base):
+    __tablename__ = "product_variants"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    additional_price_delta: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0)
+    stock_quantity: Mapped[int] = mapped_column(nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    product: Mapped[Product] = relationship("Product", back_populates="variants")

@@ -42,6 +42,7 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     images: list["ProductImageCreate"] = []
+    variants: list["ProductVariantCreate"] = []
 
 
 class ProductUpdate(BaseModel):
@@ -72,6 +73,22 @@ class ProductImageRead(ProductImageBase):
     id: UUID
 
 
+class ProductVariantBase(BaseModel):
+    name: str
+    additional_price_delta: float = 0
+    stock_quantity: int = 0
+
+
+class ProductVariantCreate(ProductVariantBase):
+    pass
+
+
+class ProductVariantRead(ProductVariantBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+
+
 class ProductRead(ProductBase):
     model_config = ConfigDict(from_attributes=True)
 
@@ -80,3 +97,4 @@ class ProductRead(ProductBase):
     updated_at: datetime
     images: list[ProductImageRead] = []
     category: CategoryRead
+    variants: list[ProductVariantRead] = []
