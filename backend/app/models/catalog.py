@@ -92,6 +92,12 @@ class Product(Base):
     reviews: Mapped[list["ProductReview"]] = relationship(
         "ProductReview", back_populates="product", cascade="all, delete-orphan", lazy="selectin"
     )
+    slug_history: Mapped[list["ProductSlugHistory"]] = relationship(
+        "ProductSlugHistory", back_populates="product", cascade="all, delete-orphan", lazy="selectin"
+    )
+    recent_views: Mapped[list["RecentlyViewedProduct"]] = relationship(
+        "RecentlyViewedProduct", back_populates="product", cascade="all, delete-orphan", lazy="selectin"
+    )
 
 
 class ProductImage(Base):
@@ -164,3 +170,30 @@ class ProductReview(Base):
     )
 
     product: Mapped[Product] = relationship("Product", back_populates="reviews")
+
+
+class ProductSlugHistory(Base):
+    __tablename__ = "product_slug_history"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(160), unique=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    product: Mapped[Product] = relationship("Product", back_populates="slug_history")
+
+
+class RecentlyViewedProduct(Base):
+    __tablename__ = "recently_viewed_products"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    session_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    viewed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    product: Mapped[Product] = relationship("Product", lazy="joined")

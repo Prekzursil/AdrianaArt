@@ -113,6 +113,13 @@ class ProductReviewRead(ProductReviewCreate):
     created_at: datetime
 
 
+class PaginationMeta(BaseModel):
+    total_items: int
+    total_pages: int
+    page: int
+    limit: int
+
+
 class ProductCreate(ProductBase):
     images: list[ProductImageCreate] = []
     variants: list[ProductVariantCreate] = []
@@ -122,6 +129,7 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(BaseModel):
+    slug: str | None = Field(default=None, min_length=1, max_length=160)
     name: str | None = Field(default=None, max_length=160)
     short_description: str | None = Field(default=None, max_length=280)
     long_description: str | None = None
@@ -162,3 +170,14 @@ class ProductRead(ProductBase):
     options: list[ProductOptionRead] = []
     tags: list[TagRead] = []
     reviews: list[ProductReviewRead] = []
+
+
+class ProductListResponse(BaseModel):
+    items: list[ProductRead]
+    meta: PaginationMeta
+
+
+class ImportResult(BaseModel):
+    created: int
+    updated: int
+    errors: list[str] = []

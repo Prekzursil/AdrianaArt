@@ -1,4 +1,5 @@
 import asyncio
+import io
 from typing import Dict
 
 import pytest
@@ -108,8 +109,10 @@ def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
     # Public list
     res = client.get("/api/v1/catalog/products")
     assert res.status_code == 200
-    assert len(res.json()) == 2
-    assert res.json()[0]["slug"] == "white-cup"
+    body = res.json()
+    assert body["meta"]["total_items"] == 2
+    assert len(body["items"]) == 2
+    assert body["items"][0]["slug"] == "white-cup"
 
     # Public detail
     res = client.get("/api/v1/catalog/products/white-cup")
@@ -130,17 +133,22 @@ def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
     # Filters: category + featured + price + search
     res = client.get("/api/v1/catalog/products", params={"category_slug": "cups", "is_featured": True})
     assert res.status_code == 200
-    assert len(res.json()) == 1
-    assert res.json()[0]["slug"] == "blue-cup"
+    filtered = res.json()
+    assert len(filtered["items"]) == 1
+    assert filtered["items"][0]["slug"] == "blue-cup"
 
     res = client.get("/api/v1/catalog/products", params={"min_price": 20, "max_price": 30})
-    assert len(res.json()) == 1 and res.json()[0]["slug"] == "blue-cup"
+    price_filtered = res.json()
+    assert len(price_filtered["items"]) == 1 and price_filtered["items"][0]["slug"] == "blue-cup"
 
     res = client.get("/api/v1/catalog/products", params={"search": "white"})
-    assert len(res.json()) == 1 and res.json()[0]["slug"] == "white-cup"
+    search_filtered = res.json()
+    assert len(search_filtered["items"]) == 1 and search_filtered["items"][0]["slug"] == "white-cup"
 
-    res = client.get("/api/v1/catalog/products", params={"limit": 1, "offset": 1})
-    assert len(res.json()) == 1
+    res = client.get("/api/v1/catalog/products", params={"limit": 1, "page": 2})
+    paged = res.json()
+    assert len(paged["items"]) == 1
+    assert paged["meta"]["total_pages"] == 2
 
     # Soft delete hides product
     res = client.delete("/api/v1/catalog/products/white-cup", headers=auth_headers(admin_token))
@@ -148,7 +156,7 @@ def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
     res = client.get("/api/v1/catalog/products/white-cup")
     assert res.status_code == 404
     res = client.get("/api/v1/catalog/products")
-    assert all(p["slug"] != "white-cup" for p in res.json())
+    assert all(p["slug"] != "white-cup" for p in res.json()["items"])
 
 
 def test_product_image_upload_and_delete(tmp_path, test_app: Dict[str, object]) -> None:
@@ -308,3 +316,67 @@ def test_product_reviews_and_related(test_app: Dict[str, object]) -> None:
     related = client.get("/api/v1/catalog/products/teapot/related")
     assert related.status_code == 200
     assert len(related.json()) >= 1
+
+
+def test_slug_history_recently_viewed_and_csv(test_app: Dict[str, object]) -> None:
+    client: TestClient = test_app["client"]  # type: ignore[assignment]
+    SessionLocal = test_app["session_factory"]  # type: ignore[assignment]
+    admin_token = create_admin_token(SessionLocal, email="slugadmin@example.com")
+
+    res = client.post(
+        "/api/v1/catalog/categories",
+        json={"slug": "history", "name": "History"},
+        headers=auth_headers(admin_token),
+    )
+    category_id = res.json()["id"]
+
+    res = client.post(
+        "/api/v1/catalog/products",
+        json={
+            "category_id": category_id,
+            "slug": "old-slug",
+            "name": "Old Name",
+            "base_price": 5,
+            "currency": "USD",
+            "stock_quantity": 1,
+            "status": "draft",
+        },
+        headers=auth_headers(admin_token),
+    )
+    assert res.status_code == 201
+
+    update = client.patch(
+        "/api/v1/catalog/products/old-slug",
+        json={"slug": "new-slug", "status": "published"},
+        headers=auth_headers(admin_token),
+    )
+    assert update.status_code == 200
+    assert update.json()["slug"] == "new-slug"
+
+    # Old slug should redirect to current product
+    from_history = client.get("/api/v1/catalog/products/old-slug", params={"session_id": "sess-123"})
+    assert from_history.status_code == 200
+    assert from_history.json()["slug"] == "new-slug"
+
+    # Recently viewed for the session
+    recent = client.get("/api/v1/catalog/products/recently-viewed", params={"session_id": "sess-123"})
+    assert recent.status_code == 200
+    assert recent.json()[0]["slug"] == "new-slug"
+
+    # Export CSV
+    export_res = client.get("/api/v1/catalog/products/export", headers=auth_headers(admin_token))
+    assert export_res.status_code == 200
+    assert "slug" in export_res.text.splitlines()[0]
+
+    # Import CSV dry-run
+    csv_content = export_res.text
+    import_res = client.post(
+        "/api/v1/catalog/products/import",
+        params={"dry_run": True},
+        files={"file": ("products.csv", io.BytesIO(csv_content.encode("utf-8")), "text/csv")},
+        headers=auth_headers(admin_token),
+    )
+    assert import_res.status_code == 200
+    body = import_res.json()
+    assert body["errors"] == []
+    assert body["created"] >= 0

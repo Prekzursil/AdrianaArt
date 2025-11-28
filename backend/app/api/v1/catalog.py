@@ -1,13 +1,14 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import StreamingResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.core.dependencies import require_admin, get_current_user_optional
 from app.db.session import get_session
-from app.models.catalog import Category, Product, Tag, ProductReview
+from app.models.catalog import Category, Product, ProductReview, ProductStatus
 from app.schemas.catalog import (
     CategoryCreate,
     CategoryRead,
@@ -18,6 +19,8 @@ from app.schemas.catalog import (
     ProductReviewCreate,
     ProductReviewRead,
     BulkProductUpdateItem,
+    ProductListResponse,
+    ImportResult,
 )
 from app.services import catalog as catalog_service
 from app.services import storage
@@ -31,7 +34,7 @@ async def list_categories(session: AsyncSession = Depends(get_session)) -> list[
     return list(result.scalars())
 
 
-@router.get("/products", response_model=list[ProductRead])
+@router.get("/products", response_model=ProductListResponse)
 async def list_products(
     session: AsyncSession = Depends(get_session),
     category_slug: str | None = Query(default=None),
@@ -41,52 +44,23 @@ async def list_products(
     max_price: float | None = Query(default=None, ge=0),
     tags: list[str] | None = Query(default=None),
     sort: str | None = Query(default=None, description="newest|price_asc|price_desc|name_asc|name_desc"),
+    page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
-) -> list[Product]:
-    query = select(Product).options(
-        selectinload(Product.images),
-        selectinload(Product.category),
-        selectinload(Product.tags),
+) -> ProductListResponse:
+    offset = (page - 1) * limit
+    items, total_items = await catalog_service.list_products_with_filters(
+        session, category_slug, is_featured, search, min_price, max_price, tags, sort, limit, offset
     )
-    query = query.where(Product.is_deleted.is_(False))
-    if category_slug:
-        query = query.join(Category).where(Category.slug == category_slug)
-    if is_featured is not None:
-        query = query.where(Product.is_featured == is_featured)
-    if search:
-        like = f"%{search.lower()}%"
-        query = query.where(
-            (Product.name.ilike(like)) | (Product.short_description.ilike(like)) | (Product.long_description.ilike(like))
-        )
-    if min_price is not None:
-        query = query.where(Product.base_price >= min_price)
-    if max_price is not None:
-        query = query.where(Product.base_price <= max_price)
-    if tags:
-        query = query.join(Product.tags).where(Tag.slug.in_(tags))
-    if sort == "price_asc":
-        query = query.order_by(Product.base_price.asc())
-    elif sort == "price_desc":
-        query = query.order_by(Product.base_price.desc())
-    elif sort == "name_asc":
-        query = query.order_by(Product.name.asc())
-    elif sort == "name_desc":
-        query = query.order_by(Product.name.desc())
-    else:
-        query = query.order_by(Product.created_at.desc())
-    result = await session.execute(query.limit(limit).offset(offset))
-    return list(result.scalars().unique())
-
-
-@router.get("/products/{slug}", response_model=ProductRead)
-async def get_product(slug: str, session: AsyncSession = Depends(get_session)) -> Product:
-    product = await catalog_service.get_product_by_slug(
-        session, slug, options=[selectinload(Product.images), selectinload(Product.category)]
+    total_pages = max(1, (total_items + limit - 1) // limit) if total_items else 1
+    return ProductListResponse(
+        items=items,
+        meta={
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "page": page,
+            "limit": limit,
+        },
     )
-    if not product or product.is_deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
-    return product
 
 
 # Admin endpoints
@@ -197,6 +171,66 @@ async def duplicate_product(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     clone = await catalog_service.duplicate_product(session, product)
     return clone
+
+
+@router.get("/products/recently-viewed", response_model=list[ProductRead])
+async def recently_viewed_products(
+    session: AsyncSession = Depends(get_session),
+    session_id: str | None = Query(default=None, description="Client session identifier for guests"),
+    limit: int = Query(default=5, ge=1, le=20),
+    current_user=Depends(get_current_user_optional),
+) -> list[Product]:
+    products = await catalog_service.get_recently_viewed(
+        session, getattr(current_user, "id", None) if current_user else None, session_id, limit
+    )
+    return products
+
+
+@router.get("/products/export", response_class=StreamingResponse)
+async def export_products_csv(
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_admin),
+):
+    content = await catalog_service.export_products_csv(session)
+    headers = {"Content-Disposition": 'attachment; filename="products.csv"'}
+    return StreamingResponse(iter([content]), media_type="text/csv", headers=headers)
+
+
+@router.post("/products/import", response_model=ImportResult)
+async def import_products_csv(
+    file: UploadFile = File(...),
+    dry_run: bool = Query(default=True),
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_admin),
+) -> ImportResult:
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CSV file required")
+    raw = await file.read()
+    try:
+        content = raw.decode()
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to decode CSV")
+    result = await catalog_service.import_products_csv(session, content, dry_run=dry_run)
+    return ImportResult(**result)
+
+
+@router.get("/products/{slug}", response_model=ProductRead)
+async def get_product(
+    slug: str,
+    session: AsyncSession = Depends(get_session),
+    session_id: str | None = Query(default=None, description="Client session identifier for recently viewed tracking"),
+    current_user=Depends(get_current_user_optional),
+) -> Product:
+    product = await catalog_service.get_product_by_slug(
+        session, slug, options=[selectinload(Product.images), selectinload(Product.category)], follow_history=True
+    )
+    if not product or product.is_deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    if product.status == ProductStatus.published:
+        await catalog_service.record_recently_viewed(
+            session, product, getattr(current_user, "id", None) if current_user else None, session_id
+        )
+    return product
 
 
 @router.delete("/products/{slug}/images/{image_id}", response_model=ProductRead)
