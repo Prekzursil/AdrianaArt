@@ -99,10 +99,10 @@ Below is a structured checklist you can turn into issues.
 - [x] Order timeline/audit log (status changes, notes).
 - [x] Packing slip/invoice PDF stub.
 - [x] Order item fulfillment tracking (shipped qty).
-- [ ] Capture/void support for Stripe intents.
-- [ ] Admin order export CSV.
-- [ ] Reorder endpoint (copy past order to cart).
-- [ ] Address validation hook (country/postal rules).
+- [x] Capture/void support for Stripe intents.
+- [x] Admin order export CSV.
+- [x] Reorder endpoint (copy past order to cart).
+- [x] Address validation hook (country/postal rules).
 
 ## Backend - CMS & Content
 - [ ] ContentBlock model + migration.

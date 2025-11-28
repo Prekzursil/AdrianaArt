@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.models.cart import Cart
 from app.models.order import Order, OrderItem, OrderStatus, ShippingMethod, OrderEvent
 from app.schemas.order import OrderUpdate, ShippingMethodCreate, OrderCreate
+from app.services import payments
 
 
 async def build_order_from_cart(
@@ -218,6 +219,40 @@ async def refund_order(session: AsyncSession, order: Order, note: str | None = N
     previous = order.status
     order.status = OrderStatus.refunded
     await _log_event(session, order.id, "refund_requested", note or f"Manual refund requested from {previous.value}")
+    session.add(order)
+    await session.commit()
+    await session.refresh(order)
+    await session.refresh(order, attribute_names=["events", "items", "shipping_method"])
+    return order
+
+
+async def capture_payment(session: AsyncSession, order: Order, intent_id: str | None = None) -> Order:
+    payment_intent_id = intent_id or order.stripe_payment_intent_id
+    if not payment_intent_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Payment intent id required")
+    if order.status not in {OrderStatus.pending, OrderStatus.paid}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Capture only allowed for pending/paid orders")
+    await payments.capture_payment_intent(payment_intent_id)
+    order.stripe_payment_intent_id = payment_intent_id
+    order.status = OrderStatus.paid
+    await _log_event(session, order.id, "payment_captured", f"Intent {payment_intent_id}")
+    session.add(order)
+    await session.commit()
+    await session.refresh(order)
+    await session.refresh(order, attribute_names=["events", "items", "shipping_method"])
+    return order
+
+
+async def void_payment(session: AsyncSession, order: Order, intent_id: str | None = None) -> Order:
+    payment_intent_id = intent_id or order.stripe_payment_intent_id
+    if not payment_intent_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Payment intent id required")
+    if order.status not in {OrderStatus.pending, OrderStatus.paid}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Void only allowed for pending/paid orders")
+    await payments.void_payment_intent(payment_intent_id)
+    order.stripe_payment_intent_id = payment_intent_id
+    order.status = OrderStatus.cancelled
+    await _log_event(session, order.id, "payment_voided", f"Intent {payment_intent_id}")
     session.add(order)
     await session.commit()
     await session.refresh(order)

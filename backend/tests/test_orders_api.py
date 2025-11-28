@@ -6,17 +6,19 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.future import select
 
 from app.main import app
 from app.db.base import Base
 from app.db.session import get_session
 from app.models.catalog import Category, Product
 from app.models.cart import Cart, CartItem
-from app.models.order import OrderStatus
+from app.models.order import OrderStatus, Order
 from app.models.user import UserRole
 from app.services.auth import create_user, issue_tokens_for_user
 from app.schemas.user import UserCreate
 from app.services import order as order_service
+from app.services import payments as payments_service
 from app.schemas.order import ShippingMethodCreate
 
 
@@ -173,3 +175,74 @@ def test_order_create_and_admin_updates(test_app: Dict[str, object]) -> None:
     assert packing.status_code == 200
     assert "Packing slip for order" in packing.text
     assert "Items:" in packing.text
+
+
+def test_capture_void_export_and_reorder(monkeypatch: pytest.MonkeyPatch, test_app: Dict[str, object]) -> None:
+    client: TestClient = test_app["client"]  # type: ignore[assignment]
+    SessionLocal = test_app["session_factory"]  # type: ignore[assignment]
+
+    token, user_id = create_user_token(SessionLocal, email="buyer2@example.com")
+    admin_token, _ = create_user_token(SessionLocal, email="admin2@example.com", admin=True)
+    seed_cart_with_product(SessionLocal, user_id)
+
+    async def seed_shipping():
+        async with SessionLocal() as session:
+            method = await order_service.create_shipping_method(
+                session, ShippingMethodCreate(name="Express", rate_flat=10.0, rate_per_kg=0)
+            )
+            return method.id
+
+    shipping_method_id = asyncio.run(seed_shipping())
+
+    res = client.post(
+        "/api/v1/orders",
+        json={"shipping_method_id": str(shipping_method_id)},
+        headers=auth_headers(token),
+    )
+    assert res.status_code == 201
+    order = res.json()
+    order_id = order["id"]
+
+    async def attach_intent():
+        async with SessionLocal() as session:
+            result = await session.execute(select(Order).where(Order.id == UUID(order_id)))
+            db_order = result.scalar_one()
+            db_order.stripe_payment_intent_id = "pi_test_123"
+            await session.commit()
+
+    asyncio.run(attach_intent())
+
+    async def fake_capture(intent_id: str):
+        return {"id": intent_id, "status": "succeeded"}
+
+    async def fake_void(intent_id: str):
+        return {"id": intent_id, "status": "canceled"}
+
+    monkeypatch.setattr(payments_service, "capture_payment_intent", fake_capture)
+    monkeypatch.setattr(payments_service, "void_payment_intent", fake_void)
+
+    capture = client.post(
+        f"/api/v1/orders/admin/{order_id}/capture-payment",
+        headers=auth_headers(admin_token),
+    )
+    assert capture.status_code == 200
+    assert capture.json()["status"] == "paid"
+    assert capture.json()["stripe_payment_intent_id"] == "pi_test_123"
+
+    void = client.post(
+        f"/api/v1/orders/admin/{order_id}/void-payment",
+        headers=auth_headers(admin_token),
+    )
+    assert void.status_code == 200
+    assert void.json()["status"] == "cancelled"
+    assert any(evt["event"] == "payment_voided" for evt in void.json()["events"])
+
+    export_resp = client.get("/api/v1/orders/admin/export", headers=auth_headers(admin_token))
+    assert export_resp.status_code == 200
+    assert "text/csv" in export_resp.headers.get("content-type", "")
+    assert "reference_code" in export_resp.text
+
+    reorder_resp = client.post(f"/api/v1/orders/{order_id}/reorder", headers=auth_headers(token))
+    assert reorder_resp.status_code == 200
+    assert len(reorder_resp.json()["items"]) == 1
+    assert reorder_resp.json()["items"][0]["product_id"]

@@ -39,3 +39,25 @@ async def handle_webhook_event(payload: bytes, sig_header: str | None) -> dict:
     except Exception as exc:  # broad for Stripe signature errors
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid payload") from exc
     return event
+
+
+async def capture_payment_intent(intent_id: str) -> dict:
+    """Capture an authorized PaymentIntent."""
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Stripe not configured")
+    init_stripe()
+    try:
+        return stripe.PaymentIntent.capture(intent_id)
+    except stripe.error.StripeError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+async def void_payment_intent(intent_id: str) -> dict:
+    """Cancel/void a PaymentIntent that has not been captured."""
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Stripe not configured")
+    init_stripe()
+    try:
+        return stripe.PaymentIntent.cancel(intent_id)
+    except stripe.error.StripeError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc

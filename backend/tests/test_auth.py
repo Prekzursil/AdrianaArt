@@ -21,7 +21,7 @@ def test_app() -> Dict[str, object]:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-    asyncio.get_event_loop().run_until_complete(init_models())
+    asyncio.run(init_models())
 
     async def override_get_session():
         async with SessionLocal() as session:
@@ -92,7 +92,7 @@ def test_admin_guard(test_app: Dict[str, object]) -> None:
             user.role = UserRole.admin
             await session.commit()
 
-    asyncio.get_event_loop().run_until_complete(promote())
+    asyncio.run(promote())
 
     # Acquire new tokens after role change
     res = client.post("/api/v1/auth/login", json={"email": "admin@example.com", "password": "adminpass"})
