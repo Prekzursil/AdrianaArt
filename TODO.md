@@ -1,6 +1,6 @@
 # TODO / Roadmap
 
-Below is a structured checklist you can turn into issues. Nothing is marked done yet.
+Below is a structured checklist you can turn into issues.
 
 ## Project & Infra
 - [x] Initialize monorepo with `backend/`, `frontend/`, `infra/`.
@@ -12,11 +12,11 @@ Below is a structured checklist you can turn into issues. Nothing is marked done
 - [x] GitHub Actions for frontend (lint, tests, build).
 - [x] CONTRIBUTING.md with branching, commit style, runbook.
 - [x] ARCHITECTURE.md with high-level design and data flow.
-- [ ] CI: add deployment/release job (e.g., container build + push) once runtime code lands.
+- [x] CI: add deployment/release job (e.g., container build + push) once runtime code lands.
 
 ## Backend - Core & Auth
-- [ ] Scaffold FastAPI app with versioned `/api/v1` router.
-- [ ] Settings via `pydantic-settings`.
+- [x] Scaffold FastAPI app with versioned `/api/v1` router.
+- [x] Settings via `pydantic-settings`.
 - [ ] SQLAlchemy engine/session for Postgres.
 - [ ] User model + Alembic migration.
 - [ ] Password hashing/verification.
