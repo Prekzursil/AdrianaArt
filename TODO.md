@@ -48,11 +48,11 @@ Below is a structured checklist you can turn into issues.
 - [x] Product reviews model + moderation queue.
 - [x] Average rating + review count on product list/detail.
 - [x] Related products/recommendations service (rule-based).
-- [ ] Recently viewed products service (per session).
-- [ ] Admin export products CSV.
-- [ ] Admin import products CSV with dry-run validation.
-- [ ] Product slug history/redirects on slug change.
-- [ ] Server-side pagination metadata (total pages/items).
+- [x] Recently viewed products service (per session).
+- [x] Admin export products CSV.
+- [x] Admin import products CSV with dry-run validation.
+- [x] Product slug history/redirects on slug change.
+- [x] Server-side pagination metadata (total pages/items).
 - [ ] Sort options: newest, price asc/desc, name asc/desc.
 - [ ] Backorder/preorder flag + estimated restock date.
 - [ ] Per-product shipping dimensions/weight fields.

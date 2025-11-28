@@ -1,11 +1,15 @@
 from datetime import datetime, timezone
+import csv
+import io
+import math
 import random
 import string
 import uuid
 
 from fastapi import HTTPException, status
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from app.models.catalog import (
     Category,
@@ -16,6 +20,8 @@ from app.models.catalog import (
     ProductStatus,
     Tag,
     ProductReview,
+    ProductSlugHistory,
+    RecentlyViewedProduct,
 )
 from app.schemas.catalog import (
     CategoryCreate,
@@ -37,14 +43,21 @@ async def get_category_by_slug(session: AsyncSession, slug: str) -> Category | N
 
 
 async def get_product_by_slug(
-    session: AsyncSession, slug: str, options: list | None = None
+    session: AsyncSession, slug: str, options: list | None = None, follow_history: bool = True
 ) -> Product | None:
     query = select(Product)
     if options:
         for opt in options:
             query = query.options(opt)
     result = await session.execute(query.where(Product.slug == slug))
-    return result.scalar_one_or_none()
+    product = result.scalar_one_or_none()
+    if product or not follow_history:
+        return product
+    hist_result = await session.execute(select(ProductSlugHistory).where(ProductSlugHistory.slug == slug))
+    history = hist_result.scalar_one_or_none()
+    if history:
+        product = await session.get(Product, history.product_id)
+    return product
 
 
 async def _ensure_slug_unique(session: AsyncSession, slug: str, exclude_id: uuid.UUID | None = None) -> None:
@@ -54,6 +67,12 @@ async def _ensure_slug_unique(session: AsyncSession, slug: str, exclude_id: uuid
     exists = await session.execute(query)
     if exists.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product slug already exists")
+    hist_query = select(ProductSlugHistory).where(ProductSlugHistory.slug == slug)
+    if exclude_id:
+        hist_query = hist_query.where(ProductSlugHistory.product_id != exclude_id)
+    hist = await session.execute(hist_query)
+    if hist.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product slug already exists in history")
 
 
 async def _get_product_by_sku(session: AsyncSession, sku: str) -> Product | None:
@@ -99,7 +118,7 @@ async def update_category(session: AsyncSession, category: Category, payload: Ca
     return category
 
 
-async def create_product(session: AsyncSession, payload: ProductCreate) -> Product:
+async def create_product(session: AsyncSession, payload: ProductCreate, commit: bool = True) -> Product:
     await _ensure_slug_unique(session, payload.slug)
     sku = payload.sku or await _generate_unique_sku(session, payload.slug)
     await _ensure_sku_unique(session, sku)
@@ -117,15 +136,20 @@ async def create_product(session: AsyncSession, payload: ProductCreate) -> Produ
     if payload.options:
         product.options = [ProductOption(**opt.model_dump()) for opt in payload.options]
     session.add(product)
-    await session.commit()
-    await session.refresh(product)
+    if commit:
+        await session.commit()
+        await session.refresh(product)
+    else:
+        await session.flush()
     return product
 
 
-async def update_product(session: AsyncSession, product: Product, payload: ProductUpdate) -> Product:
+async def update_product(session: AsyncSession, product: Product, payload: ProductUpdate, commit: bool = True) -> Product:
     data = payload.model_dump(exclude_unset=True)
     if "slug" in data:
         await _ensure_slug_unique(session, data["slug"], exclude_id=product.id)
+        if data["slug"] and data["slug"] != product.slug:
+            await _record_slug_history(session, product, product.slug)
     if "sku" in data and data["sku"]:
         await _ensure_sku_unique(session, data["sku"], exclude_id=product.id)
     if "tags" in data and data["tags"] is not None:
@@ -136,8 +160,11 @@ async def update_product(session: AsyncSession, product: Product, payload: Produ
         setattr(product, field, value)
     _set_publish_timestamp(product, data.get("status"))
     session.add(product)
-    await session.commit()
-    await session.refresh(product)
+    if commit:
+        await session.commit()
+        await session.refresh(product)
+    else:
+        await session.flush()
     return product
 
 
@@ -201,6 +228,59 @@ async def bulk_update_products(session: AsyncSession, updates: list[BulkProductU
 def slugify(value: str) -> str:
     cleaned = "".join(ch.lower() if ch.isalnum() else "-" for ch in value).strip("-")
     return "-".join(filter(None, cleaned.split("-")))
+
+
+async def list_products_with_filters(
+    session: AsyncSession,
+    category_slug: str | None,
+    is_featured: bool | None,
+    search: str | None,
+    min_price: float | None,
+    max_price: float | None,
+    tags: list[str] | None,
+    sort: str | None,
+    limit: int,
+    offset: int,
+):
+    base_query = select(Product).options(
+        selectinload(Product.images),
+        selectinload(Product.category),
+        selectinload(Product.tags),
+    ).where(Product.is_deleted.is_(False))
+    if category_slug:
+        base_query = base_query.join(Category).where(Category.slug == category_slug)
+    if is_featured is not None:
+        base_query = base_query.where(Product.is_featured == is_featured)
+    if search:
+        like = f"%{search.lower()}%"
+        base_query = base_query.where(
+            (Product.name.ilike(like)) | (Product.short_description.ilike(like)) | (Product.long_description.ilike(like))
+        )
+    if min_price is not None:
+        base_query = base_query.where(Product.base_price >= min_price)
+    if max_price is not None:
+        base_query = base_query.where(Product.base_price <= max_price)
+    if tags:
+        base_query = base_query.join(Product.tags).where(Tag.slug.in_(tags))
+
+    total_query = base_query.with_only_columns(func.count(func.distinct(Product.id))).order_by(None)
+    total_result = await session.execute(total_query)
+    total_items = total_result.scalar_one()
+
+    if sort == "price_asc":
+        base_query = base_query.order_by(Product.base_price.asc())
+    elif sort == "price_desc":
+        base_query = base_query.order_by(Product.base_price.desc())
+    elif sort == "name_asc":
+        base_query = base_query.order_by(Product.name.asc())
+    elif sort == "name_desc":
+        base_query = base_query.order_by(Product.name.desc())
+    else:
+        base_query = base_query.order_by(Product.created_at.desc())
+
+    result = await session.execute(base_query.limit(limit).offset(offset))
+    items = list(result.scalars().unique())
+    return items, total_items
 
 
 async def _get_or_create_tags(session: AsyncSession, names: list[str]) -> list[Tag]:
@@ -318,3 +398,202 @@ async def get_related_products(session: AsyncSession, product: Product, limit: i
         .limit(limit)
     )
     return result.scalars().unique().all()
+
+
+async def record_recently_viewed(
+    session: AsyncSession, product: Product, user_id: uuid.UUID | None, session_id: str | None, limit: int = 10
+) -> None:
+    if not user_id and not session_id:
+        return
+    query = select(RecentlyViewedProduct).where(RecentlyViewedProduct.product_id == product.id)
+    if user_id:
+        query = query.where(RecentlyViewedProduct.user_id == user_id)
+    else:
+        query = query.where(RecentlyViewedProduct.session_id == session_id)
+    existing = await session.execute(query)
+    view = existing.scalar_one_or_none()
+    now = datetime.now(timezone.utc)
+    if view:
+        view.viewed_at = now
+    else:
+        view = RecentlyViewedProduct(
+            product_id=product.id,
+            user_id=user_id,
+            session_id=session_id,
+            viewed_at=now,
+        )
+        session.add(view)
+    await session.commit()
+
+    # enforce cap
+    cleanup_query = select(RecentlyViewedProduct).where(
+        (RecentlyViewedProduct.user_id == user_id) if user_id else (RecentlyViewedProduct.session_id == session_id)
+    ).order_by(RecentlyViewedProduct.viewed_at.desc())
+    result = await session.execute(cleanup_query)
+    all_views = result.scalars().all()
+    for extra in all_views[limit:]:
+        await session.delete(extra)
+    if len(all_views) > limit:
+        await session.commit()
+
+
+async def get_recently_viewed(
+    session: AsyncSession, user_id: uuid.UUID | None, session_id: str | None, limit: int = 10
+):
+    if not user_id and not session_id:
+        return []
+    query = (
+        select(RecentlyViewedProduct)
+        .options(selectinload(RecentlyViewedProduct.product).selectinload(Product.images))
+        .where(
+            RecentlyViewedProduct.product.has(
+                and_(Product.is_deleted.is_(False), Product.status == ProductStatus.published)
+            )
+        )
+    )
+    if user_id:
+        query = query.where(RecentlyViewedProduct.user_id == user_id)
+    else:
+        query = query.where(RecentlyViewedProduct.session_id == session_id)
+    query = query.order_by(RecentlyViewedProduct.viewed_at.desc()).limit(limit)
+    result = await session.execute(query)
+    return [rv.product for rv in result.scalars()]
+
+
+async def export_products_csv(session: AsyncSession) -> str:
+    products_result = await session.execute(
+        select(Product)
+        .options(selectinload(Product.category), selectinload(Product.tags))
+        .where(Product.is_deleted.is_(False))
+        .order_by(Product.created_at.desc())
+    )
+    products = products_result.scalars().unique().all()
+    buf = io.StringIO()
+    fieldnames = [
+        "slug",
+        "name",
+        "category_slug",
+        "base_price",
+        "currency",
+        "stock_quantity",
+        "status",
+        "is_featured",
+        "is_active",
+        "short_description",
+        "long_description",
+        "tags",
+    ]
+    writer = csv.DictWriter(buf, fieldnames=fieldnames)
+    writer.writeheader()
+    for p in products:
+        writer.writerow(
+            {
+                "slug": p.slug,
+                "name": p.name,
+                "category_slug": p.category.slug if p.category else "",
+                "base_price": float(p.base_price),
+                "currency": p.currency,
+                "stock_quantity": p.stock_quantity,
+                "status": p.status.value,
+                "is_featured": p.is_featured,
+                "is_active": p.is_active,
+                "short_description": p.short_description or "",
+                "long_description": p.long_description or "",
+                "tags": ",".join(tag.slug for tag in p.tags),
+            }
+        )
+    return buf.getvalue()
+
+
+async def import_products_csv(session: AsyncSession, content: str, dry_run: bool = True):
+    reader = csv.DictReader(io.StringIO(content))
+    created = 0
+    updated = 0
+    errors: list[str] = []
+
+    for idx, row in enumerate(reader, start=2):
+        slug = (row.get("slug") or "").strip()
+        name = (row.get("name") or "").strip()
+        category_slug = (row.get("category_slug") or "").strip()
+        if not slug or not name or not category_slug:
+            errors.append(f"Row {idx}: missing slug, name, or category_slug")
+            continue
+        try:
+            base_price = float(row.get("base_price") or 0)
+            stock_quantity = int(row.get("stock_quantity") or 0)
+        except ValueError:
+            errors.append(f"Row {idx}: invalid base_price or stock_quantity")
+            continue
+        currency = (row.get("currency") or "USD").strip()
+        status_value = (row.get("status") or ProductStatus.draft.value).strip()
+        try:
+            status_enum = ProductStatus(status_value)
+        except ValueError:
+            errors.append(f"Row {idx}: invalid status {status_value}")
+            continue
+        is_featured = str(row.get("is_featured") or "").lower() in {"true", "1", "yes"}
+        is_active = str(row.get("is_active") or "true").lower() not in {"false", "0", "no"}
+        short_description = (row.get("short_description") or "").strip() or None
+        long_description = (row.get("long_description") or "").strip() or None
+        tag_slugs = [t.strip() for t in (row.get("tags") or "").split(",") if t.strip()]
+
+        category = await get_category_by_slug(session, category_slug)
+        if not category:
+            if dry_run:
+                errors.append(f"Row {idx}: category {category_slug} not found")
+                continue
+            category = Category(slug=category_slug, name=category_slug.replace("-", " ").title())
+            session.add(category)
+            await session.flush()
+
+        existing = await get_product_by_slug(session, slug, follow_history=False)
+        if existing:
+            updated += 1
+            if dry_run:
+                continue
+            payload = ProductUpdate(
+                name=name,
+                base_price=base_price,
+                currency=currency,
+                stock_quantity=stock_quantity,
+                status=status_enum,
+                is_featured=is_featured,
+                is_active=is_active,
+                short_description=short_description,
+                long_description=long_description,
+                category_id=category.id,
+                tags=tag_slugs if tag_slugs else [],
+            )
+            await update_product(session, existing, payload, commit=False)
+        else:
+            created += 1
+            if dry_run:
+                continue
+            payload = ProductCreate(
+                category_id=category.id,
+                slug=slug,
+                name=name,
+                base_price=base_price,
+                currency=currency,
+                stock_quantity=stock_quantity,
+                status=status_enum,
+                is_featured=is_featured,
+                is_active=is_active,
+                short_description=short_description,
+                long_description=long_description,
+                tags=tag_slugs,
+            )
+            await create_product(session, payload, commit=False)
+    if errors:
+        if not dry_run:
+            await session.rollback()
+    else:
+        if not dry_run:
+            await session.commit()
+    return {"created": created, "updated": updated, "errors": errors}
+
+
+async def _record_slug_history(session: AsyncSession, product: Product, old_slug: str) -> None:
+    history = ProductSlugHistory(product_id=product.id, slug=old_slug)
+    session.add(history)
+    await session.flush()
