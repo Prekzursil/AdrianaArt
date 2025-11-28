@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_current_user_optional
 from app.db.session import get_session
 from app.schemas.cart import CartItemCreate, CartItemRead, CartItemUpdate, CartRead
+from app.schemas.promo import PromoCodeRead, PromoCodeCreate
 from app.services import cart as cart_service
 
 router = APIRouter(prefix="/cart", tags=["cart"])
@@ -31,7 +32,7 @@ async def get_cart(
         session.add(cart)
         await session.commit()
         await session.refresh(cart)
-    return cart
+    return await cart_service.serialize_cart(cart)
 
 
 @router.post("/items", response_model=CartItemRead, status_code=status.HTTP_201_CREATED)
@@ -44,7 +45,15 @@ async def add_item(
     if not current_user and not session_id:
         session_id = f"guest-{uuid.uuid4()}"
     cart = await cart_service.get_cart(session, getattr(current_user, "id", None) if current_user else None, session_id)
-    return await cart_service.add_item(session, cart, payload)
+    item = await cart_service.add_item(session, cart, payload)
+    return CartItemRead(
+        id=item.id,
+        product_id=item.product_id,
+        variant_id=item.variant_id,
+        quantity=item.quantity,
+        max_quantity=item.max_quantity,
+        unit_price_at_add=item.unit_price_at_add,
+    )
 
 
 @router.patch("/items/{item_id}", response_model=CartItemRead)
@@ -56,7 +65,15 @@ async def update_item(
     session_id: str | None = Depends(session_header),
 ):
     cart = await cart_service.get_cart(session, getattr(current_user, "id", None) if current_user else None, session_id)
-    return await cart_service.update_item(session, cart, item_id, payload)
+    item = await cart_service.update_item(session, cart, item_id, payload)
+    return CartItemRead(
+        id=item.id,
+        product_id=item.product_id,
+        variant_id=item.variant_id,
+        quantity=item.quantity,
+        max_quantity=item.max_quantity,
+        unit_price_at_add=item.unit_price_at_add,
+    )
 
 
 @router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -81,4 +98,12 @@ async def merge_guest_cart(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Auth required to merge guest cart")
     user_cart = await cart_service.get_cart(session, current_user.id, None)
     merged_cart = await cart_service.merge_guest_cart(session, user_cart, session_id)
-    return merged_cart
+    return await cart_service.serialize_cart(merged_cart)
+
+
+@router.post("/promo/validate", response_model=PromoCodeRead)
+async def validate_promo(
+    payload: PromoCodeCreate,
+    session: AsyncSession = Depends(get_session),
+):
+    return await cart_service.validate_promo(session, payload.code, payload.currency)
