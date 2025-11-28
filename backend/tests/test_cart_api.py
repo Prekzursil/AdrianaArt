@@ -59,6 +59,7 @@ def seed_product(session_factory) -> UUID:
             product = Product(
                 category=category,
                 slug="cup",
+                sku="SKU-CUP",
                 name="Cup",
                 base_price=10,
                 currency="USD",

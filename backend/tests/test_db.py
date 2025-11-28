@@ -76,6 +76,7 @@ async def test_cart_models_sqlite_memory() -> None:
         product = Product(
             category=category,
             slug="plate",
+            sku="SKU-PLATE",
             name="Plate",
             base_price=20,
             currency="USD",
@@ -108,6 +109,7 @@ async def test_order_models_sqlite_memory() -> None:
         product = Product(
             category=category,
             slug="order-cup",
+            sku="SKU-ORDER",
             name="Order Cup",
             base_price=15,
             currency="USD",

@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.models.catalog import ProductStatus
+
 
 class CategoryBase(BaseModel):
     slug: str = Field(min_length=1, max_length=120)
@@ -30,6 +32,7 @@ class CategoryRead(CategoryBase):
 class ProductBase(BaseModel):
     category_id: UUID
     slug: str = Field(min_length=1, max_length=160)
+    sku: str | None = Field(default=None, min_length=3, max_length=64)
     name: str = Field(min_length=1, max_length=160)
     short_description: str | None = Field(default=None, max_length=280)
     long_description: str | None = None
@@ -43,6 +46,7 @@ class ProductBase(BaseModel):
 class ProductCreate(ProductBase):
     images: list["ProductImageCreate"] = []
     variants: list["ProductVariantCreate"] = []
+    status: ProductStatus = ProductStatus.draft
 
 
 class ProductUpdate(BaseModel):
@@ -55,6 +59,9 @@ class ProductUpdate(BaseModel):
     is_featured: bool | None = None
     stock_quantity: int | None = Field(default=None, ge=0)
     category_id: UUID | None = None
+    sku: str | None = Field(default=None, min_length=3, max_length=64)
+    status: ProductStatus | None = None
+    publish_at: datetime | None = None
 
 
 class ProductImageBase(BaseModel):
@@ -95,6 +102,16 @@ class ProductRead(ProductBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
+    publish_at: datetime | None = None
+    last_modified: datetime
+    status: ProductStatus
     images: list[ProductImageRead] = []
     category: CategoryRead
     variants: list[ProductVariantRead] = []
+
+
+class BulkProductUpdateItem(BaseModel):
+    product_id: UUID
+    base_price: float | None = Field(default=None, ge=0)
+    stock_quantity: int | None = Field(default=None, ge=0)
+    status: ProductStatus | None = None

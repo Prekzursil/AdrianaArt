@@ -37,11 +37,11 @@ Below is a structured checklist you can turn into issues.
 - [x] Admin product image upload/delete.
 - [x] Image storage service (local first, S3-ready).
 - [x] Seed example products/categories for dev.
-- [ ] SKU generation and uniqueness enforcement.
-- [ ] Slug collision handling and validator.
-- [ ] Product status enums (draft/published/archived).
-- [ ] Track publish date and last_modified.
-- [ ] Bulk price/stock update endpoint for admins.
+- [x] SKU generation and uniqueness enforcement.
+- [x] Slug collision handling and validator.
+- [x] Product status enums (draft/published/archived).
+- [x] Track publish date and last_modified.
+- [x] Bulk price/stock update endpoint for admins.
 - [ ] Product labels/tags schema and filters.
 - [ ] Product option schema (color/size) without variants.
 - [ ] Admin product duplication/cloning.
@@ -276,3 +276,84 @@ Below is a structured checklist you can turn into issues.
 - [ ] Structured data (JSON-LD) for products.
 - [ ] Breadcrumb structured data for SEO.
 - [ ] Perf budget and bundle analysis (Angular).
+
+## Internationalization & Localization (RO/EN)
+- [ ] Pick frontend i18n strategy (Angular i18n vs ngx-translate) and set up RO/EN language switching.
+- [ ] Base translation files for `en` and `ro` (navigation, footer, auth, cart, checkout, admin).
+- [ ] Language toggle in header with persisted choice (localStorage/cookie).
+- [ ] Store preferred language on user profile and default to it after login.
+- [ ] Internationalize storefront text (home, shop, product detail, cart, checkout, account).
+- [ ] RO/EN translations for validation/error messages in forms (login, register, checkout, admin).
+- [ ] Internationalize admin dashboard labels/messages.
+- [ ] `product_translations` (or JSONB) for localized product name/short/long description per language.
+- [ ] `category_translations` (or JSONB) for localized category name/description per language.
+- [ ] Localized content blocks for static pages (About, FAQ, Shipping, etc.).
+- [ ] Content API supports `lang` query param with sensible fallbacks and `Accept-Language` defaults.
+- [ ] Localize email templates (order confirmation, password reset) into RO/EN based on user preference.
+- [ ] Localized SEO meta tags per language (home, category, product, about).
+- [ ] Tests rendering pages in RO/EN to verify translations/directionality.
+
+## Auth – Google OAuth & Account Linking
+- [ ] Add Google identity fields to `User` (google_sub, google_email, google_picture_url) + migration.
+- [ ] Settings for Google OAuth client ID/secret, redirect URI, allowed domains.
+- [ ] `/auth/google/start` builds consent URL and redirects.
+- [ ] `/auth/google/callback` exchanges code, fetches profile, maps to local user.
+- [ ] Handle email collision: prompt linking instead of duplicate creation when email matches existing user.
+- [ ] Google login when `google_sub` exists issues standard access/refresh tokens.
+- [ ] `/auth/google/link` for logged-in users to link Google (password confirmation).
+- [ ] `/auth/google/unlink` to disconnect Google profile (must retain password).
+- [ ] Validation to prevent linking a Google account already linked elsewhere.
+- [ ] Frontend login/register “Continue with Google” flow and callback handling.
+- [ ] Account settings “Connected accounts” section with link/unlink actions.
+- [ ] Log security events for linking/unlinking and first-time Google logins.
+- [ ] Unit tests for Google OAuth flows (happy path, link existing, conflicting emails, unlink).
+- [ ] README docs for Google OAuth setup/testing (console steps, redirect URLs).
+
+## Admin Dashboard – CMS & UX Enhancements
+- [ ] Admin UI for editing homepage hero per language (headline, subtitle, CTA, hero image).
+- [ ] Admin UI for managing Collections (named groups of products to feature).
+- [ ] Drag-and-drop ordering for homepage sections (hero, collections, bestsellers, new arrivals).
+- [ ] Admin UI for global assets (logo, favicon, social preview image).
+- [ ] SEO settings in admin to set meta title/description per page per language.
+- [ ] WYSIWYG/markdown editor for About/FAQ/Shipping content with RO/EN tabs.
+- [ ] Live preview mode in admin for page changes before publishing.
+- [ ] Version metadata (“last updated by/at”) for content blocks.
+- [ ] Admin dashboard overview with key metrics (open orders, recent orders, low-stock, sales last 30d).
+- [ ] Admin tools for inline/bulk stock editing in product table.
+- [ ] Duplicate product action in admin (clone with images, mark draft).
+- [ ] Admin controls for bestseller/highlight badges on storefront cards.
+- [ ] Scheduling for product publish/unpublish; show upcoming scheduled products.
+- [ ] Admin maintenance mode toggle (customer-facing maintenance page, admin bypass).
+- [ ] Admin audit log page listing important events (login, product changes, content updates, Google linking).
+
+## Data Portability & Backups (Extended)
+- [ ] CLI command `python -m app.cli export-data` exporting users (no passwords), products, categories, orders, addresses to JSON.
+- [ ] CLI command `import-data` to bootstrap a new DB from JSON exports with idempotent upserts.
+- [ ] Infra helper script to archive DB dump + JSON exports + media into timestamped `.tar.gz`.
+- [ ] Document “Move to a new server” flow in README (restore DB/media, run migrations, import as needed).
+- [ ] Example cron/systemd timer config for scheduled backups in production.
+- [ ] `check-backup` script to restore latest backup into disposable Docker container and hit `/api/v1/health`.
+- [ ] Admin-triggered “Download my data” export endpoint with auth/logging.
+
+## Media & File Handling Improvements
+- [ ] `storage.save_upload` generates unique filenames (UUID + extension) to avoid collisions/traversal.
+- [ ] Server-side validation for uploaded image type and size across endpoints.
+- [ ] Thumbnail/preview generation for product images (small/medium/large).
+- [ ] Store relative media paths and derive full URLs via MEDIA_ROOT/CDN base.
+- [ ] Script to scan for orphaned media files and delete/archive safely.
+- [ ] Ensure product/image deletes remove files from disk/S3 and log the operation.
+
+## Bugs / Technical Debt / Misc Features
+- [ ] Config option to enforce Decimal end-to-end for prices; tests for exact totals.
+- [ ] Pagination metadata (total items/pages) in product list API responses.
+- [ ] Standardize error response format across APIs.
+- [ ] Structured logging around cart/checkout (cart id, user id, request id).
+- [ ] Rate limiting on `/auth/login`, `/auth/register`, `/auth/google/*` with consistent 429 response.
+- [ ] Wishlist/save-for-later feature per user.
+- [ ] Recently viewed products widget using cookie/localStorage list (storefront).
+- [ ] Integration test covering register → login → add to cart → checkout (mock payment) → see order.
+- [ ] Smoke test for Google OAuth using mocked Google endpoint.
+- [ ] Metrics counters for signups, logins, failed logins, orders created, payment failures.
+- [ ] robots.txt and sitemap.xml generation (with i18n URLs).
+- [ ] Per-language canonical URLs for product pages.
+- [ ] Document “local-only dev” mode (SQLite + local media + Stripe test) and “prod-like” mode (Postgres + S3 + SMTP).

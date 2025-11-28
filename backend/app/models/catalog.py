@@ -1,7 +1,8 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+import enum
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text, func, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,11 +29,20 @@ class Category(Base):
     products: Mapped[list["Product"]] = relationship("Product", back_populates="category")
 
 
+class ProductStatus(str, enum.Enum):
+    draft = "draft"
+    published = "published"
+    archived = "archived"
+
+
 class Product(Base):
     __tablename__ = "products"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     category_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=False)
+    sku: Mapped[str] = mapped_column(
+        String(64), unique=True, nullable=False, index=True, default=lambda: uuid.uuid4().hex[:12].upper()
+    )
     slug: Mapped[str] = mapped_column(String(160), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     short_description: Mapped[str | None] = mapped_column(String(280), nullable=True)
@@ -43,6 +53,8 @@ class Product(Base):
     is_featured: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     stock_quantity: Mapped[int] = mapped_column(nullable=False, default=0)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    status: Mapped[ProductStatus] = mapped_column(Enum(ProductStatus), nullable=False, default=ProductStatus.draft)
+    publish_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -51,6 +63,9 @@ class Product(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+    last_modified: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
     category: Mapped[Category] = relationship("Category", back_populates="products", lazy="joined")
