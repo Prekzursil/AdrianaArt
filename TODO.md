@@ -29,9 +29,9 @@ Below is a structured checklist you can turn into issues.
 - [x] Product model + migration.
 - [x] ProductImage model + migration.
 - [ ] (Optional) ProductVariant model + migration.
-- [ ] GET /categories (public).
+- [x] GET /categories (public).
 - [ ] GET /products with pagination, search, category, price filters.
-- [ ] GET /products/{slug} detail.
+- [x] GET /products/{slug} detail.
 - [x] Admin create/update product endpoints.
 - [ ] Admin soft-delete product.
 - [ ] Admin product image upload/delete.
