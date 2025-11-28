@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/adrianaart"
     secret_key: str = "dev-secret-key"
     stripe_secret_key: str = "sk_test_placeholder"
+    stripe_webhook_secret: str | None = None
     jwt_algorithm: str = "HS256"
     access_token_exp_minutes: int = 30
     refresh_token_exp_days: int = 7

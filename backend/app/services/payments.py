@@ -1,0 +1,41 @@
+import stripe
+from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.models.cart import Cart
+
+
+def init_stripe() -> None:
+    stripe.api_key = settings.stripe_secret_key
+
+
+async def create_payment_intent(session: AsyncSession, cart: Cart) -> str:
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Stripe not configured")
+    if not cart.items:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cart is empty")
+
+    init_stripe()
+    amount_cents = int(sum(float(item.unit_price_at_add) * item.quantity for item in cart.items) * 100)
+    try:
+        intent = stripe.PaymentIntent.create(
+            amount=amount_cents,
+            currency="usd",
+            metadata={"cart_id": str(cart.id), "user_id": str(cart.user_id) if cart.user_id else ""},
+        )
+    except stripe.error.StripeError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+    return intent.client_secret
+
+
+async def handle_webhook_event(payload: bytes, sig_header: str | None) -> dict:
+    if not settings.stripe_webhook_secret:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Webhook secret not set")
+    init_stripe()
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, settings.stripe_webhook_secret)
+    except Exception as exc:  # broad for Stripe signature errors
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid payload") from exc
+    return event
