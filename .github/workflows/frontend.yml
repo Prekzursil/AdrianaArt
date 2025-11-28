@@ -5,27 +5,47 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   frontend:
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('frontend/package.json') != '' }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Detect frontend
+        id: detect
+        run: |
+          if [ ! -f frontend/package.json ]; then
+            echo "missing=true" >> "$GITHUB_OUTPUT"
+            echo "No frontend package.json found; skipping npm steps."
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.detect.outputs.missing != 'true'
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
+
       - name: Install dependencies
+        if: steps.detect.outputs.missing != 'true'
         run: |
           cd frontend
           npm ci
+
       - name: Run tests
+        if: steps.detect.outputs.missing != 'true'
         run: |
           cd frontend
           npm test -- --watch=false --browsers=ChromeHeadless || npm test -- --watch=false
+
       - name: Build
+        if: steps.detect.outputs.missing != 'true'
         run: |
           cd frontend
           npm run build --if-present
+
+      - name: Skip placeholder
+        if: steps.detect.outputs.missing == 'true'
+        run: echo "Frontend scaffold not present yet; check recorded as skipped."
