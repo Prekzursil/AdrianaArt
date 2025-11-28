@@ -3,13 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.models.catalog import Category, Product, ProductImage
+from app.models.catalog import Category, Product, ProductImage, ProductVariant
 from app.schemas.catalog import (
     CategoryCreate,
     CategoryUpdate,
     ProductCreate,
     ProductImageCreate,
     ProductUpdate,
+    ProductVariantCreate,
 )
 
 
@@ -55,9 +56,11 @@ async def create_product(session: AsyncSession, payload: ProductCreate) -> Produ
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product slug already exists")
 
     images_payload = payload.images or []
-    product_data = payload.model_dump(exclude={"images"})
+    variants_payload: list[ProductVariantCreate] = getattr(payload, "variants", []) or []
+    product_data = payload.model_dump(exclude={"images", "variants"})
     product = Product(**product_data)
     product.images = [ProductImage(**img.model_dump()) for img in images_payload]
+    product.variants = [ProductVariant(**variant.model_dump()) for variant in variants_payload]
     session.add(product)
     await session.commit()
     await session.refresh(product)

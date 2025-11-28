@@ -30,13 +30,27 @@ async def list_products(
     session: AsyncSession = Depends(get_session),
     category_slug: str | None = Query(default=None),
     is_featured: bool | None = Query(default=None),
+    search: str | None = Query(default=None),
+    min_price: float | None = Query(default=None, ge=0),
+    max_price: float | None = Query(default=None, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
 ) -> list[Product]:
     query = select(Product).options(selectinload(Product.images), selectinload(Product.category))
     if category_slug:
         query = query.join(Category).where(Category.slug == category_slug)
     if is_featured is not None:
         query = query.where(Product.is_featured == is_featured)
-    result = await session.execute(query.order_by(Product.created_at.desc()))
+    if search:
+        like = f"%{search.lower()}%"
+        query = query.where(
+            (Product.name.ilike(like)) | (Product.short_description.ilike(like)) | (Product.long_description.ilike(like))
+        )
+    if min_price is not None:
+        query = query.where(Product.base_price >= min_price)
+    if max_price is not None:
+        query = query.where(Product.base_price <= max_price)
+    result = await session.execute(query.order_by(Product.created_at.desc()).limit(limit).offset(offset))
     return list(result.scalars().unique())
 
 
