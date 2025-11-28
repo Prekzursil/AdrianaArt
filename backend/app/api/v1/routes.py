@@ -5,6 +5,7 @@ from app.api.v1 import catalog
 from app.api.v1 import cart
 from app.api.v1 import addresses
 from app.api.v1 import orders
+from app.api.v1 import payments
 
 api_router = APIRouter()
 
@@ -13,6 +14,7 @@ api_router.include_router(catalog.router)
 api_router.include_router(cart.router)
 api_router.include_router(addresses.router)
 api_router.include_router(orders.router)
+api_router.include_router(payments.router)
 
 
 @api_router.get("/health", tags=["health"])

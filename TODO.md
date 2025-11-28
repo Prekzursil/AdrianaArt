@@ -86,8 +86,8 @@ Below is a structured checklist you can turn into issues.
 - [x] Address model + migration; CRUD /me/addresses.
 - [x] Order + OrderItem models + migrations.
 - [x] Service to build order from cart (price snapshot).
-- [ ] Stripe integration: PaymentIntent create, return client secret.
-- [ ] Stripe webhook for payment succeeded/failed; update status.
+- [x] Stripe integration: PaymentIntent create, return client secret.
+- [x] Stripe webhook for payment succeeded/failed; update status.
 - [x] GET /me/orders and /me/orders/{id}.
 - [ ] Admin order list/filter + status/tracking update.
 - [ ] Order status enums and transitions (pending/paid/shipped/cancelled/refunded).
