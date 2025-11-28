@@ -37,6 +37,7 @@ class CartItem(Base):
     product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
     variant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    max_quantity: Mapped[int | None] = mapped_column(Integer, nullable=True)
     unit_price_at_add: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

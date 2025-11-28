@@ -4,10 +4,18 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class Totals(BaseModel):
+    subtotal: Decimal
+    tax: Decimal
+    shipping: Decimal
+    total: Decimal
+
+
 class CartItemCreate(BaseModel):
     product_id: UUID
     variant_id: UUID | None = None
     quantity: int = Field(ge=1)
+    max_quantity: int | None = Field(default=None, ge=1)
 
 
 class CartItemUpdate(BaseModel):
@@ -21,6 +29,7 @@ class CartItemRead(BaseModel):
     product_id: UUID
     variant_id: UUID | None = None
     quantity: int
+    max_quantity: int | None = None
     unit_price_at_add: Decimal
 
 
@@ -31,3 +40,4 @@ class CartRead(BaseModel):
     user_id: UUID | None = None
     session_id: str | None = None
     items: list[CartItemRead] = []
+    totals: Totals | None = None

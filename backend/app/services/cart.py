@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -8,7 +9,9 @@ from sqlalchemy.orm import selectinload
 
 from app.models.cart import Cart, CartItem
 from app.models.catalog import Product, ProductVariant
-from app.schemas.cart import CartItemCreate, CartItemUpdate
+from app.schemas.cart import CartItemCreate, CartItemUpdate, CartRead, CartItemRead, Totals
+from app.schemas.promo import PromoCodeRead, PromoCodeCreate
+from app.models.promo import PromoCode
 
 
 async def _get_or_create_cart(session: AsyncSession, user_id: UUID | None, session_id: str | None) -> Cart:
@@ -34,13 +37,54 @@ async def _get_or_create_cart(session: AsyncSession, user_id: UUID | None, sessi
 
 
 async def get_cart(session: AsyncSession, user_id: UUID | None, session_id: str | None) -> Cart:
-    return await _get_or_create_cart(session, user_id, session_id)
+    cart = await _get_or_create_cart(session, user_id, session_id)
+    return cart
 
 
 async def _validate_stock(product: Product, variant: ProductVariant | None, quantity: int) -> None:
     stock = variant.stock_quantity if variant else product.stock_quantity
     if quantity > stock:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient stock")
+    max_allowed = variant.stock_quantity if variant else product.stock_quantity
+    if max_allowed and quantity > max_allowed:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Quantity exceeds allowed maximum")
+
+
+def _enforce_max_quantity(quantity: int, limit: int | None) -> None:
+    if limit and quantity > limit:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Quantity exceeds allowed maximum")
+
+
+async def _calculate_totals(cart: Cart) -> Totals:
+    subtotal = sum(Decimal(item.unit_price_at_add) * item.quantity for item in cart.items)
+    tax = subtotal * Decimal("0.1")
+    shipping = Decimal("5.00") if subtotal > 0 else Decimal("0.00")
+    total = subtotal + tax + shipping
+    return Totals(subtotal=subtotal, tax=tax, shipping=shipping, total=total)
+
+
+async def serialize_cart(cart: Cart) -> CartRead:
+    totals = await _calculate_totals(cart)
+    return CartRead(
+        id=cart.id,
+        user_id=cart.user_id,
+        session_id=cart.session_id,
+        items=[
+            CartItemRead(
+                id=item.id,
+                product_id=item.product_id,
+                variant_id=item.variant_id,
+                quantity=item.quantity,
+                max_quantity=item.max_quantity,
+                unit_price_at_add=item.unit_price_at_add,
+            )
+            for item in cart.items
+        ],
+        totals=totals,
+    )
+    max_allowed = variant.stock_quantity if variant else product.stock_quantity
+    if max_allowed and quantity > max_allowed:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Quantity exceeds allowed maximum")
 
 
 async def add_item(
@@ -59,6 +103,8 @@ async def add_item(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid variant")
 
     await _validate_stock(product, variant, payload.quantity)
+    limit = payload.max_quantity or (variant.stock_quantity if variant else product.stock_quantity)
+    _enforce_max_quantity(payload.quantity, limit)
 
     unit_price = Decimal(product.base_price)
     if variant:
@@ -70,6 +116,7 @@ async def add_item(
         variant_id=variant.id if variant else None,
         quantity=payload.quantity,
         unit_price_at_add=unit_price,
+        max_quantity=payload.max_quantity,
     )
     session.add(item)
     await session.commit()
@@ -86,6 +133,7 @@ async def update_item(session: AsyncSession, cart: Cart, item_id: UUID, payload:
     product = await session.get(Product, item.product_id)
     variant = await session.get(ProductVariant, item.variant_id) if item.variant_id else None
     await _validate_stock(product, variant, payload.quantity)
+    _enforce_max_quantity(payload.quantity, item.max_quantity)
 
     item.quantity = payload.quantity
     session.add(item)
@@ -141,3 +189,47 @@ async def merge_guest_cart(session: AsyncSession, user_cart: Cart, guest_session
     await session.commit()
     await session.refresh(user_cart)
     return user_cart
+
+
+async def create_promo(session: AsyncSession, payload: PromoCodeCreate) -> PromoCode:
+    code = payload.code.strip().upper()
+    result = await session.execute(select(PromoCode).where(PromoCode.code == code))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Promo code already exists")
+    if payload.percentage_off and payload.amount_off:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Choose percentage_off or amount_off, not both")
+    promo = PromoCode(**payload.model_dump())
+    promo.code = code
+    session.add(promo)
+    await session.commit()
+    await session.refresh(promo)
+    return promo
+
+
+async def validate_promo(session: AsyncSession, code: str, currency: str | None = None) -> PromoCodeRead:
+    cleaned = code.strip().upper()
+    result = await session.execute(select(PromoCode).where(PromoCode.code == cleaned, PromoCode.active.is_(True)))
+    promo = result.scalar_one_or_none()
+    if not promo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Promo code not found")
+    if promo.expires_at and promo.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Promo code expired")
+    if promo.max_uses and promo.times_used >= promo.max_uses:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Promo code usage limit reached")
+    if promo.currency and currency and promo.currency.upper() != currency.upper():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Promo code currency mismatch")
+    return PromoCodeRead.model_validate(promo)
+
+
+async def reserve_stock_for_checkout(session: AsyncSession, cart: Cart) -> bool:
+    # Placeholder: would mark stock as reserved in inventory system
+    return True
+
+
+async def run_abandoned_cart_job(session: AsyncSession, max_age_hours: int = 24) -> int:
+    # Placeholder for future job to email users about abandoned carts
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
+    result = await session.execute(select(Cart).where(Cart.updated_at < cutoff))
+    abandoned = result.scalars().all()
+    # In real implementation, send emails / enqueue notifications
+    return len(abandoned)

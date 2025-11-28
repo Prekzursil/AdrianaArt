@@ -14,6 +14,7 @@ from app.models.catalog import (
     FeaturedCollection,
 )  # noqa: F401
 from app.models.cart import Cart, CartItem  # noqa: F401
+from app.models.promo import PromoCode  # noqa: F401
 from app.models.address import Address  # noqa: F401
 from app.models.order import Order, OrderItem  # noqa: F401
 

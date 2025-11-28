@@ -72,11 +72,11 @@ Below is a structured checklist you can turn into issues.
 - [x] DELETE /cart/items/{id} remove.
 - [x] Stock validation in cart endpoints.
 - [x] Merge guest cart into user cart on login.
-- [ ] Max quantity per item enforcement.
-- [ ] Reserve stock on checkout start (optional).
-- [ ] Cart subtotal/tax/shipping calculation helper.
-- [ ] Promo code model + validation hook.
-- [ ] Abandoned cart job (email reminder) scaffold.
+- [x] Max quantity per item enforcement.
+- [x] Reserve stock on checkout start (optional).
+- [x] Cart subtotal/tax/shipping calculation helper.
+- [x] Promo code model + validation hook.
+- [x] Abandoned cart job (email reminder) scaffold.
 - [ ] Cart item note (gift message) support.
 - [ ] Cart cleanup job for stale guest carts.
 - [ ] Variant selection validation (options match product).

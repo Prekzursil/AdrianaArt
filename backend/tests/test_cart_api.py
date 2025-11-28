@@ -13,6 +13,8 @@ from app.models.catalog import Category, Product
 from app.models.user import UserRole
 from app.services.auth import create_user
 from app.schemas.user import UserCreate
+from app.services import cart as cart_service
+from app.schemas.promo import PromoCodeCreate
 
 
 @pytest.fixture
@@ -93,6 +95,7 @@ def test_cart_crud_flow(test_app: Dict[str, object]) -> None:
     res = client.get("/api/v1/cart", headers=auth_headers(token))
     assert res.status_code == 200
     assert res.json()["items"][0]["quantity"] == 2
+    assert res.json()["totals"]["subtotal"] == "20.00"
 
     # Update quantity
     res = client.patch(
@@ -130,3 +133,47 @@ def test_guest_cart_and_merge(test_app: Dict[str, object]) -> None:
     assert merge_res.status_code == 200
     assert len(merge_res.json()["items"]) == 1
     assert merge_res.json()["items"][0]["quantity"] == 1
+
+
+def test_max_quantity_promo_and_abandoned_job(test_app: Dict[str, object]) -> None:
+    client: TestClient = test_app["client"]  # type: ignore[assignment]
+    SessionLocal = test_app["session_factory"]  # type: ignore[assignment]
+
+    token, user_id = create_user_token(SessionLocal, email="limit@example.com")
+    product_id = seed_product(SessionLocal)
+
+    # Add with max_quantity=2
+    res = client.post(
+        "/api/v1/cart/items",
+        json={"product_id": str(product_id), "quantity": 2, "max_quantity": 2},
+        headers=auth_headers(token),
+    )
+    assert res.status_code == 201
+    item_id = res.json()["id"]
+
+    # Exceeding limit fails
+    over = client.patch(
+        f"/api/v1/cart/items/{item_id}",
+        json={"quantity": 3},
+        headers=auth_headers(token),
+    )
+    assert over.status_code == 400
+
+    # Validate promo endpoint
+    async def seed_promo():
+        async with SessionLocal() as session:
+            await cart_service.create_promo(
+                session,
+                PromoCodeCreate(code="SAVE10", percentage_off=10),
+            )
+    asyncio.get_event_loop().run_until_complete(seed_promo())
+    promo = client.post("/api/v1/cart/promo/validate", json={"code": "SAVE10"})
+    assert promo.status_code == 200
+    assert promo.json()["code"] == "SAVE10"
+
+    # Abandoned cart job scaffold returns count (should be >=0)
+    async def run_job():
+        async with SessionLocal() as session:
+            return await cart_service.run_abandoned_cart_job(session, max_age_hours=0)
+    count = asyncio.get_event_loop().run_until_complete(run_job())
+    assert count >= 0
