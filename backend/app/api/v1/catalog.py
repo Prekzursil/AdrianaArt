@@ -15,6 +15,7 @@ from app.schemas.catalog import (
     ProductCreate,
     ProductRead,
     ProductUpdate,
+    BulkProductUpdateItem,
 )
 from app.services import catalog as catalog_service
 from app.services import storage
@@ -151,6 +152,16 @@ async def upload_product_image(
     )
     await session.refresh(product)
     return product
+
+
+@router.post("/products/bulk-update", response_model=list[ProductRead])
+async def bulk_update_products(
+    payload: list[BulkProductUpdateItem],
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_admin),
+) -> list[Product]:
+    updated = await catalog_service.bulk_update_products(session, payload)
+    return updated
 
 
 @router.delete("/products/{slug}/images/{image_id}", response_model=ProductRead)

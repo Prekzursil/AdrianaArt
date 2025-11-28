@@ -84,6 +84,8 @@ def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
         headers=auth_headers(admin_token),
     )
     assert first.status_code == 201, first.text
+    assert first.json()["sku"]
+    assert first.json()["status"] == "draft"
 
     second = client.post(
         "/api/v1/catalog/products",
@@ -96,10 +98,12 @@ def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
             "stock_quantity": 10,
             "is_featured": True,
             "short_description": "Bright blue",
+            "status": "published",
         },
         headers=auth_headers(admin_token),
     )
     assert second.status_code == 201, second.text
+    assert second.json()["status"] == "published"
 
     # Public list
     res = client.get("/api/v1/catalog/products")
@@ -194,3 +198,49 @@ def test_product_image_upload_and_delete(tmp_path, test_app: Dict[str, object]) 
     assert delete_res.json()["images"] == []
 
     settings.media_root = original_media
+
+
+def test_bulk_update_and_publish(test_app: Dict[str, object]) -> None:
+    client: TestClient = test_app["client"]  # type: ignore[assignment]
+    SessionLocal = test_app["session_factory"]  # type: ignore[assignment]
+    admin_token = create_admin_token(SessionLocal, email="bulkadmin@example.com")
+
+    # seed
+    res = client.post(
+        "/api/v1/catalog/categories",
+        json={"slug": "bulk-cat", "name": "Bulk"},
+        headers=auth_headers(admin_token),
+    )
+    category_id = res.json()["id"]
+    prods = []
+    for slug in ["p1", "p2"]:
+        resp = client.post(
+            "/api/v1/catalog/products",
+            json={
+                "category_id": category_id,
+                "slug": slug,
+                "name": slug.upper(),
+                "base_price": 10,
+                "currency": "USD",
+                "stock_quantity": 1,
+            },
+            headers=auth_headers(admin_token),
+        )
+        assert resp.status_code == 201
+        prods.append(resp.json())
+
+    bulk_res = client.post(
+        "/api/v1/catalog/products/bulk-update",
+        json=[
+            {"product_id": prods[0]["id"], "base_price": 15.5, "stock_quantity": 5, "status": "published"},
+            {"product_id": prods[1]["id"], "base_price": 20.0, "stock_quantity": 2},
+        ],
+        headers=auth_headers(admin_token),
+    )
+    assert bulk_res.status_code == 200, bulk_res.text
+    body = bulk_res.json()
+    updated = {item["id"]: item for item in body}
+    assert float(updated[prods[0]["id"]]["base_price"]) == 15.5
+    assert updated[prods[0]["id"]]["stock_quantity"] == 5
+    assert updated[prods[0]["id"]]["status"] == "published"
+    assert updated[prods[0]["id"]]["publish_at"] is not None

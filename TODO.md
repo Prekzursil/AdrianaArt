@@ -37,11 +37,11 @@ Below is a structured checklist you can turn into issues.
 - [x] Admin product image upload/delete.
 - [x] Image storage service (local first, S3-ready).
 - [x] Seed example products/categories for dev.
-- [ ] SKU generation and uniqueness enforcement.
-- [ ] Slug collision handling and validator.
-- [ ] Product status enums (draft/published/archived).
-- [ ] Track publish date and last_modified.
-- [ ] Bulk price/stock update endpoint for admins.
+- [x] SKU generation and uniqueness enforcement.
+- [x] Slug collision handling and validator.
+- [x] Product status enums (draft/published/archived).
+- [x] Track publish date and last_modified.
+- [x] Bulk price/stock update endpoint for admins.
 - [ ] Product labels/tags schema and filters.
 - [ ] Product option schema (color/size) without variants.
 - [ ] Admin product duplication/cloning.
