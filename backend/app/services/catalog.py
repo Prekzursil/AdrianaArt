@@ -321,6 +321,14 @@ async def duplicate_product(session: AsyncSession, product: Product) -> Product:
         is_featured=False,
         stock_quantity=product.stock_quantity,
         status=ProductStatus.draft,
+        allow_backorder=product.allow_backorder,
+        restock_at=product.restock_at,
+        weight_grams=product.weight_grams,
+        width_cm=product.width_cm,
+        height_cm=product.height_cm,
+        depth_cm=product.depth_cm,
+        meta_title=product.meta_title,
+        meta_description=product.meta_description,
     )
     clone.images = [ProductImage(url=img.url, alt_text=img.alt_text, sort_order=img.sort_order) for img in product.images]
     clone.variants = [

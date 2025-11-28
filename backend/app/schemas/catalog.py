@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic import field_validator
 
 from app.models.catalog import ProductStatus
 
@@ -41,6 +42,21 @@ class ProductBase(BaseModel):
     is_active: bool = True
     is_featured: bool = False
     stock_quantity: int = Field(ge=0)
+    allow_backorder: bool = False
+    restock_at: datetime | None = None
+    weight_grams: int | None = Field(default=None, ge=0)
+    width_cm: float | None = Field(default=None, ge=0)
+    height_cm: float | None = Field(default=None, ge=0)
+    depth_cm: float | None = Field(default=None, ge=0)
+    meta_title: str | None = Field(default=None, max_length=180)
+    meta_description: str | None = Field(default=None, max_length=300)
+
+    @field_validator("long_description")
+    @classmethod
+    def validate_long_description(cls, value: str | None):
+        if value and "<script" in value.lower():
+            raise ValueError("Invalid rich text content")
+        return value
 
 
 class ProductImageBase(BaseModel):
@@ -144,6 +160,21 @@ class ProductUpdate(BaseModel):
     publish_at: datetime | None = None
     tags: list[str] | None = None
     options: list[ProductOptionCreate] | None = None
+    allow_backorder: bool | None = None
+    restock_at: datetime | None = None
+    weight_grams: int | None = Field(default=None, ge=0)
+    width_cm: float | None = Field(default=None, ge=0)
+    height_cm: float | None = Field(default=None, ge=0)
+    depth_cm: float | None = Field(default=None, ge=0)
+    meta_title: str | None = Field(default=None, max_length=180)
+    meta_description: str | None = Field(default=None, max_length=300)
+
+    @field_validator("long_description")
+    @classmethod
+    def validate_long_description(cls, value: str | None):
+        if value and "<script" in value.lower():
+            raise ValueError("Invalid rich text content")
+        return value
 
 
 class BulkProductUpdateItem(BaseModel):
