@@ -108,3 +108,24 @@ def test_cart_crud_flow(test_app: Dict[str, object]) -> None:
     res = client.get("/api/v1/cart", headers=auth_headers(token))
     assert res.status_code == 200
     assert res.json()["items"] == []
+
+
+def test_guest_cart_and_merge(test_app: Dict[str, object]) -> None:
+    client: TestClient = test_app["client"]  # type: ignore[assignment]
+    SessionLocal = test_app["session_factory"]  # type: ignore[assignment]
+
+    token, user_id = create_user_token(SessionLocal, email="merge@example.com")
+    product_id = seed_product(SessionLocal)
+    session_id = "guest-merge-123"
+
+    res = client.post(
+        "/api/v1/cart/items",
+        json={"product_id": str(product_id), "quantity": 1},
+        headers={"X-Session-Id": session_id},
+    )
+    assert res.status_code == 201
+
+    merge_res = client.post("/api/v1/cart/merge", headers={**auth_headers(token), "X-Session-Id": session_id})
+    assert merge_res.status_code == 200
+    assert len(merge_res.json()["items"]) == 1
+    assert merge_res.json()["items"][0]["quantity"] == 1
