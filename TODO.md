@@ -23,6 +23,7 @@ Below is a structured checklist you can turn into issues.
 - [x] Auth endpoints: register, login (access+refresh), refresh, logout.
 - [x] JWT guard dependency + role guard for admin.
 - [x] Tests for auth flows (register/login/refresh/invalid creds).
+- [x] HTTP-only refresh token cookie issued on login/refresh and cleared on logout.
 
 ## Backend - Catalog & Products
 - [x] Category model + migration.
@@ -232,8 +233,8 @@ Below is a structured checklist you can turn into issues.
 - [x] Saved payment method placeholder.
 - [x] Profile avatar upload (optional).
 - [x] Session timeout/logout messaging.
-- [ ] Wire login/register/password reset flows to backend auth endpoints (replace mocks).
-- [ ] Fetch real profile, addresses, and order history from backend; replace account dashboard mock data.
+- [x] Wire login/register/password reset flows to backend auth endpoints (replace mocks).
+- [x] Fetch real profile, addresses, and order history from backend; replace account dashboard mock data.
 - [x] Implement avatar upload wired to storage backend.
 
 ## Frontend - Admin Dashboard
