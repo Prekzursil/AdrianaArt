@@ -1,0 +1,86 @@
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { ApiService } from './api.service';
+
+export type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc';
+
+export interface Category {
+  slug: string;
+  name: string;
+}
+
+export interface ProductImage {
+  url: string;
+  alt_text?: string | null;
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;
+  stock_quantity: number | null;
+}
+
+export interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  short_description?: string;
+  long_description?: string;
+  base_price: number;
+  currency: string;
+  stock_quantity?: number | null;
+  rating_average?: number;
+  rating_count?: number;
+  images?: ProductImage[];
+  tags?: { slug: string; name: string }[];
+  variants?: ProductVariant[];
+}
+
+export interface PaginationMeta {
+  total_items: number;
+  total_pages: number;
+  page: number;
+  limit: number;
+}
+
+export interface ProductListResponse {
+  items: Product[];
+  meta: PaginationMeta;
+}
+
+export interface ProductFilterParams {
+  category_slug?: string;
+  search?: string;
+  min_price?: number;
+  max_price?: number;
+  tags?: string[];
+  sort?: SortOption;
+  page?: number;
+  limit?: number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class CatalogService {
+  constructor(private api: ApiService) {}
+
+  listCategories(): Observable<Category[]> {
+    return this.api.get<Category[]>('/catalog/categories');
+  }
+
+  listProducts(params: ProductFilterParams): Observable<ProductListResponse> {
+    return this.api.get<ProductListResponse>('/catalog/products', {
+      category_slug: params.category_slug,
+      search: params.search,
+      min_price: params.min_price,
+      max_price: params.max_price,
+      tags: params.tags?.join(','),
+      sort: params.sort,
+      page: params.page ?? 1,
+      limit: params.limit ?? 12
+    });
+  }
+
+  getProduct(slug: string): Observable<Product> {
+    return this.api.get<Product>(`/catalog/products/${slug}`);
+  }
+}

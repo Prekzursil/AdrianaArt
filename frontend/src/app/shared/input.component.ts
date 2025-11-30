@@ -24,5 +24,5 @@ export class InputComponent {
   @Input() placeholder = '';
   @Input() type: 'text' | 'email' | 'password' = 'text';
   @Input() hint = '';
-  @Input() value = '';
+  @Input() value: string | number = '';
 }

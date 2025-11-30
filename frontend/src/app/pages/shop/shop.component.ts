@@ -1,151 +1,267 @@
-import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { CatalogService, Category, PaginationMeta, Product, SortOption } from '../../core/catalog.service';
 import { ContainerComponent } from '../../layout/container.component';
-import { CardComponent } from '../../shared/card.component';
-import { LazyImageDirective } from '../../shared/lazy-image.directive';
+import { ButtonComponent } from '../../shared/button.component';
+import { InputComponent } from '../../shared/input.component';
+import { ProductCardComponent } from '../../shared/product-card.component';
 import { SkeletonComponent } from '../../shared/skeleton.component';
-import { SpinnerComponent } from '../../shared/spinner.component';
-import { BreadcrumbComponent } from '../../shared/breadcrumb.component';
-
-interface Product {
-  title: string;
-  price: string;
-  image: string;
-  tag?: string;
-}
 
 @Component({
   selector: 'app-shop',
   standalone: true,
   imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
     ContainerComponent,
-    CardComponent,
-    LazyImageDirective,
-    SkeletonComponent,
-    SpinnerComponent,
-    BreadcrumbComponent
+    ButtonComponent,
+    InputComponent,
+    ProductCardComponent,
+    SkeletonComponent
   ],
   template: `
-    <app-container class="grid gap-8">
-      <app-breadcrumb [crumbs]="crumbs"></app-breadcrumb>
-      <section class="flex items-center justify-between gap-4">
-        <div>
-          <p class="text-sm uppercase tracking-[0.3em] text-slate-500">Featured</p>
-          <h2 class="text-2xl font-semibold text-slate-900">Customer favorites</h2>
-        </div>
-      </section>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <ng-container *ngIf="loading; else productGrid">
-          <app-card *ngFor="let _ of placeholders">
-            <app-skeleton height="180px"></app-skeleton>
-            <div class="mt-3 grid gap-2">
-              <app-skeleton width="70%" height="1rem"></app-skeleton>
-              <app-skeleton width="40%" height="1rem"></app-skeleton>
+    <app-container classes="py-10">
+      <div class="grid gap-8 lg:grid-cols-[280px_1fr]">
+        <aside class="border border-slate-200 rounded-2xl p-4 bg-white h-fit space-y-6">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-slate-900">Filters</h2>
+              <button class="text-sm text-indigo-600 font-medium" type="button" (click)="resetFilters()">Reset</button>
             </div>
-          </app-card>
-        </ng-container>
-        <ng-template #productGrid>
-          <app-card *ngFor="let product of featured">
-            <div class="rounded-xl overflow-hidden bg-slate-100">
-              <img
-                appLazyImage="{{ product.image }}"
-                [alt]="product.title"
-                class="w-full h-40 object-cover opacity-0"
-              />
-            </div>
-            <div class="mt-3 grid gap-1">
-              <p class="font-semibold text-slate-900">{{ product.title }}</p>
-              <p class="text-slate-600">{{ product.price }}</p>
-              <span *ngIf="product.tag" class="inline-flex text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-full">
-                {{ product.tag }}
-              </span>
-            </div>
-          </app-card>
-        </ng-template>
-      </div>
-
-      <section class="grid gap-4">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <p class="text-sm uppercase tracking-[0.3em] text-slate-500">Catalog</p>
-            <h2 class="text-xl font-semibold text-slate-900">Browse by category</h2>
+            <app-input label="Search" placeholder="Search products" [(value)]="filters.search" (ngModelChange)="onSearch()">
+            </app-input>
           </div>
-          <div class="text-sm text-slate-600">Page {{ page }} / {{ totalPages }}</div>
-        </div>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <app-card *ngFor="let product of pagedProducts">
-            <div class="rounded-xl overflow-hidden bg-slate-100">
-              <img appLazyImage="{{ product.image }}" [alt]="product.title" class="w-full h-36 object-cover opacity-0" />
+
+          <div class="space-y-3">
+            <p class="text-sm font-semibold text-slate-800">Categories</p>
+            <div class="space-y-2 max-h-48 overflow-auto pr-1">
+              <label
+                *ngFor="let category of categories"
+                class="flex items-center gap-2 text-sm text-slate-700"
+              >
+                <input
+                  type="radio"
+                  name="category"
+                  class="h-4 w-4 rounded border-slate-300"
+                  [value]="category.slug"
+                  [(ngModel)]="filters.category_slug"
+                  (change)="applyFilters()"
+                />
+                <span>{{ category.name }}</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="radio"
+                  name="category"
+                  class="h-4 w-4 rounded border-slate-300"
+                  value=""
+                  [(ngModel)]="filters.category_slug"
+                  (change)="applyFilters()"
+                />
+                <span>All categories</span>
+              </label>
             </div>
-            <div class="mt-2 font-semibold text-slate-900">{{ product.title }}</div>
-            <div class="text-slate-600">{{ product.price }}</div>
-          </app-card>
-        </div>
-        <div class="flex items-center justify-between">
-          <button class="text-sm font-semibold text-slate-700 hover:text-slate-900" (click)="prevPage()" [disabled]="page === 1">
-            ← Previous
-          </button>
-          <button
-            class="text-sm font-semibold text-slate-700 hover:text-slate-900"
-            (click)="nextPage()"
-            [disabled]="page === totalPages"
-          >
-            Next →
-          </button>
-        </div>
-      </section>
+          </div>
+
+          <div class="space-y-3">
+            <p class="text-sm font-semibold text-slate-800">Price range</p>
+            <div class="grid grid-cols-2 gap-3">
+              <app-input label="Min" type="number" [(value)]="filters.min_price" (ngModelChange)="applyFilters()">
+              </app-input>
+              <app-input label="Max" type="number" [(value)]="filters.max_price" (ngModelChange)="applyFilters()">
+              </app-input>
+            </div>
+          </div>
+
+          <div class="space-y-3" *ngIf="allTags.size">
+            <p class="text-sm font-semibold text-slate-800">Tags</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition"
+                [ngClass]="filters.tags.has(tag) ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 text-slate-700'"
+                *ngFor="let tag of allTags"
+                (click)="toggleTag(tag)"
+              >
+                {{ tag }}
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <section class="grid gap-6">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+            <div class="flex items-center gap-3">
+              <input
+                class="w-64 max-w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                placeholder="Search products..."
+                [(ngModel)]="filters.search"
+                (keyup.enter)="onSearch()"
+              />
+              <app-button label="Search" size="sm" (action)="onSearch()"></app-button>
+            </div>
+            <label class="flex items-center gap-2 text-sm text-slate-700">
+              <span>Sort</span>
+              <select
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                [(ngModel)]="filters.sort"
+                (change)="applyFilters()"
+              >
+                <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
+              </select>
+            </label>
+          </div>
+
+          <div *ngIf="loading()" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+            <app-skeleton *ngFor="let i of placeholders" height="260px"></app-skeleton>
+          </div>
+
+          <div *ngIf="!loading() && products.length === 0" class="border border-dashed border-slate-200 rounded-2xl p-10 text-center">
+            <p class="text-lg font-semibold text-slate-900">No products found</p>
+            <p class="text-sm text-slate-600">Try adjusting filters or search terms.</p>
+          </div>
+
+          <div *ngIf="!loading() && products.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <app-product-card *ngFor="let product of products" [product]="product"></app-product-card>
+          </div>
+
+          <div *ngIf="meta" class="flex items-center justify-between text-sm text-slate-700">
+            <div>
+              Page {{ meta.page }} of {{ meta.total_pages }} · {{ meta.total_items }} items
+            </div>
+            <div class="flex gap-2">
+              <app-button label="Prev" size="sm" variant="ghost" [disabled]="meta.page <= 1" (action)="changePage(-1)">
+              </app-button>
+              <app-button
+                label="Next"
+                size="sm"
+                variant="ghost"
+                [disabled]="meta.page >= meta.total_pages"
+                (action)="changePage(1)"
+              >
+              </app-button>
+            </div>
+          </div>
+        </section>
+      </div>
     </app-container>
   `
 })
 export class ShopComponent implements OnInit {
-  loading = true;
-  crumbs = [
-    { label: 'Home', url: '/' },
-    { label: 'Shop', url: '/shop' },
-    { label: 'Featured' }
-  ];
-  featured: Product[] = [];
-  allProducts: Product[] = [];
-  pagedProducts: Product[] = [];
-  page = 1;
-  pageSize = 6;
-  totalPages = 1;
+  products: Product[] = [];
+  categories: Category[] = [];
+  meta: PaginationMeta | null = null;
+  allTags = new Set<string>();
+  loading = signal<boolean>(true);
   placeholders = Array.from({ length: 6 });
 
+  filters: {
+    search: string;
+    category_slug: string;
+    min_price?: number | string;
+    max_price?: number | string;
+    tags: Set<string>;
+    sort: SortOption;
+    page: number;
+    limit: number;
+  } = {
+    search: '',
+    category_slug: '',
+    tags: new Set<string>(),
+    sort: 'newest',
+    page: 1,
+    limit: 12
+  };
+
+  sortOptions: { label: string; value: SortOption }[] = [
+    { label: 'Newest', value: 'newest' },
+    { label: 'Price: Low to High', value: 'price_asc' },
+    { label: 'Price: High to Low', value: 'price_desc' },
+    { label: 'Name: A → Z', value: 'name_asc' },
+    { label: 'Name: Z → A', value: 'name_desc' }
+  ];
+
+  constructor(private catalog: CatalogService) {}
+
   ngOnInit(): void {
-    setTimeout(() => {
-      this.featured = this.mockProducts().slice(0, 6);
-      this.allProducts = this.mockProducts();
-      this.totalPages = Math.ceil(this.allProducts.length / this.pageSize);
-      this.setPage(1);
-      this.loading = false;
-    }, 500);
+    this.fetchCategories();
+    this.loadProducts();
   }
 
-  setPage(page: number): void {
-    this.page = page;
-    const start = (page - 1) * this.pageSize;
-    this.pagedProducts = this.allProducts.slice(start, start + this.pageSize);
+  fetchCategories(): void {
+    this.catalog.listCategories().subscribe((data) => {
+      this.categories = data;
+    });
   }
 
-  nextPage(): void {
-    if (this.page < this.totalPages) this.setPage(this.page + 1);
+  loadProducts(): void {
+    this.loading.set(true);
+    this.catalog
+      .listProducts({
+        search: this.filters.search || undefined,
+        category_slug: this.filters.category_slug || undefined,
+        min_price: this.filters.min_price ? Number(this.filters.min_price) : undefined,
+        max_price: this.filters.max_price ? Number(this.filters.max_price) : undefined,
+        tags: Array.from(this.filters.tags),
+        sort: this.filters.sort,
+        page: this.filters.page,
+        limit: this.filters.limit
+      })
+      .subscribe({
+        next: (response) => {
+          this.products = response.items;
+          this.meta = response.meta;
+          this.allTags = new Set(
+            response.items
+              .flatMap((p) => p.tags ?? [])
+              .map((t) => ('name' in t ? t.name : String(t)))
+          );
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.products = [];
+        }
+      });
   }
 
-  prevPage(): void {
-    if (this.page > 1) this.setPage(this.page - 1);
+  applyFilters(): void {
+    this.filters.page = 1;
+    this.loadProducts();
   }
 
-  private mockProducts(): Product[] {
-    return [
-      { title: 'Ocean glaze cup', price: '$28', image: 'https://picsum.photos/seed/ocean/400/240', tag: 'Bestseller' },
-      { title: 'Matte black bowl', price: '$32', image: 'https://picsum.photos/seed/bowl/400/240' },
-      { title: 'Speckled mug', price: '$24', image: 'https://picsum.photos/seed/mug/400/240' },
-      { title: 'Sculpted vase', price: '$58', image: 'https://picsum.photos/seed/vase/400/240', tag: 'New' },
-      { title: 'Serving platter', price: '$45', image: 'https://picsum.photos/seed/platter/400/240' },
-      { title: 'Teapot set', price: '$72', image: 'https://picsum.photos/seed/teapot/400/240' },
-      { title: 'Minimal plate set', price: '$55', image: 'https://picsum.photos/seed/plate/400/240' },
-      { title: 'Stoneware pitcher', price: '$38', image: 'https://picsum.photos/seed/pitcher/400/240' },
-      { title: 'Candle holder duo', price: '$22', image: 'https://picsum.photos/seed/candle/400/240' }
-    ];
+  onSearch(): void {
+    this.applyFilters();
+  }
+
+  changePage(delta: number): void {
+    if (!this.meta) return;
+    const nextPage = this.meta.page + delta;
+    if (nextPage < 1 || nextPage > this.meta.total_pages) return;
+    this.filters.page = nextPage;
+    this.loadProducts();
+  }
+
+  toggleTag(tag: string): void {
+    if (this.filters.tags.has(tag)) {
+      this.filters.tags.delete(tag);
+    } else {
+      this.filters.tags.add(tag);
+    }
+    this.applyFilters();
+  }
+
+  resetFilters(): void {
+    this.filters.search = '';
+    this.filters.category_slug = '';
+    this.filters.min_price = undefined;
+    this.filters.max_price = undefined;
+    this.filters.tags = new Set<string>();
+    this.filters.sort = 'newest';
+    this.filters.page = 1;
+    this.loadProducts();
   }
 }

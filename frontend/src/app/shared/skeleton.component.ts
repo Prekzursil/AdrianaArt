@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-skeleton',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NgClass],
   template: `
     <div
       [ngClass]="[shape === 'circle' ? 'rounded-full' : 'rounded-lg', 'bg-slate-200/70 animate-pulse']"
