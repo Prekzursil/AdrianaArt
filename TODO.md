@@ -226,12 +226,12 @@ Below is a structured checklist you can turn into issues.
 - [x] Password reset request + reset form.
 - [x] Account dashboard (profile, address book, order history, order detail).
 - [x] Change password form.
-- [ ] Email verification flow UI.
-- [ ] Address book CRUD UI.
-- [ ] Order history pagination + filters.
-- [ ] Saved payment method placeholder.
-- [ ] Profile avatar upload (optional).
-- [ ] Session timeout/logout messaging.
+- [x] Email verification flow UI.
+- [x] Address book CRUD UI.
+- [x] Order history pagination + filters.
+- [x] Saved payment method placeholder.
+- [x] Profile avatar upload (optional).
+- [x] Session timeout/logout messaging.
 
 ## Frontend - Admin Dashboard
 - [ ] /admin layout with sidebar + guard.
