@@ -38,7 +38,7 @@ import { ToastService } from '../../core/toast.service';
         <ng-container *ngIf="product; else missing">
           <div class="grid gap-10 lg:grid-cols-2">
             <div class="space-y-4">
-              <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white cursor-zoom-in" (click)="openPreview()">
                 <img
                   [ngSrc]="activeImage"
                   [alt]="product.name"
@@ -123,6 +123,29 @@ import { ToastService } from '../../core/toast.service';
         </ng-container>
       </ng-template>
 
+      <div
+        *ngIf="previewOpen"
+        class="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6"
+        (click)="closePreview()"
+      >
+        <div class="relative max-w-5xl w-full" (click)="$event.stopPropagation()">
+          <button
+            class="absolute -top-10 right-0 text-white text-sm font-semibold underline"
+            type="button"
+            (click)="closePreview()"
+          >
+            Close
+          </button>
+          <img
+            [ngSrc]="activeImage"
+            [alt]="product?.name"
+            class="w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl"
+            width="1600"
+            height="1200"
+          />
+        </div>
+      </div>
+
       <ng-template #missing>
         <div class="border border-dashed border-slate-200 rounded-2xl p-10 text-center">
           <p class="text-lg font-semibold text-slate-900">Product not found</p>
@@ -138,6 +161,7 @@ export class ProductComponent implements OnInit {
   selectedVariantId: string | null = null;
   quantity = 1;
   activeImageIndex = 0;
+  previewOpen = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -173,6 +197,14 @@ export class ProductComponent implements OnInit {
 
   setActiveImage(index: number): void {
     this.activeImageIndex = index;
+  }
+
+  openPreview(): void {
+    this.previewOpen = true;
+  }
+
+  closePreview(): void {
+    this.previewOpen = false;
   }
 
   addToCart(): void {
