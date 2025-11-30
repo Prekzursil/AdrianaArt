@@ -143,12 +143,12 @@ Below is a structured checklist you can turn into issues.
 - [x] Health/readiness endpoints.
 - [x] Pytest suite for services (auth, catalog, cart, checkout).
 - [x] Integration tests against temp Postgres.
-- [ ] mypy type-checking and fixes.
-- [ ] CI smoke test hitting health/readiness.
+- [x] mypy type-checking and fixes.
+- [x] CI smoke test hitting health/readiness.
 - [ ] DRF-style schema docs via OpenAPI tweaks.
-- [ ] API rate limit tests.
-- [ ] Structured logging format (JSON) toggle.
-- [ ] Request ID propagation to logs.
+- [x] API rate limit tests.
+- [x] Structured logging format (JSON) toggle.
+- [x] Request ID propagation to logs.
 - [ ] DB connection pool monitoring.
 - [ ] Cache layer placeholder (e.g., Redis) for rate limits.
 - [ ] Secure password reset tokens (expiry, blacklist).

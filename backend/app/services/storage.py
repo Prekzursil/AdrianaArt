@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Tuple
 
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile, status
 
 from app.core.config import settings
 
@@ -12,10 +12,21 @@ def ensure_media_root(root: str | Path | None = None) -> Path:
     return path
 
 
-def save_upload(file: UploadFile, root: str | Path | None = None) -> Tuple[str, str]:
+def save_upload(
+    file: UploadFile,
+    root: str | Path | None = None,
+    allowed_content_types: tuple[str, ...] | None = ("image/png", "image/jpeg", "image/webp", "image/gif"),
+    max_bytes: int | None = 5 * 1024 * 1024,
+) -> Tuple[str, str]:
+    if allowed_content_types and (not file.content_type or file.content_type not in allowed_content_types):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type")
+
     media_root = ensure_media_root(root)
-    destination = media_root / file.filename
+    filename = file.filename or "upload"
+    destination = media_root / filename
     content = file.file.read()
+    if max_bytes and len(content) > max_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File too large")
     destination.write_bytes(content)
     return str(destination), destination.name
 

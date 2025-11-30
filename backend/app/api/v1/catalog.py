@@ -146,17 +146,17 @@ async def upload_product_image(
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_admin),
 ) -> Product:
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type")
-    if file.size and file.size > 5 * 1024 * 1024:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File too large")
     product = await catalog_service.get_product_by_slug(
         session, slug, options=[selectinload(Product.images), selectinload(Product.category)]
     )
     if not product or product.is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
-    path, filename = storage.save_upload(file)
+    path, filename = storage.save_upload(
+        file,
+        allowed_content_types=("image/png", "image/jpeg", "image/webp", "image/gif"),
+        max_bytes=5 * 1024 * 1024,
+    )
     await catalog_service.add_product_image_from_path(
         session, product, url=path, alt_text=filename, sort_order=len(product.images) + 1
     )

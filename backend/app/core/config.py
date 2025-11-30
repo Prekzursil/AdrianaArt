@@ -35,11 +35,17 @@ class Settings(BaseSettings):
     smtp_from_email: str | None = None
     email_rate_limit_per_minute: int = 60
     email_rate_limit_per_recipient_per_minute: int = 10
+    auth_rate_limit_register: int = 10
+    auth_rate_limit_login: int = 20
+    auth_rate_limit_refresh: int = 60
+    auth_rate_limit_reset_request: int = 30
+    auth_rate_limit_reset_confirm: int = 60
 
     frontend_origin: str = "http://localhost:4200"
     content_preview_token: str = "preview-token"
     error_alert_email: str | None = None
     admin_alert_email: str | None = None
+    log_json: bool = False
 
 
 @lru_cache
