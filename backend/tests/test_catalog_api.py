@@ -110,12 +110,13 @@ def test_catalog_admin_and_public_flows(test_app: Dict[str, object]) -> None:
     assert second.json()["status"] == "published"
 
     # Public list
-    res = client.get("/api/v1/catalog/products")
+    res = client.get("/api/v1/catalog/products?sort=name_asc")
     assert res.status_code == 200
     body = res.json()
     assert body["meta"]["total_items"] == 2
     assert len(body["items"]) == 2
-    assert body["items"][0]["slug"] == "white-cup"
+    assert body["items"][0]["slug"] == "blue-cup"
+    assert body["items"][1]["slug"] == "white-cup"
 
     # Public detail
     res = client.get("/api/v1/catalog/products/white-cup")
