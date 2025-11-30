@@ -137,12 +137,12 @@ Below is a structured checklist you can turn into issues.
 
 ## Backend - Security, Observability, Testing
 - [x] CORS config for dev/prod.
-- [ ] Rate limiting on login/register/password reset.
-- [ ] Validate file types/sizes for uploads.
-- [ ] Structured logging with request ID.
+- [x] Rate limiting on login/register/password reset.
+- [x] Validate file types/sizes for uploads.
+- [x] Structured logging with request ID.
 - [x] Health/readiness endpoints.
-- [ ] Pytest suite for services (auth, catalog, cart, checkout).
-- [ ] Integration tests against temp Postgres.
+- [x] Pytest suite for services (auth, catalog, cart, checkout).
+- [x] Integration tests against temp Postgres.
 - [ ] mypy type-checking and fixes.
 - [ ] CI smoke test hitting health/readiness.
 - [ ] DRF-style schema docs via OpenAPI tweaks.
