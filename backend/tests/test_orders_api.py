@@ -94,7 +94,7 @@ def test_order_create_and_admin_updates(test_app: Dict[str, object]) -> None:
 
     token, user_id = create_user_token(SessionLocal)
     admin_token, _ = create_user_token(SessionLocal, email="admin@example.com", admin=True)
-    cart_id = seed_cart_with_product(SessionLocal, user_id)
+    seed_cart_with_product(SessionLocal, user_id)
 
     async def seed_shipping():
         async with SessionLocal() as session:
