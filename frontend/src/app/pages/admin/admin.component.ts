@@ -1,14 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ContainerComponent } from '../../layout/container.component';
-import { ButtonComponent } from '../../shared/button.component';
-import { CardComponent } from '../../shared/card.component';
+import { RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../shared/breadcrumb.component';
-import { SkeletonComponent } from '../../shared/skeleton.component';
+import { ContainerComponent } from '../../layout/container.component';
+import { CardComponent } from '../../shared/card.component';
+import { ButtonComponent } from '../../shared/button.component';
 import { InputComponent } from '../../shared/input.component';
 import { LocalizedCurrencyPipe } from '../../shared/localized-currency.pipe';
+import { SkeletonComponent } from '../../shared/skeleton.component';
 import {
   AdminService,
   AdminSummary,
@@ -18,7 +18,9 @@ import {
   AdminContent,
   AdminCoupon,
   AdminAudit,
-  LowStockItem
+  LowStockItem,
+  AdminCategory,
+  AdminProductDetail
 } from '../../core/admin.service';
 import { ToastService } from '../../core/toast.service';
 
@@ -30,12 +32,12 @@ import { ToastService } from '../../core/toast.service';
     FormsModule,
     RouterLink,
     ContainerComponent,
-    ButtonComponent,
-    CardComponent,
     BreadcrumbComponent,
-    SkeletonComponent,
+    CardComponent,
+    ButtonComponent,
     InputComponent,
-    LocalizedCurrencyPipe
+    LocalizedCurrencyPipe,
+    SkeletonComponent
   ],
   template: `
     <app-container classes="py-8 grid gap-6">
@@ -55,7 +57,6 @@ import { ToastService } from '../../core/toast.service';
         <div class="grid gap-6" *ngIf="!loading(); else loadingTpl">
           <section class="grid gap-3">
             <h1 class="text-2xl font-semibold text-slate-900">Admin dashboard</h1>
-            <p class="text-sm text-slate-600">Protected route guarded by adminGuard.</p>
             <div class="grid md:grid-cols-3 gap-4">
               <app-card title="Products" [subtitle]="summary()?.products + ' total'"></app-card>
               <app-card title="Orders" [subtitle]="summary()?.orders + ' total'"></app-card>
@@ -72,19 +73,9 @@ import { ToastService } from '../../core/toast.service';
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold text-slate-900">Products</h2>
               <div class="flex gap-2">
-                <app-button size="sm" variant="ghost" label="Activate" [disabled]="!selectedIds.size" (action)="bulkUpdateStatus()"></app-button>
-                <app-button size="sm" variant="ghost" label="Archive" [disabled]="!selectedIds.size" (action)="bulkUpdateStatus()"></app-button>
+                <app-button size="sm" label="New" (action)="startNewProduct()"></app-button>
+                <app-button size="sm" variant="ghost" label="Delete" [disabled]="!selectedIds.size" (action)="deleteSelected()"></app-button>
               </div>
-            </div>
-            <div class="flex flex-wrap gap-3 items-center text-sm">
-              <app-input label="Search" [(value)]="productSearch"></app-input>
-              <label class="grid text-sm font-medium text-slate-700">
-                Sort
-                <select class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="productSort">
-                  <option value="name">Name</option>
-                  <option value="price">Price</option>
-                </select>
-              </label>
             </div>
             <div class="overflow-auto">
               <table class="min-w-full text-sm text-left">
@@ -98,15 +89,16 @@ import { ToastService } from '../../core/toast.service';
                     <th>Status</th>
                     <th>Category</th>
                     <th>Stock</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let product of filteredProducts()" class="border-b border-slate-100">
+                  <tr *ngFor="let product of products" class="border-b border-slate-100">
                     <td class="py-2">
                       <input
                         type="checkbox"
-                        [checked]="selectedIds.has(product.slug)"
-                        (change)="toggleSelect(product.slug, $event)"
+                        [checked]="selectedIds.has(product.id)"
+                        (change)="toggleSelect(product.id, $event)"
                       />
                     </td>
                     <td class="py-2 font-semibold text-slate-900">{{ product.name }}</td>
@@ -114,10 +106,64 @@ import { ToastService } from '../../core/toast.service';
                     <td><span class="text-xs rounded-full bg-slate-100 px-2 py-1">{{ product.status }}</span></td>
                     <td>{{ product.category }}</td>
                     <td>{{ product.stock_quantity }}</td>
+                    <td class="flex gap-2 py-2">
+                      <app-button size="sm" variant="ghost" label="Edit" (action)="loadProduct(product.slug)"></app-button>
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
+          </section>
+
+          <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-slate-900">{{ editingId ? 'Edit product' : 'Create product' }}</h2>
+              <app-button size="sm" variant="ghost" label="Reset" (action)="startNewProduct()"></app-button>
+            </div>
+            <div class="grid md:grid-cols-2 gap-3 text-sm">
+              <app-input label="Name" [(value)]="form.name"></app-input>
+              <app-input label="Slug" [(value)]="form.slug"></app-input>
+              <label class="grid text-sm font-medium text-slate-700">
+                Category
+                <select class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="form.category_id">
+                  <option *ngFor="let c of categories" [value]="c.id">{{ c.name }}</option>
+                </select>
+              </label>
+              <app-input label="Price" type="number" [(value)]="form.price"></app-input>
+              <app-input label="Stock" type="number" [(value)]="form.stock"></app-input>
+              <label class="grid text-sm font-medium text-slate-700">
+                Status
+                <select class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="form.status">
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </label>
+              <app-input label="SKU" [(value)]="form.sku"></app-input>
+              <app-input label="Image URL" [(value)]="form.image"></app-input>
+            </div>
+            <label class="grid gap-1 text-sm font-medium text-slate-700">
+              Description
+              <textarea rows="3" class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="form.description"></textarea>
+            </label>
+            <div class="flex gap-3">
+              <app-button label="Save product" (action)="saveProduct()"></app-button>
+              <label class="text-sm text-indigo-600 font-medium cursor-pointer">
+                Upload image
+                <input type="file" class="hidden" accept="image/*" (change)="onImageUpload($event)" />
+              </label>
+            </div>
+            <div class="grid gap-2" *ngIf="productImages().length">
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Images</p>
+              <div *ngFor="let img of productImages()" class="flex items-center gap-3 rounded-lg border border-slate-200 p-2">
+                <img [src]="img.url" [alt]="img.alt_text || 'image'" class="h-12 w-12 rounded object-cover" />
+                <div class="flex-1">
+                  <p class="font-semibold text-slate-900">{{ img.alt_text || 'Image' }}</p>
+                </div>
+                <app-button size="sm" variant="ghost" label="Delete" (action)="deleteImage(img.id)"></app-button>
+              </div>
+            </div>
+            <p *ngIf="formMessage" class="text-sm text-emerald-700">{{ formMessage }}</p>
           </section>
 
           <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -283,29 +329,47 @@ export class AdminComponent implements OnInit {
     { label: 'Admin' }
   ];
 
-  allSelected = false;
-  productSearch = '';
-  productSort = 'name';
-  selectedIds = new Set<string>();
-  products: AdminProduct[] = [];
-  orders: AdminOrder[] = [];
-  activeOrder: AdminOrder | null = null;
-  orderFilter = '';
-  users: AdminUser[] = [];
-  selectedUserId: string | null = null;
-  contentBlocks: AdminContent[] = [];
-  coupons: AdminCoupon[] = [];
-  newCoupon: Partial<AdminCoupon> = { code: '', percentage_off: 0, active: true, currency: 'USD' };
-  productAudit: AdminAudit['products'] = [];
-  contentAudit: AdminAudit['content'] = [];
-  lowStock: LowStockItem[] = [];
   summary = signal<AdminSummary | null>(null);
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
 
-  constructor(private admin: AdminService, private toast: ToastService) {
-    this.computeAllSelected();
-  }
+  products: AdminProduct[] = [];
+  categories: AdminCategory[] = [];
+  selectedIds = new Set<string>();
+  allSelected = false;
+
+  formMessage = '';
+  editingId: string | null = null;
+  productDetail: AdminProductDetail | null = null;
+  productImages = signal<{ id: string; url: string; alt_text?: string | null }[]>([]);
+  form = {
+    name: '',
+    slug: '',
+    category_id: '',
+    price: 0,
+    stock: 0,
+    status: 'draft',
+    sku: '',
+    image: '',
+    description: ''
+  };
+
+  orders: AdminOrder[] = [];
+  activeOrder: AdminOrder | null = null;
+  orderFilter = '';
+
+  users: AdminUser[] = [];
+  selectedUserId: string | null = null;
+
+  contentBlocks: AdminContent[] = [];
+  coupons: AdminCoupon[] = [];
+  newCoupon: Partial<AdminCoupon> = { code: '', percentage_off: 0, active: true, currency: 'USD' };
+
+  productAudit: AdminAudit['products'] = [];
+  contentAudit: AdminAudit['content'] = [];
+  lowStock: LowStockItem[] = [];
+
+  constructor(private admin: AdminService, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.loadAll();
@@ -325,31 +389,127 @@ export class AdminComponent implements OnInit {
     this.admin.users().subscribe({ next: (u) => (this.users = u) });
     this.admin.content().subscribe({ next: (c) => (this.contentBlocks = c) });
     this.admin.coupons().subscribe({ next: (c) => (this.coupons = c) });
-    this.loadAudit();
     this.admin.lowStock().subscribe({ next: (items) => (this.lowStock = items) });
-    this.loading.set(false);
-  }
-
-  loadAudit(): void {
     this.admin.audit().subscribe({
       next: (logs) => {
         this.productAudit = logs.products;
         this.contentAudit = logs.content;
+      }
+    });
+    this.admin.getCategories().subscribe({ next: (cats) => (this.categories = cats) });
+    this.loading.set(false);
+  }
+
+  startNewProduct(): void {
+    this.editingId = null;
+    this.productDetail = null;
+    this.productImages.set([]);
+    this.form = {
+      name: '',
+      slug: '',
+      category_id: this.categories[0]?.id || '',
+      price: 0,
+      stock: 0,
+      status: 'draft',
+      sku: '',
+      image: '',
+      description: ''
+    };
+  }
+
+  loadProduct(slug: string): void {
+    this.admin.getProduct(slug).subscribe({
+      next: (prod) => {
+        this.productDetail = prod;
+        this.editingId = prod.slug;
+        this.form = {
+          name: prod.name,
+          slug: prod.slug,
+          category_id: prod.category_id || '',
+          price: prod.price,
+          stock: prod.stock_quantity,
+          status: prod.status,
+          sku: (prod as any).sku || '',
+          image: '',
+          description: prod.long_description || ''
+        };
+        this.productImages.set((prod as any).images || []);
       },
-      error: () => this.toast.error('Unable to load audit log right now.')
+      error: () => this.toast.error('Unable to load product')
     });
   }
 
-  filteredProducts(): AdminProduct[] {
-    const q = this.productSearch.toLowerCase();
-    let list = this.products;
-    if (q) list = list.filter((p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q));
-    if (this.productSort === 'price') {
-      list = [...list].sort((a, b) => a.price - b.price);
-    } else {
-      list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+  saveProduct(): void {
+    const payload: Partial<AdminProductDetail> = {
+      name: this.form.name,
+      slug: this.form.slug,
+      category_id: this.form.category_id,
+      base_price: this.form.price,
+      stock_quantity: this.form.stock,
+      status: this.form.status as any,
+      short_description: this.form.description,
+      long_description: this.form.description,
+      sku: this.form.sku
+    } as any;
+    const op = this.editingId
+      ? this.admin.updateProduct(this.editingId, payload)
+      : this.admin.createProduct(payload);
+    op.subscribe({
+      next: () => {
+        this.toast.success('Product saved');
+        this.loadAll();
+        this.startNewProduct();
+      },
+      error: () => this.toast.error('Failed to save product')
+    });
+  }
+
+  deleteSelected(): void {
+    if (!this.selectedIds.size) return;
+    const ids = Array.from(this.selectedIds);
+    const target = this.products.find((p) => p.id === ids[0]);
+    if (!target) return;
+    this.admin.deleteProduct(target.slug).subscribe({
+      next: () => {
+        this.toast.success('Product deleted');
+        this.products = this.products.filter((p) => !this.selectedIds.has(p.id));
+        this.selectedIds.clear();
+        this.computeAllSelected();
+      },
+      error: () => this.toast.error('Failed to delete product')
+    });
+  }
+
+  onImageUpload(event: Event): void {
+    if (!this.editingId) {
+      this.toast.error('Save product before uploading images');
+      return;
     }
-    return list;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.admin.uploadProductImage(this.editingId, file).subscribe({
+      next: (prod) => {
+        this.productImages.set((prod as any).images || []);
+        this.toast.success('Image uploaded');
+      },
+      error: () => this.toast.error('Image upload failed')
+    });
+  }
+
+  deleteImage(id: string): void {
+    if (!this.editingId) return;
+    this.admin.deleteProductImage(this.editingId, id).subscribe({
+      next: (prod) => {
+        this.productImages.set((prod as any).images || []);
+        this.toast.success('Image deleted');
+      },
+      error: () => this.toast.error('Failed to delete image')
+    });
+  }
+
+  selectOrder(order: AdminOrder): void {
+    this.activeOrder = { ...order };
   }
 
   filteredOrders(): AdminOrder[] {
@@ -359,45 +519,19 @@ export class AdminComponent implements OnInit {
   toggleAll(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     this.allSelected = checked;
-    if (checked) this.selectedIds = new Set(this.products.map((p) => p.slug));
+    if (checked) this.selectedIds = new Set(this.products.map((p) => p.id));
     else this.selectedIds.clear();
   }
 
-  toggleSelect(slug: string, event: Event): void {
+  toggleSelect(id: string, event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    if (checked) this.selectedIds.add(slug);
-    else this.selectedIds.delete(slug);
+    if (checked) this.selectedIds.add(id);
+    else this.selectedIds.delete(id);
     this.computeAllSelected();
   }
 
   computeAllSelected(): void {
     this.allSelected = this.selectedIds.size > 0 && this.selectedIds.size === this.products.length;
-  }
-
-  bulkUpdateStatus(): void {
-    if (!this.selectedIds.size) return;
-    const payload = Array.from(this.selectedIds).map((slug) => ({ slug, status: 'active' }));
-    this.admin.bulkUpdateProducts(payload).subscribe({
-      next: (updated) => {
-        this.toast.success(`Updated ${updated.length} products`);
-        this.products = updated;
-        this.selectedIds.clear();
-        this.computeAllSelected();
-      },
-      error: () => this.toast.error('Failed to update products')
-    });
-  }
-
-  selectOrder(order: AdminOrder): void {
-    this.activeOrder = { ...order };
-  }
-
-  forceLogout(): void {
-    if (!this.selectedUserId) return;
-    this.admin.revokeSessions(this.selectedUserId).subscribe({
-      next: () => this.toast.success('Sessions revoked'),
-      error: () => this.toast.error('Failed to revoke sessions')
-    });
   }
 
   changeOrderStatus(status: string): void {
@@ -409,6 +543,14 @@ export class AdminComponent implements OnInit {
         this.orders = this.orders.map((o) => (o.id === order.id ? order : o));
       },
       error: () => this.toast.error('Failed to update order status')
+    });
+  }
+
+  forceLogout(): void {
+    if (!this.selectedUserId) return;
+    this.admin.revokeSessions(this.selectedUserId).subscribe({
+      next: () => this.toast.success('Sessions revoked'),
+      error: () => this.toast.error('Failed to revoke sessions')
     });
   }
 

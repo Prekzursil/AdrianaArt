@@ -71,6 +71,7 @@ export interface AdminProductDetail extends AdminProduct {
   long_description?: string | null;
   category_id?: string | null;
   stock_quantity: number;
+  images?: { id: string; url: string; alt_text?: string | null }[];
 }
 
 export interface AdminAudit {
@@ -170,5 +171,15 @@ export class AdminService {
 
   updateCoupon(id: string, payload: Partial<AdminCoupon>): Observable<AdminCoupon> {
     return this.api.patch<AdminCoupon>(`/admin/dashboard/coupons/${id}`, payload);
+  }
+
+  uploadProductImage(slug: string, file: File): Observable<AdminProductDetail> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.api.post<AdminProductDetail>(`/catalog/products/${slug}/images`, form);
+  }
+
+  deleteProductImage(slug: string, imageId: string): Observable<AdminProductDetail> {
+    return this.api.delete<AdminProductDetail>(`/catalog/products/${slug}/images/${imageId}`);
   }
 }
