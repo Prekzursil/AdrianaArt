@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     access_token_exp_minutes: int = 30
     refresh_token_exp_days: int = 7
 
+    refresh_token_rotation: bool = True
+    secure_cookies: bool = False
+    cookie_samesite: str = "lax"
+
     media_root: str = "uploads"
     cors_origins: list[str] = ["http://localhost:4200"]
     cors_allow_credentials: bool = True
@@ -46,6 +50,9 @@ class Settings(BaseSettings):
     error_alert_email: str | None = None
     admin_alert_email: str | None = None
     log_json: bool = False
+    csp_enabled: bool = True
+    csp_policy: str = "default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    slow_query_threshold_ms: int = 500
 
 
 @lru_cache

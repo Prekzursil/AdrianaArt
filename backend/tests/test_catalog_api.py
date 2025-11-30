@@ -51,7 +51,8 @@ def create_admin_token(session_factory, email="admin@example.com"):
             await session.commit()
             from app.services.auth import issue_tokens_for_user
 
-            return issue_tokens_for_user(user)["access_token"]
+            tokens = await issue_tokens_for_user(session, user)
+            return tokens["access_token"]
 
     return asyncio.run(create_admin())
 

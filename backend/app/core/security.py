@@ -18,18 +18,21 @@ def verify_password(password: str, hashed_password: str) -> bool:
         return False
 
 
-def _create_token(subject: str, token_type: str, expires_delta: timedelta) -> str:
+def _create_token(subject: str, token_type: str, expires_delta: timedelta, jti: str | None = None) -> str:
     expire = datetime.now(timezone.utc) + expires_delta
     to_encode = {"sub": subject, "type": token_type, "exp": expire}
+    if jti:
+        to_encode["jti"] = jti
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
-def create_access_token(subject: str) -> str:
-    return _create_token(subject, "access", timedelta(minutes=settings.access_token_exp_minutes))
+def create_access_token(subject: str, jti: str | None = None) -> str:
+    return _create_token(subject, "access", timedelta(minutes=settings.access_token_exp_minutes), jti=jti)
 
 
-def create_refresh_token(subject: str) -> str:
-    return _create_token(subject, "refresh", timedelta(days=settings.refresh_token_exp_days))
+def create_refresh_token(subject: str, jti: str, expires_at: datetime | None = None) -> str:
+    delta = expires_at - datetime.now(timezone.utc) if expires_at else timedelta(days=settings.refresh_token_exp_days)
+    return _create_token(subject, "refresh", delta, jti=jti)
 
 
 def decode_token(token: str) -> Optional[dict[str, Any]]:

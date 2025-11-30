@@ -35,6 +35,9 @@ class User(Base):
     reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(
         "PasswordResetToken", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
     )
+    refresh_sessions: Mapped[list["RefreshSession"]] = relationship(
+        "RefreshSession", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
+    )
 
 
 class PasswordResetToken(Base):
@@ -48,3 +51,17 @@ class PasswordResetToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user: Mapped[User] = relationship("User", back_populates="reset_tokens")
+
+
+class RefreshSession(Base):
+    __tablename__ = "refresh_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    jti: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked: Mapped[bool] = mapped_column(default=False, nullable=False)
+    revoked_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user: Mapped[User] = relationship("User", back_populates="refresh_sessions")
