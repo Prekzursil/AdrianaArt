@@ -274,6 +274,7 @@ async def bulk_update_products(
             user_id,
             {"base_price": product.base_price, "stock_quantity": product.stock_quantity, "status": str(product.status)},
         )
+        await _maybe_alert_low_stock(product)
     return updated
 
 

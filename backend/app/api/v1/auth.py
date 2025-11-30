@@ -8,6 +8,7 @@ from app.core.dependencies import get_current_user, require_admin
 from app.core.security import decode_token
 from app.db.session import get_session
 from app.models.user import User
+from app.core.rate_limit import limiter, per_identifier_limiter
 from app.schemas.auth import (
     AuthResponse,
     PasswordResetConfirm,
@@ -24,7 +25,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
-async def register(user_in: UserCreate, session: AsyncSession = Depends(get_session)) -> AuthResponse:
+async def register(
+    user_in: UserCreate,
+    session: AsyncSession = Depends(get_session),
+    _: None = Depends(per_identifier_limiter(lambda r: r.client.host if r.client else "anon", 20, 60)),
+) -> AuthResponse:
     user = await auth_service.create_user(session, user_in)
     tokens = auth_service.issue_tokens_for_user(user)
     return AuthResponse(user=UserResponse.model_validate(user), tokens=TokenPair(**tokens))
@@ -34,6 +39,7 @@ async def register(user_in: UserCreate, session: AsyncSession = Depends(get_sess
 async def login(
     user_in: UserCreate,  # reuse for email/password fields
     session: AsyncSession = Depends(get_session),
+    _: None = Depends(limiter("auth:login", 20, 60)),
 ) -> AuthResponse:
     user = await auth_service.authenticate_user(session, user_in.email, user_in.password)
     tokens = auth_service.issue_tokens_for_user(user)
@@ -44,6 +50,7 @@ async def login(
 async def refresh_tokens(
     refresh_request: RefreshRequest,
     session: AsyncSession = Depends(get_session),
+    _: None = Depends(limiter("auth:refresh", 60, 60)),
 ) -> TokenPair:
     payload = decode_token(refresh_request.refresh_token)
     if not payload or payload.get("type") != "refresh":
@@ -84,6 +91,7 @@ async def request_password_reset(
     payload: PasswordResetRequest,
     background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
+    _: None = Depends(limiter("auth:reset_request", 30, 60)),
 ) -> dict[str, str]:
     reset = await auth_service.create_reset_token(session, payload.email)
     background_tasks.add_task(email_service.send_password_reset, payload.email, reset.token)
@@ -94,6 +102,7 @@ async def request_password_reset(
 async def confirm_password_reset(
     payload: PasswordResetConfirm,
     session: AsyncSession = Depends(get_session),
+    _: None = Depends(limiter("auth:reset_confirm", 60, 60)),
 ) -> dict[str, str]:
     await auth_service.confirm_reset_token(session, payload.token, payload.new_password)
     return {"status": "updated"}

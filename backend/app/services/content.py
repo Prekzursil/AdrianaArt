@@ -101,9 +101,9 @@ async def upsert_block(
 
 
 async def add_image(session: AsyncSession, block: ContentBlock, file, actor_id: UUID | None = None) -> ContentBlock:
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type")
-    path, filename = storage.save_upload(file)
+    path, filename = storage.save_upload(
+        file, allowed_content_types=["image/png", "image/jpeg", "image/jpg"], max_bytes=5 * 1024 * 1024
+    )
     next_sort = (max([img.sort_order for img in block.images], default=0) or 0) + 1
     image = ContentImage(content_block_id=block.id, url=path, alt_text=filename, sort_order=next_sort)
     audit = ContentAuditLog(content_block_id=block.id, action="image_upload", version=block.version, user_id=actor_id)
