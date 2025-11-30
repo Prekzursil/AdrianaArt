@@ -33,11 +33,9 @@ from app.schemas.catalog import (
     ProductUpdate,
     ProductVariantCreate,
     BulkProductUpdateItem,
-    ProductOptionCreate,
     ProductReviewCreate,
     FeaturedCollectionCreate,
     FeaturedCollectionUpdate,
-    FeaturedCollectionRead,
     ProductFeedItem,
 )
 from app.services.storage import delete_file
@@ -534,6 +532,8 @@ async def recompute_product_rating(session: AsyncSession, product_id: uuid.UUID)
     count = len(reviews)
     avg = sum(r.rating for r in reviews) / count if count else 0
     product = await session.get(Product, product_id)
+    if not product:
+        return
     product.rating_average = avg
     product.rating_count = count
     session.add(product)
@@ -725,7 +725,7 @@ async def import_products_csv(session: AsyncSession, content: str, dry_run: bool
             created += 1
             if dry_run:
                 continue
-            payload = ProductCreate(
+            create_payload = ProductCreate(
                 category_id=category.id,
                 slug=slug,
                 name=name,
@@ -739,7 +739,7 @@ async def import_products_csv(session: AsyncSession, content: str, dry_run: bool
                 long_description=long_description,
                 tags=tag_slugs,
             )
-            await create_product(session, payload, commit=False)
+            await create_product(session, create_payload, commit=False)
     if errors:
         if not dry_run:
             await session.rollback()

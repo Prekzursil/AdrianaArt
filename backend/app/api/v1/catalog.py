@@ -58,12 +58,7 @@ async def list_products(
     total_pages = max(1, (total_items + limit - 1) // limit) if total_items else 1
     return ProductListResponse(
         items=items,
-        meta={
-            "total_items": total_items,
-            "total_pages": total_pages,
-            "page": page,
-            "limit": limit,
-        },
+        meta={"total_items": total_items, "total_pages": total_pages, "page": page, "limit": limit},
     )
 
 
@@ -177,7 +172,7 @@ async def bulk_update_products(
 @router.get("/collections/featured", response_model=list[FeaturedCollectionRead])
 async def list_featured_collections(session: AsyncSession = Depends(get_session)) -> list[FeaturedCollectionRead]:
     collections = await catalog_service.list_featured_collections(session)
-    return collections
+    return [FeaturedCollectionRead.model_validate(c) for c in collections]
 
 
 @router.post("/collections/featured", response_model=FeaturedCollectionRead, status_code=status.HTTP_201_CREATED)
@@ -186,7 +181,8 @@ async def create_featured_collection(
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_admin),
 ) -> FeaturedCollectionRead:
-    return await catalog_service.create_featured_collection(session, payload)
+    created = await catalog_service.create_featured_collection(session, payload)
+    return FeaturedCollectionRead.model_validate(created)
 
 
 @router.patch("/collections/featured/{slug}", response_model=FeaturedCollectionRead)
@@ -199,7 +195,8 @@ async def update_featured_collection(
     collection = await catalog_service.get_featured_collection_by_slug(session, slug)
     if not collection:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
-    return await catalog_service.update_featured_collection(session, collection, payload)
+    updated = await catalog_service.update_featured_collection(session, collection, payload)
+    return FeaturedCollectionRead.model_validate(updated)
 
 
 @router.post("/products/{slug}/duplicate", response_model=ProductRead, status_code=status.HTTP_201_CREATED)
@@ -290,7 +287,7 @@ async def delete_product_image(
     if not product or product.is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
-    await catalog_service.delete_product_image(session, product, image_id)
+    await catalog_service.delete_product_image(session, product, str(image_id))
     await session.refresh(product)
     return product
 

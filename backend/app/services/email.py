@@ -140,7 +140,6 @@ async def notify_critical_error(message: str) -> bool:
 
 def _prune(now: float) -> None:
     window = 60.0
-    global_limit = settings.email_rate_limit_per_minute
     _rate_global[:] = [ts for ts in _rate_global if now - ts < window]
     for key in list(_rate_per_recipient.keys()):
         _rate_per_recipient[key] = [ts for ts in _rate_per_recipient[key] if now - ts < window]

@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.cart import Cart
 from app.models.order import Order, OrderItem, OrderStatus, ShippingMethod, OrderEvent
-from app.schemas.order import OrderUpdate, ShippingMethodCreate, OrderCreate
+from app.schemas.order import OrderUpdate, ShippingMethodCreate
 from app.services import payments
 
 
@@ -139,10 +139,12 @@ async def update_order(
 
     if shipping_method:
         order.shipping_method_id = shipping_method.id
-        subtotal = sum(Decimal(item.subtotal) for item in order.items)
-        order.shipping_amount = _calculate_shipping(subtotal, shipping_method)
-        order.tax_amount = _calculate_tax(subtotal)
-        order.total_amount = subtotal + order.tax_amount + order.shipping_amount
+        subtotal: Decimal = sum((Decimal(item.subtotal) for item in order.items), start=Decimal("0"))
+        shipping_amount_dec = _calculate_shipping(subtotal, shipping_method)
+        tax_amount_dec = _calculate_tax(subtotal)
+        order.shipping_amount = float(shipping_amount_dec)
+        order.tax_amount = float(tax_amount_dec)
+        order.total_amount = float(subtotal + tax_amount_dec + shipping_amount_dec)
 
     for field, value in data.items():
         setattr(order, field, value)

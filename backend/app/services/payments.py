@@ -1,9 +1,13 @@
+from typing import Any, cast
+
 import stripe
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.cart import Cart
+
+stripe = cast(Any, stripe)
 
 
 def init_stripe() -> None:
@@ -24,10 +28,13 @@ async def create_payment_intent(session: AsyncSession, cart: Cart) -> str:
             currency="usd",
             metadata={"cart_id": str(cart.id), "user_id": str(cart.user_id) if cart.user_id else ""},
         )
-    except stripe.error.StripeError as exc:
+    except Exception as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
-    return intent.client_secret
+    client_secret = getattr(intent, "client_secret", None)
+    if not client_secret:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Stripe client secret missing")
+    return str(client_secret)
 
 
 async def handle_webhook_event(payload: bytes, sig_header: str | None) -> dict:
@@ -48,7 +55,7 @@ async def capture_payment_intent(intent_id: str) -> dict:
     init_stripe()
     try:
         return stripe.PaymentIntent.capture(intent_id)
-    except stripe.error.StripeError as exc:
+    except Exception as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
 
@@ -59,5 +66,5 @@ async def void_payment_intent(intent_id: str) -> dict:
     init_stripe()
     try:
         return stripe.PaymentIntent.cancel(intent_id)
-    except stripe.error.StripeError as exc:
+    except Exception as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc

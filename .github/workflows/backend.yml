@@ -19,7 +19,21 @@ jobs:
         run: |
           cd backend
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt ruff mypy pip-audit
+      - name: Ruff lint
+        run: |
+          cd backend
+          ruff check .
+      - name: Mypy type-check
+        run: |
+          cd backend
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          mypy app
+      - name: Pip audit (advisory)
+        continue-on-error: true
+        run: |
+          cd backend
+          pip-audit -r requirements.txt --progress-spinner=off
       - name: Run tests
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)/backend

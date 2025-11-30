@@ -86,8 +86,8 @@ async def test_cart_models_sqlite_memory() -> None:
         await session.commit()
 
         cart = Cart(session_id="guest-123")
-        item = CartItem(cart=cart, product=product, quantity=2, unit_price_at_add=product.base_price)
         session.add(cart)
+        session.add(CartItem(cart=cart, product=product, quantity=2, unit_price_at_add=product.base_price))
         await session.commit()
 
         result = await session.execute(select(CartItem).where(CartItem.cart == cart))
@@ -121,8 +121,8 @@ async def test_order_models_sqlite_memory() -> None:
         await session.refresh(product)
 
         order = Order(user_id=user.id, total_amount=15, currency="USD")
-        item = OrderItem(order=order, product_id=product.id, quantity=1, unit_price=15, subtotal=15)
         session.add(order)
+        session.add(OrderItem(order=order, product_id=product.id, quantity=1, unit_price=15, subtotal=15))
         await session.commit()
 
         result = await session.execute(select(OrderItem).where(OrderItem.order == order))

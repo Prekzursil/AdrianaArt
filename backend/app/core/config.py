@@ -19,10 +19,12 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_exp_minutes: int = 30
     refresh_token_exp_days: int = 7
-
     refresh_token_rotation: bool = True
     secure_cookies: bool = False
     cookie_samesite: str = "lax"
+    maintenance_mode: bool = False
+    maintenance_bypass_token: str = "bypass-token"
+    max_concurrent_requests: int = 100
 
     media_root: str = "uploads"
     cors_origins: list[str] = ["http://localhost:4200"]

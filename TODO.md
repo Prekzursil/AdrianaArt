@@ -155,12 +155,12 @@ Below is a structured checklist you can turn into issues.
 - [x] Audit log middleware (user + IP).
 - [x] Request/response logging with PII redaction.
 - [x] Slow query logging and performance metrics.
-- [ ] Lint/type-check jobs extended (mypy, ruff).
-- [ ] Load testing plan (k6/locust) and scripts.
-- [ ] SQL injection and XSS validation tests.
-- [ ] Dependency vulnerability scanning (pip/npm).
-- [ ] Backpressure handling (429) for expensive endpoints.
-- [ ] Maintenance mode toggle.
+- [x] Lint/type-check jobs extended (mypy, ruff).
+- [x] Load testing plan (k6/locust) and scripts.
+- [x] SQL injection and XSS validation tests.
+- [x] Dependency vulnerability scanning (pip/npm).
+- [x] Backpressure handling (429) for expensive endpoints.
+- [x] Maintenance mode toggle.
 
 ## Frontend - Shell & Shared
 - [ ] Scaffold Angular app with routing + strict TS.

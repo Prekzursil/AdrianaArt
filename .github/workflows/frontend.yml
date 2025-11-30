@@ -45,6 +45,12 @@ jobs:
         run: |
           cd frontend
           npm run build --if-present
+      - name: npm audit (high+)
+        if: steps.detect.outputs.missing != 'true'
+        continue-on-error: true
+        run: |
+          cd frontend
+          npm audit --audit-level=high --production
 
       - name: Skip placeholder
         if: steps.detect.outputs.missing == 'true'

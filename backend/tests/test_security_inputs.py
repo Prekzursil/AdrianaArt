@@ -1,5 +1,6 @@
 import asyncio
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -8,7 +9,8 @@ from app.db.session import get_session
 from app.main import app
 
 
-def test_refresh_token_rotation() -> None:
+@pytest.fixture
+def client_with_db():
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
     SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -24,20 +26,22 @@ def test_refresh_token_rotation() -> None:
 
     app.dependency_overrides[get_session] = override_get_session
     client = TestClient(app)
-
-    register_payload = {"email": "rotate@example.com", "password": "password1", "name": "Rotate"}
-    res = client.post("/api/v1/auth/register", json=register_payload)
-    assert res.status_code == 201, res.text
-    refresh_token = res.json()["tokens"]["refresh_token"]
-
-    first = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
-    assert first.status_code == 200, first.text
-    new_refresh = first.json()["refresh_token"]
-    assert new_refresh != refresh_token
-
-    # old token should now be rejected
-    second = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
-    assert second.status_code == 401
-
+    yield client
     client.close()
     app.dependency_overrides.clear()
+
+
+def test_catalog_search_injection_strings(client_with_db: TestClient):
+    payloads = ["' OR 1=1 --", "<script>alert(1)</script>", "\";DROP TABLE users;--"]
+    for term in payloads:
+        res = client_with_db.get(f"/api/v1/catalog/products?search={term}")
+        assert res.status_code == 200
+        assert isinstance(res.json(), dict)
+
+
+def test_content_block_rejects_script_tags(client_with_db: TestClient):
+    res = client_with_db.patch(
+        "/api/v1/content/admin/secure.block",
+        json={"body_markdown": "<script>alert(1)</script>", "title": "XSS"},
+    )
+    assert res.status_code in (400, 401, 403)

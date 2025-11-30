@@ -1,6 +1,6 @@
 import asyncio
-import uuid
 from decimal import Decimal
+from typing import Any, TypedDict
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.future import select
@@ -9,13 +9,39 @@ from app.core.config import settings
 from app.models.catalog import Category, Product, ProductImage, ProductVariant
 
 
-SEED_CATEGORIES = [
+class SeedImage(TypedDict):
+    url: str
+    alt_text: str
+    sort_order: int
+
+
+class SeedVariant(TypedDict):
+    name: str
+    additional_price_delta: Decimal
+    stock_quantity: int
+
+
+class SeedProduct(TypedDict):
+    slug: str
+    name: str
+    category_slug: str
+    short_description: str
+    long_description: str
+    base_price: Decimal
+    currency: str
+    stock_quantity: int
+    is_featured: bool
+    images: list[SeedImage]
+    variants: list[SeedVariant]
+
+
+SEED_CATEGORIES: list[dict[str, Any]] = [
     {"slug": "cups", "name": "Cups & Mugs", "description": "Handmade cups and mugs."},
     {"slug": "plates", "name": "Plates", "description": "Dinner and side plates."},
     {"slug": "bowls", "name": "Bowls", "description": "Serving and cereal bowls."},
 ]
 
-SEED_PRODUCTS = [
+SEED_PRODUCTS: list[SeedProduct] = [
     {
         "slug": "white-cup",
         "name": "White Glazed Cup",

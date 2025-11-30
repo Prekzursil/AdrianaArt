@@ -4,7 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import api_router
 from app.core.config import settings
 from app.core.logging_config import configure_logging
-from app.middleware import AuditMiddleware, RequestLoggingMiddleware, SecurityHeadersMiddleware
+from app.middleware import (
+    AuditMiddleware,
+    BackpressureMiddleware,
+    MaintenanceModeMiddleware,
+    RequestLoggingMiddleware,
+    SecurityHeadersMiddleware,
+)
 
 
 def get_application() -> FastAPI:
@@ -31,6 +37,8 @@ def get_application() -> FastAPI:
         allow_headers=settings.cors_allow_headers,
     )
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(MaintenanceModeMiddleware)
+    app.add_middleware(BackpressureMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(AuditMiddleware)
     app.include_router(api_router, prefix="/api/v1")

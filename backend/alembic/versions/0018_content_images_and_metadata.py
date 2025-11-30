@@ -6,8 +6,6 @@ Create Date: 2024-10-10
 """
 
 from collections.abc import Sequence
-import uuid
-from datetime import datetime, timezone
 
 import sqlalchemy as sa
 from alembic import op
