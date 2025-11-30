@@ -192,11 +192,11 @@ Below is a structured checklist you can turn into issues.
 - [x] Product detail page with gallery, variants, quantity/add-to-cart.
 - [x] Handmade uniqueness note.
 - [x] Sort controls (price/name/newest).
-- [ ] Price range slider.
-- [ ] Tag/label pills (featured/new/limited).
-- [ ] Product gallery zoom/lightbox.
-- [ ] Persist filters in query params.
-- [ ] Empty state for product lists.
+- [x] Price range slider.
+- [x] Tag/label pills (featured/new/limited).
+- [x] Product gallery zoom/lightbox.
+- [x] Persist filters in query params.
+- [x] Empty state for product lists.
 - [ ] Error state/retry for product lists.
 - [ ] Breadcrumbs for category/product pages.
 - [ ] Recently viewed carousel.

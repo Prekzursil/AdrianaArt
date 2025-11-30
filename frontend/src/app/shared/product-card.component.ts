@@ -19,10 +19,10 @@ import { ButtonComponent } from './button.component';
           height="640"
         />
         <span
-          *ngIf="stockBadge"
+          *ngIf="badge"
           class="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-800 shadow"
         >
-          {{ stockBadge }}
+          {{ badge }}
         </span>
       </a>
       <div class="grid gap-1">
@@ -46,6 +46,14 @@ import { ButtonComponent } from './button.component';
 })
 export class ProductCardComponent {
   @Input({ required: true }) product!: Product;
+  @Input() tag?: string | null;
+
+  get badge(): string | null {
+    if (this.tag) return this.tag;
+    const tagName = this.product.tags?.[0]?.name;
+    if (tagName) return tagName;
+    return this.stockBadge;
+  }
 
   get primaryImage(): string {
     return this.product.images?.[0]?.url ?? 'https://via.placeholder.com/640x640?text=Product';
