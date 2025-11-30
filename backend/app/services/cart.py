@@ -80,7 +80,7 @@ async def serialize_cart(cart: Cart) -> CartRead:
                 quantity=item.quantity,
                 max_quantity=item.max_quantity,
                 note=item.note,
-                unit_price_at_add=item.unit_price_at_add,
+                unit_price_at_add=Decimal(item.unit_price_at_add),
             )
             for item in cart.items
         ],
@@ -134,6 +134,8 @@ async def update_item(session: AsyncSession, cart: Cart, item_id: UUID, payload:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cart item not found")
 
     product = await session.get(Product, item.product_id)
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     variant = await session.get(ProductVariant, item.variant_id) if item.variant_id else None
     await _validate_stock(product, variant, payload.quantity)
     _enforce_max_quantity(payload.quantity, item.max_quantity)
@@ -172,6 +174,8 @@ async def merge_guest_cart(session: AsyncSession, user_cart: Cart, guest_session
             None,
         )
         product = await session.get(Product, guest_item.product_id)
+        if not product:
+            continue
         variant = await session.get(ProductVariant, guest_item.variant_id) if guest_item.variant_id else None
         new_qty = guest_item.quantity + (match.quantity if match else 0)
         await _validate_stock(product, variant, new_qty)

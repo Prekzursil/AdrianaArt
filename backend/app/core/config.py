@@ -26,10 +26,6 @@ class Settings(BaseSettings):
     maintenance_bypass_token: str = "bypass-token"
     max_concurrent_requests: int = 100
 
-    refresh_token_rotation: bool = True
-    secure_cookies: bool = False
-    cookie_samesite: str = "lax"
-
     media_root: str = "uploads"
     cors_origins: list[str] = ["http://localhost:4200"]
     cors_allow_credentials: bool = True

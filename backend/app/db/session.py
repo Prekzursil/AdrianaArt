@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import AsyncGenerator
 
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -32,7 +33,7 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
         )
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency to provide a database session."""
     async with SessionLocal() as session:
         yield session

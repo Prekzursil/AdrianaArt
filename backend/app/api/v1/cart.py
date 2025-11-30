@@ -1,4 +1,5 @@
 from uuid import UUID
+from decimal import Decimal
 
 import uuid
 from fastapi import APIRouter, Depends, Header, HTTPException, status
@@ -52,7 +53,7 @@ async def add_item(
         variant_id=item.variant_id,
         quantity=item.quantity,
         max_quantity=item.max_quantity,
-        unit_price_at_add=item.unit_price_at_add,
+        unit_price_at_add=Decimal(item.unit_price_at_add),
     )
 
 
@@ -72,7 +73,7 @@ async def update_item(
         variant_id=item.variant_id,
         quantity=item.quantity,
         max_quantity=item.max_quantity,
-        unit_price_at_add=item.unit_price_at_add,
+        unit_price_at_add=Decimal(item.unit_price_at_add),
     )
 
 
