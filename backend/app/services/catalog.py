@@ -235,6 +235,17 @@ async def delete_product_image(session: AsyncSession, product: Product, image_id
     await session.commit()
 
 
+async def update_product_image_sort(session: AsyncSession, product: Product, image_id: str, sort_order: int) -> Product:
+    image = next((img for img in product.images if str(img.id) == str(image_id)), None)
+    if not image:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+    image.sort_order = sort_order
+    session.add(image)
+    await session.commit()
+    await session.refresh(product, attribute_names=["images"])
+    return product
+
+
 async def soft_delete_product(session: AsyncSession, product: Product, user_id: uuid.UUID | None = None) -> None:
     product.is_deleted = True
     session.add(product)

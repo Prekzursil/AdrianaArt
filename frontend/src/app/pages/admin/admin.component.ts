@@ -211,7 +211,10 @@ import { ToastService } from '../../core/toast.service';
           <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold text-slate-900">Users</h2>
-              <app-button size="sm" variant="ghost" label="Force logout selected" [disabled]="!selectedUserId" (action)="forceLogout()"></app-button>
+              <div class="flex gap-2">
+                <app-button size="sm" variant="ghost" label="Set role" [disabled]="!selectedUserId || !selectedUserRole" (action)="updateRole()"></app-button>
+                <app-button size="sm" variant="ghost" label="Force logout selected" [disabled]="!selectedUserId" (action)="forceLogout()"></app-button>
+              </div>
             </div>
             <div class="grid gap-2 text-sm text-slate-700">
               <div *ngFor="let user of users" class="flex items-center justify-between rounded-lg border border-slate-200 p-3">
@@ -219,9 +222,13 @@ import { ToastService } from '../../core/toast.service';
                   <p class="font-semibold text-slate-900">{{ user.name || user.email }}</p>
                   <p class="text-xs text-slate-500">{{ user.email }}</p>
                 </div>
-                <label class="flex items-center gap-2 text-xs">
-                  <input type="radio" name="userSelect" [value]="user.id" [(ngModel)]="selectedUserId" /> Select
-                </label>
+                <div class="flex items-center gap-2 text-xs">
+                  <input type="radio" name="userSelect" [value]="user.id" [(ngModel)]="selectedUserId" />
+                  <select class="rounded border border-slate-200 px-2 py-1" [ngModel]="user.role" (ngModelChange)="selectUser(user.id, $event)">
+                    <option value="customer">Customer</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
               </div>
             </div>
           </section>
@@ -360,6 +367,7 @@ export class AdminComponent implements OnInit {
 
   users: AdminUser[] = [];
   selectedUserId: string | null = null;
+  selectedUserRole: string | null = null;
 
   contentBlocks: AdminContent[] = [];
   coupons: AdminCoupon[] = [];
@@ -551,6 +559,22 @@ export class AdminComponent implements OnInit {
     this.admin.revokeSessions(this.selectedUserId).subscribe({
       next: () => this.toast.success('Sessions revoked'),
       error: () => this.toast.error('Failed to revoke sessions')
+    });
+  }
+
+  selectUser(userId: string, role: string): void {
+    this.selectedUserId = userId;
+    this.selectedUserRole = role;
+  }
+
+  updateRole(): void {
+    if (!this.selectedUserId || !this.selectedUserRole) return;
+    this.admin.updateUserRole(this.selectedUserId, this.selectedUserRole).subscribe({
+      next: (updated) => {
+        this.users = this.users.map((u) => (u.id === updated.id ? updated : u));
+        this.toast.success('Role updated');
+      },
+      error: () => this.toast.error('Failed to update role')
     });
   }
 

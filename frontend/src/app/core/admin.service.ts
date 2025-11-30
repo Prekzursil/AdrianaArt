@@ -182,4 +182,14 @@ export class AdminService {
   deleteProductImage(slug: string, imageId: string): Observable<AdminProductDetail> {
     return this.api.delete<AdminProductDetail>(`/catalog/products/${slug}/images/${imageId}`);
   }
+
+  reorderProductImage(slug: string, imageId: string, sortOrder: number): Observable<AdminProductDetail> {
+    return this.api.patch<AdminProductDetail>(`/catalog/products/${slug}/images/${imageId}/sort`, null, {
+      sort_order: sortOrder
+    } as any);
+  }
+
+  updateUserRole(userId: string, role: string): Observable<AdminUser> {
+    return this.api.patch<AdminUser>(`/admin/dashboard/users/${userId}/role`, { role });
+  }
 }

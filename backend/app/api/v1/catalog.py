@@ -292,6 +292,23 @@ async def delete_product_image(
     return product
 
 
+@router.patch("/products/{slug}/images/{image_id}/sort", response_model=ProductRead)
+async def reorder_product_image(
+    slug: str,
+    image_id: UUID,
+    sort_order: int = Query(..., ge=0),
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_admin),
+) -> Product:
+    product = await catalog_service.get_product_by_slug(
+        session, slug, options=[selectinload(Product.images), selectinload(Product.category)]
+    )
+    if not product or product.is_deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    updated = await catalog_service.update_product_image_sort(session, product, str(image_id), sort_order)
+    return updated
+
+
 @router.post("/products/{slug}/reviews", response_model=ProductReviewRead, status_code=status.HTTP_201_CREATED)
 async def create_review(
     slug: str,
