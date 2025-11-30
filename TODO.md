@@ -173,11 +173,11 @@ Below is a structured checklist you can turn into issues.
 - [x] Dark/light mode toggle.
 - [x] Form validation utilities (error messages, async validation).
 - [x] Toast/snackbar service and global overlay.
-- [ ] Loading spinner/skeleton components.
-- [ ] Page-level breadcrumb component.
-- [ ] Accessible modal focus trapping.
-- [ ] IntersectionObserver-based lazy image component.
-- [ ] Global HTTP error handler (401/403/500).
+- [x] Loading spinner/skeleton components.
+- [x] Page-level breadcrumb component.
+- [x] Accessible modal focus trapping.
+- [x] IntersectionObserver-based lazy image component.
+- [x] Global HTTP error handler (401/403/500).
 - [ ] Responsive nav drawer with keyboard navigation.
 - [ ] Route guards for auth/admin.
 - [ ] ESLint/Prettier strict config.
