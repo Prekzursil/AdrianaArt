@@ -2,14 +2,14 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select, desc
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import require_admin
 from app.db.session import get_session
 from app.models.catalog import Product, ProductAuditLog, Category
 from app.models.content import ContentBlock, ContentAuditLog
-from app.models.order import Order, OrderStatus
+from app.models.order import Order
 from app.models.user import User, RefreshSession
 from app.models.promo import PromoCode
 
