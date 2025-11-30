@@ -9,4 +9,4 @@ async function bootstrapTests() {
   getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 }
 
-bootstrapTests();
+await bootstrapTests();
