@@ -45,7 +45,8 @@ def create_admin_token(session_factory) -> str:
             user = await create_user(session, UserCreate(email="cms@example.com", password="cmspassword", name="CMS"))
             user.role = UserRole.admin
             await session.commit()
-            return issue_tokens_for_user(user)["access_token"]
+            tokens = await issue_tokens_for_user(session, user)
+            return tokens["access_token"]
 
     return asyncio.run(create_and_token())
 

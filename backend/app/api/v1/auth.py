@@ -40,7 +40,7 @@ async def register(
     _: None = Depends(register_rate_limit),
 ) -> AuthResponse:
     user = await auth_service.create_user(session, user_in)
-    tokens = auth_service.issue_tokens_for_user(user)
+    tokens = await auth_service.issue_tokens_for_user(session, user)
     return AuthResponse(user=UserResponse.model_validate(user), tokens=TokenPair(**tokens))
 
 
@@ -51,7 +51,7 @@ async def login(
     _: None = Depends(login_rate_limit),
 ) -> AuthResponse:
     user = await auth_service.authenticate_user(session, user_in.email, user_in.password)
-    tokens = auth_service.issue_tokens_for_user(user)
+    tokens = await auth_service.issue_tokens_for_user(session, user)
     return AuthResponse(user=UserResponse.model_validate(user), tokens=TokenPair(**tokens))
 
 
@@ -61,27 +61,28 @@ async def refresh_tokens(
     session: AsyncSession = Depends(get_session),
     _: None = Depends(refresh_rate_limit),
 ) -> TokenPair:
-    payload = decode_token(refresh_request.refresh_token)
-    if not payload or payload.get("type") != "refresh":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-
-    try:
-        user_id = UUID(str(payload.get("sub")))
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-
-    result = await session.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
+    stored = await auth_service.validate_refresh_token(session, refresh_request.refresh_token)
+    user = await session.get(User, stored.user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-
-    tokens = auth_service.issue_tokens_for_user(user)
+    # rotate token
+    stored.revoked = True
+    stored.revoked_reason = "rotated"
+    session.add(stored)
+    await session.flush()
+    tokens = await auth_service.issue_tokens_for_user(session, user)
     return TokenPair(**tokens)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(current_user: User = Depends(get_current_user)) -> None:
-    # Stateless JWT logout: clients should drop tokens.
+async def logout(
+    payload: RefreshRequest,
+    session: AsyncSession = Depends(get_session),
+    _: User = Depends(get_current_user),
+) -> None:
+    payload_data = decode_token(payload.refresh_token)
+    if payload_data and payload_data.get("jti"):
+        await auth_service.revoke_refresh_token(session, payload_data["jti"], reason="logout")
     return None
 
 

@@ -49,7 +49,8 @@ def create_user_token(session_factory, email="cart@example.com"):
             user = await create_user(session, UserCreate(email=email, password="cartpass", name="Cart User"))
             from app.services.auth import issue_tokens_for_user
 
-            return issue_tokens_for_user(user)["access_token"], user.id
+            tokens = await issue_tokens_for_user(session, user)
+            return tokens["access_token"], user.id
 
     return asyncio.run(create_and_token())
 

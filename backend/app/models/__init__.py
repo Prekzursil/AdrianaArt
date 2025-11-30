@@ -1,5 +1,5 @@
 from app.db.base import Base  # noqa: F401
-from app.models.user import User, PasswordResetToken  # noqa: F401
+from app.models.user import User, PasswordResetToken, RefreshSession  # noqa: F401
 from app.models.catalog import (
     Category,
     Product,
@@ -23,6 +23,7 @@ __all__ = [
     "Base",
     "User",
     "PasswordResetToken",
+    "RefreshSession",
     "Category",
     "Product",
     "ProductImage",

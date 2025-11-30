@@ -57,7 +57,8 @@ def create_user_token(session_factory, email="buyer@example.com", admin: bool = 
                 user.role = UserRole.admin
                 await session.commit()
                 await session.refresh(user)
-            return issue_tokens_for_user(user)["access_token"], user.id
+            tokens = await issue_tokens_for_user(session, user)
+            return tokens["access_token"], user.id
 
     return asyncio.run(create_and_token())
 

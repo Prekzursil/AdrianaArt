@@ -42,7 +42,8 @@ def create_user_token(session_factory) -> str:
     async def create_and_token():
         async with session_factory() as session:
             user = await create_user(session, UserCreate(email="addr@example.com", password="addrpass", name="Addr"))
-            return issue_tokens_for_user(user)["access_token"]
+            tokens = await issue_tokens_for_user(session, user)
+            return tokens["access_token"]
 
     return asyncio.run(create_and_token())
 

@@ -148,13 +148,13 @@ Below is a structured checklist you can turn into issues.
 - [x] API rate limit tests.
 - [x] Structured logging format (JSON) toggle.
 - [x] Request ID propagation to logs.
-- [ ] Secure password reset tokens (expiry, blacklist).
-- [ ] JWT rotation and blacklist on logout.
-- [ ] Content Security Policy headers.
-- [ ] HTTPS/secure cookies config for production.
-- [ ] Audit log middleware (user + IP).
-- [ ] Request/response logging with PII redaction.
-- [ ] Slow query logging and performance metrics.
+- [x] Secure password reset tokens (expiry, blacklist).
+- [x] JWT rotation and blacklist on logout.
+- [x] Content Security Policy headers.
+- [x] HTTPS/secure cookies config for production.
+- [x] Audit log middleware (user + IP).
+- [x] Request/response logging with PII redaction.
+- [x] Slow query logging and performance metrics.
 - [ ] Lint/type-check jobs extended (mypy, ruff).
 - [ ] Load testing plan (k6/locust) and scripts.
 - [ ] SQL injection and XSS validation tests.
