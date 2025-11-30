@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgClass } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 type ButtonVariant = 'primary' | 'ghost';
 type ButtonSize = 'md' | 'sm';
@@ -7,10 +8,11 @@ type ButtonSize = 'md' | 'sm';
 @Component({
   selector: 'app-button',
   standalone: true,
-  imports: [NgClass],
+  imports: [NgClass, RouterLink],
   template: `
     <button
       type="button"
+      [routerLink]="routerLink"
       [ngClass]="classes"
       class="inline-flex items-center justify-center rounded-full font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
       (click)="action.emit()"
@@ -24,6 +26,7 @@ export class ButtonComponent {
   @Input() label = '';
   @Input() variant: ButtonVariant = 'primary';
   @Input() size: ButtonSize = 'md';
+  @Input() routerLink: string | any[] | null = null;
   @Output() action = new EventEmitter<void>();
 
   get classes(): string {

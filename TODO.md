@@ -186,12 +186,12 @@ Below is a structured checklist you can turn into issues.
 - [ ] Homepage hero with "Shop now" CTA.
 - [ ] Featured products grid on homepage.
 - [ ] Category listing with grid + pagination.
-- [ ] Filter sidebar (category, price range, tags).
-- [ ] Search bar hitting /products.
-- [ ] Product card component (image, name, price, stock badge).
-- [ ] Product detail page with gallery, variants, quantity/add-to-cart.
-- [ ] Handmade uniqueness note.
-- [ ] Sort controls (price/name/newest).
+- [x] Filter sidebar (category, price range, tags).
+- [x] Search bar hitting /products.
+- [x] Product card component (image, name, price, stock badge).
+- [x] Product detail page with gallery, variants, quantity/add-to-cart.
+- [x] Handmade uniqueness note.
+- [x] Sort controls (price/name/newest).
 - [ ] Price range slider.
 - [ ] Tag/label pills (featured/new/limited).
 - [ ] Product gallery zoom/lightbox.

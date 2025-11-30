@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -8,10 +8,10 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  get<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Observable<T> {
+  get<T>(path: string, params?: Record<string, string | number | boolean | string[] | number[] | undefined>): Observable<T> {
     const httpParams = this.buildParams(params);
     return this.http.get<T>(`${this.baseUrl}${path}`, { params: httpParams });
-    }
+  }
 
   post<T>(path: string, body: unknown): Observable<T> {
     return this.http.post<T>(`${this.baseUrl}${path}`, body);
@@ -25,12 +25,18 @@ export class ApiService {
     return this.http.delete<T>(`${this.baseUrl}${path}`);
   }
 
-  private buildParams(params?: Record<string, string | number | boolean | undefined>): HttpParams {
+  private buildParams(params?: Record<string, string | number | boolean | string[] | number[] | undefined>): HttpParams {
     let httpParams = new HttpParams();
     if (!params) return httpParams;
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        httpParams = httpParams.set(key, String(value));
+        if (Array.isArray(value)) {
+          value.forEach((val) => {
+            httpParams = httpParams.append(key, String(val));
+          });
+        } else {
+          httpParams = httpParams.set(key, String(value));
+        }
       }
     });
     return httpParams;
