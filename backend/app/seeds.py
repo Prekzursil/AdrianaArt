@@ -1,5 +1,4 @@
 import asyncio
-import uuid
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

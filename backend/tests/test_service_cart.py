@@ -4,7 +4,7 @@ from decimal import Decimal
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.db.base import Base
-from app.models.cart import Cart, CartItem
+from app.models.cart import Cart
 from app.models.catalog import Category, Product
 from app.services import cart as cart_service
 from app.schemas.cart import CartItemCreate

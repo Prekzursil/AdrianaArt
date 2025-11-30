@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.cart import Cart
 from app.models.order import Order, OrderItem, OrderStatus, ShippingMethod, OrderEvent
-from app.schemas.order import OrderUpdate, ShippingMethodCreate, OrderCreate
+from app.schemas.order import OrderUpdate, ShippingMethodCreate
 from app.services import payments
 
 

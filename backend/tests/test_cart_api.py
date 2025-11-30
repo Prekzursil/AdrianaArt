@@ -10,7 +10,6 @@ from app.main import app
 from app.db.base import Base
 from app.db.session import get_session
 from app.models.catalog import Category, Product
-from app.models.user import UserRole
 from app.services.auth import create_user
 from app.schemas.user import UserCreate
 from app.services import cart as cart_service

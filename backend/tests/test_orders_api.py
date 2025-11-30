@@ -13,7 +13,7 @@ from app.db.base import Base
 from app.db.session import get_session
 from app.models.catalog import Category, Product
 from app.models.cart import Cart, CartItem
-from app.models.order import OrderStatus, Order
+from app.models.order import Order
 from app.models.user import UserRole
 from app.services.auth import create_user, issue_tokens_for_user
 from app.schemas.user import UserCreate

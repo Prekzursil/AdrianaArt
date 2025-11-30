@@ -1,11 +1,9 @@
-import asyncio
-
 import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.db.base import Base
-from app.models.user import PasswordResetToken, User
+from app.models.user import PasswordResetToken
 from app.schemas.user import UserCreate
 from app.services import auth as auth_service
 

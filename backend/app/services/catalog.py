@@ -33,11 +33,9 @@ from app.schemas.catalog import (
     ProductUpdate,
     ProductVariantCreate,
     BulkProductUpdateItem,
-    ProductOptionCreate,
     ProductReviewCreate,
     FeaturedCollectionCreate,
     FeaturedCollectionUpdate,
-    FeaturedCollectionRead,
     ProductFeedItem,
 )
 from app.services.storage import delete_file
