@@ -25,7 +25,8 @@ type ButtonSize = 'md' | 'sm';
         type="button"
         [ngClass]="classes"
         class="inline-flex items-center justify-center rounded-full font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-        (click)="action.emit()"
+        [disabled]="disabled"
+        (click)="!disabled && action.emit()"
       >
         <ng-content></ng-content>
         <span *ngIf="label">{{ label }}</span>
@@ -38,6 +39,7 @@ export class ButtonComponent {
   @Input() variant: ButtonVariant = 'primary';
   @Input() size: ButtonSize = 'md';
   @Input() routerLink?: string | any[];
+  @Input() disabled = false;
   @Output() action = new EventEmitter<void>();
 
   get classes(): string {
@@ -45,6 +47,7 @@ export class ButtonComponent {
       ? 'bg-slate-900 text-white hover:bg-slate-800 focus-visible:outline-slate-900'
       : 'bg-white text-slate-900 border border-slate-200 hover:border-slate-300 focus-visible:outline-slate-900';
     const sizeCls = this.size === 'sm' ? 'px-3 py-2 text-sm' : 'px-4 py-2.5 text-sm';
-    return `${base} ${sizeCls}`;
+    const state = this.disabled ? 'opacity-60 cursor-not-allowed' : '';
+    return `${base} ${sizeCls} ${state}`;
   }
 }
