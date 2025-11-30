@@ -237,10 +237,10 @@ Below is a structured checklist you can turn into issues.
 - [x] /admin layout with sidebar + guard.
 - [x] Product list table (sort/search).
 - [x] Product create/edit form (slug, category, price, stock, description, images, variants).
-- [ ] Admin orders list with filters + order detail/status update.
-- [ ] Content editor for hero and static pages.
-- [ ] Basic user list (view customers, promote/demote admins).
-- [ ] Bulk product actions (activate/deactivate, delete).
+- [x] Admin orders list with filters + order detail/status update.
+- [x] Content editor for hero and static pages.
+- [x] Basic user list (view customers, promote/demote admins).
+- [x] Bulk product actions (activate/deactivate, delete).
 - [ ] Product image reorder UI.
 - [ ] Category CRUD UI with drag-and-drop ordering.
 - [ ] Order status update with timeline view.

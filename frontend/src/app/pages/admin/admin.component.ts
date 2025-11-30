@@ -53,6 +53,20 @@ import { LocalizedCurrencyPipe } from '../../shared/localized-currency.pipe';
               <h2 class="text-lg font-semibold text-slate-900">Products</h2>
               <div class="flex gap-2">
                 <app-button size="sm" variant="ghost" label="New product" (action)="startNewProduct()"></app-button>
+                <app-button
+                  size="sm"
+                  variant="ghost"
+                  label="Activate"
+                  [disabled]="!selectedIds.size"
+                  (action)="bulkUpdateStatus('active')"
+                ></app-button>
+                <app-button
+                  size="sm"
+                  variant="ghost"
+                  label="Archive"
+                  [disabled]="!selectedIds.size"
+                  (action)="bulkUpdateStatus('archived')"
+                ></app-button>
               </div>
             </div>
             <div class="flex flex-wrap gap-3 items-center text-sm">
@@ -69,6 +83,9 @@ import { LocalizedCurrencyPipe } from '../../shared/localized-currency.pipe';
               <table class="min-w-full text-sm text-left">
                 <thead>
                   <tr class="border-b border-slate-200">
+                    <th class="py-2">
+                      <input type="checkbox" [checked]="allSelected" (change)="toggleAll($event)" />
+                    </th>
                     <th class="py-2">Name</th>
                     <th>Price</th>
                     <th>Status</th>
@@ -78,6 +95,13 @@ import { LocalizedCurrencyPipe } from '../../shared/localized-currency.pipe';
                 </thead>
                 <tbody>
                   <tr *ngFor="let product of filteredProducts()" class="border-b border-slate-100">
+                    <td class="py-2">
+                      <input
+                        type="checkbox"
+                        [checked]="selectedIds.has(product.slug)"
+                        (change)="toggleSelect(product.slug, $event)"
+                      />
+                    </td>
                     <td class="py-2 font-semibold text-slate-900">{{ product.name }}</td>
                     <td>{{ product.price | localizedCurrency : 'USD' }}</td>
                     <td><span class="text-xs rounded-full bg-slate-100 px-2 py-1">{{ product.status }}</span></td>
@@ -134,17 +158,36 @@ import { LocalizedCurrencyPipe } from '../../shared/localized-currency.pipe';
                   <option value="">All</option>
                   <option value="processing">Processing</option>
                   <option value="shipped">Shipped</option>
+                  <option value="refunded">Refunded</option>
                 </select>
               </label>
             </div>
-            <div class="grid gap-2 text-sm text-slate-700">
-              <div *ngFor="let order of filteredOrders()" class="rounded-lg border border-slate-200 p-3">
-                <div class="flex items-center justify-between">
-                  <span class="font-semibold text-slate-900">Order #{{ order.id }}</span>
-                  <span class="text-xs rounded-full bg-slate-100 px-2 py-1">{{ order.status }}</span>
+            <div class="grid md:grid-cols-[1.5fr_1fr] gap-4">
+              <div class="grid gap-2 text-sm text-slate-700">
+                <div *ngFor="let order of filteredOrders()" class="rounded-lg border border-slate-200 p-3 cursor-pointer" (click)="selectOrder(order)">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-slate-900">Order #{{ order.id }}</span>
+                    <span class="text-xs rounded-full bg-slate-100 px-2 py-1">{{ order.status }}</span>
+                  </div>
+                  <p>{{ order.customer }} — {{ order.total | localizedCurrency : 'USD' }}</p>
                 </div>
-                <p>{{ order.customer }} — {{ order.total | localizedCurrency : 'USD' }}</p>
-                <app-button size="sm" variant="ghost" label="View detail"></app-button>
+              </div>
+              <div class="rounded-lg border border-slate-200 p-4 text-sm text-slate-700" *ngIf="activeOrder">
+                <div class="flex items-center justify-between">
+                  <h3 class="font-semibold text-slate-900">Order #{{ activeOrder.id }}</h3>
+                  <select class="rounded-lg border border-slate-200 px-2 py-1 text-sm" [(ngModel)]="activeOrder.status">
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="refunded">Refunded</option>
+                  </select>
+                </div>
+                <p class="text-xs text-slate-500">Customer: {{ activeOrder.customer }}</p>
+                <p class="text-xs text-slate-500">Placed: {{ activeOrder.date }}</p>
+                <p class="font-semibold text-slate-900 mt-2">{{ activeOrder.total | localizedCurrency : 'USD' }}</p>
+                <div class="flex gap-2 mt-3">
+                  <app-button size="sm" label="Update status" (action)="updateOrderStatus()"></app-button>
+                  <app-button size="sm" variant="ghost" label="Refund" (action)="refundOrder()"></app-button>
+                </div>
               </div>
             </div>
           </section>
@@ -152,16 +195,31 @@ import { LocalizedCurrencyPipe } from '../../shared/localized-currency.pipe';
           <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold text-slate-900">Content editor</h2>
-              <app-button size="sm" variant="ghost" label="Save"></app-button>
+              <app-button size="sm" variant="ghost" label="Save" (action)="saveContent()"></app-button>
             </div>
             <label class="grid gap-1 text-sm font-medium text-slate-700">
-              Homepage hero
-              <textarea rows="3" class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="homeHero"></textarea>
+              Homepage hero headline
+              <input class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="homeHero.headline" />
             </label>
             <label class="grid gap-1 text-sm font-medium text-slate-700">
-              About page
+              Hero subtext
+              <textarea rows="2" class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="homeHero.subtext"></textarea>
+            </label>
+            <label class="grid gap-1 text-sm font-medium text-slate-700">
+              Hero image URL
+              <input class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="homeHero.image" />
+            </label>
+            <label class="grid gap-1 text-sm font-medium text-slate-700">
+              Static page content
               <textarea rows="3" class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="aboutContent"></textarea>
             </label>
+            <div class="rounded-lg border border-dashed border-slate-200 p-3 bg-slate-50">
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Preview</p>
+              <h3 class="text-lg font-semibold text-slate-900">{{ homeHero.headline }}</h3>
+              <p class="text-sm text-slate-700">{{ homeHero.subtext }}</p>
+              <p class="text-xs text-slate-500">Image: {{ homeHero.image || 'not set' }}</p>
+            </div>
+            <p *ngIf="contentMessage" class="text-sm text-emerald-700">{{ contentMessage }}</p>
           </section>
 
           <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -203,11 +261,12 @@ export class AdminComponent {
 
   orderFilter = '';
   orders = signal([
-    { id: '1001', customer: 'Jane', total: 120, status: 'processing' },
-    { id: '1000', customer: 'Alex', total: 85, status: 'shipped' }
+    { id: '1001', customer: 'Jane', total: 120, status: 'processing', date: '2025-11-01' },
+    { id: '1000', customer: 'Alex', total: 85, status: 'shipped', date: '2025-10-15' }
   ]);
+  activeOrder: any = null;
 
-  homeHero = 'Welcome to AdrianaArt!';
+  homeHero = { headline: 'Welcome to AdrianaArt!', subtext: 'Handmade collections updated weekly.', image: '' };
   aboutContent = 'Handmade ceramics for your home.';
 
   users = [
@@ -228,6 +287,9 @@ export class AdminComponent {
     description: ''
   };
   formMessage = '';
+  contentMessage = '';
+  selectedIds = new Set<string>();
+  allSelected = false;
 
   filteredProducts() {
     const term = this.productSearch.toLowerCase();
@@ -239,6 +301,47 @@ export class AdminComponent {
   filteredOrders() {
     const f = this.orderFilter;
     return this.orders().filter((o) => (f ? o.status === f : true));
+  }
+
+  selectOrder(order: any): void {
+    this.activeOrder = { ...order };
+  }
+
+  updateOrderStatus(): void {
+    if (!this.activeOrder) return;
+    this.orders.update((orders) =>
+      orders.map((o) => (o.id === this.activeOrder.id ? { ...o, status: this.activeOrder.status } : o))
+    );
+    this.formMessage = `Order #${this.activeOrder.id} status updated (mock).`;
+  }
+
+  refundOrder(): void {
+    if (!this.activeOrder) return;
+    this.activeOrder.status = 'refunded';
+    this.updateOrderStatus();
+    this.formMessage = `Order #${this.activeOrder.id} refunded (mock).`;
+  }
+
+  toggleSelect(slug: string, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) this.selectedIds.add(slug);
+    else this.selectedIds.delete(slug);
+    this.allSelected = this.selectedIds.size === this.products().length;
+  }
+
+  toggleAll(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.allSelected = checked;
+    this.selectedIds = checked ? new Set(this.products().map((p) => p.slug)) : new Set<string>();
+  }
+
+  bulkUpdateStatus(status: string): void {
+    this.products.update((items) =>
+      items.map((p) => (this.selectedIds.has(p.slug) ? { ...p, status } : p))
+    );
+    this.selectedIds.clear();
+    this.allSelected = false;
+    this.formMessage = `Updated ${status} for selected products (mock).`;
   }
 
   startNewProduct(): void {
@@ -307,5 +410,9 @@ export class AdminComponent {
 
   previewProduct(): void {
     this.formMessage = 'Preview not implemented (placeholder).';
+  }
+
+  saveContent(): void {
+    this.contentMessage = 'Content saved (mock).';
   }
 }
