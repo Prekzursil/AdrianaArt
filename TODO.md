@@ -238,6 +238,8 @@ Below is a structured checklist you can turn into issues.
 - [x] Implement avatar upload wired to storage backend.
 - [x] Add backend email verification tokens/endpoints + frontend resend/confirm wiring.
 - [x] Implement saved payment methods (Stripe setup intents) and wire UI add/remove card.
+- [ ] Client/session idle-timeout handling (auto logout + messaging).
+- [ ] Replace address prompt UX with form/modal wired to address CRUD APIs.
 - [ ] Integrate Stripe Elements card entry UI instead of manual payment_method prompts.
 - [ ] Run full frontend unit/e2e tests after payment + verification changes.
 - [ ] Run full backend test suite post-payment changes (beyond targeted tests).
