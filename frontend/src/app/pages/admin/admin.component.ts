@@ -168,6 +168,26 @@ import { ToastService } from '../../core/toast.service';
 
           <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
             <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-slate-900">Categories</h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-2 items-end text-sm">
+              <app-input label="Name" [(value)]="categoryName"></app-input>
+              <app-input label="Slug" [(value)]="categorySlug"></app-input>
+              <app-button size="sm" label="Add category" (action)="addCategory()"></app-button>
+            </div>
+            <div class="grid gap-2 text-sm text-slate-700">
+              <div *ngFor="let cat of categories" class="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+                <div>
+                  <p class="font-semibold text-slate-900">{{ cat.name }}</p>
+                  <p class="text-xs text-slate-500">Slug: {{ cat.slug }}</p>
+                </div>
+                <app-button size="sm" variant="ghost" label="Delete" (action)="deleteCategory(cat.slug)"></app-button>
+              </div>
+            </div>
+          </section>
+
+          <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold text-slate-900">Orders</h2>
               <label class="text-sm text-slate-700">
                 Status
@@ -342,6 +362,8 @@ export class AdminComponent implements OnInit {
 
   products: AdminProduct[] = [];
   categories: AdminCategory[] = [];
+  categoryName = '';
+  categorySlug = '';
   selectedIds = new Set<string>();
   allSelected = false;
 
@@ -485,6 +507,32 @@ export class AdminComponent implements OnInit {
         this.computeAllSelected();
       },
       error: () => this.toast.error('Failed to delete product')
+    });
+  }
+
+  addCategory(): void {
+    if (!this.categoryName || !this.categorySlug) {
+      this.toast.error('Category name and slug are required');
+      return;
+    }
+    this.admin.createCategory({ name: this.categoryName, slug: this.categorySlug }).subscribe({
+      next: (cat) => {
+        this.categories = [cat, ...this.categories];
+        this.categoryName = '';
+        this.categorySlug = '';
+        this.toast.success('Category added');
+      },
+      error: () => this.toast.error('Failed to add category')
+    });
+  }
+
+  deleteCategory(slug: string): void {
+    this.admin.deleteCategory(slug).subscribe({
+      next: () => {
+        this.categories = this.categories.filter((c) => c.slug !== slug);
+        this.toast.success('Category deleted');
+      },
+      error: () => this.toast.error('Failed to delete category')
     });
   }
 

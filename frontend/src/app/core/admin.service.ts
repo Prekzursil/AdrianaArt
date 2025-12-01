@@ -149,6 +149,14 @@ export class AdminService {
     return this.api.get<AdminCategory[]>('/catalog/categories');
   }
 
+  createCategory(payload: Partial<AdminCategory>): Observable<AdminCategory> {
+    return this.api.post<AdminCategory>('/catalog/categories', payload);
+  }
+
+  deleteCategory(slug: string): Observable<AdminCategory> {
+    return this.api.delete<AdminCategory>(`/catalog/categories/${slug}`);
+  }
+
   getProduct(slug: string): Observable<AdminProductDetail> {
     return this.api.get<AdminProductDetail>(`/catalog/products/${slug}`);
   }

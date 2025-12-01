@@ -99,6 +99,20 @@ async def update_category(
     return await catalog_service.update_category(session, category, payload)
 
 
+@router.delete("/categories/{slug}", response_model=CategoryRead)
+async def delete_category(
+    slug: str,
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_admin),
+) -> Category:
+    category = await catalog_service.get_category_by_slug(session, slug)
+    if not category:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+    await session.delete(category)
+    await session.commit()
+    return category
+
+
 @router.post("/products", response_model=ProductRead, status_code=status.HTTP_201_CREATED)
 async def create_product(
     payload: ProductCreate,
