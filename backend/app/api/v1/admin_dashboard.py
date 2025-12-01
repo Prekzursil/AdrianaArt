@@ -168,7 +168,7 @@ async def admin_create_coupon(
         active=payload.get("active", True),
     )
     session.add(promo)
-    await session.flush()
+    await session.commit()
     return {
         "id": str(promo.id),
         "code": promo.code,
