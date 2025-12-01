@@ -17,6 +17,7 @@ Key env vars:
 - `SECRET_KEY`, `JWT_ALGORITHM`, `ACCESS_TOKEN_EXP_MINUTES`, `REFRESH_TOKEN_EXP_DAYS`
 - `DATABASE_URL` (async driver, e.g., `postgresql+asyncpg://...`)
 - `SMTP_*`, `FRONTEND_ORIGIN`
+- `STRIPE_SECRET_KEY` (required for live payment flows), `STRIPE_WEBHOOK_SECRET` (if processing webhooks)
 
 ## Database and migrations
 
