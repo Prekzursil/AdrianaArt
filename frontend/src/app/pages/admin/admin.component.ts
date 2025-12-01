@@ -176,7 +176,14 @@ import { ToastService } from '../../core/toast.service';
               <app-button size="sm" label="Add category" (action)="addCategory()"></app-button>
             </div>
             <div class="grid gap-2 text-sm text-slate-700">
-              <div *ngFor="let cat of categories" class="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+              <div
+                *ngFor="let cat of categories"
+                class="flex items-center justify-between rounded-lg border border-slate-200 p-3"
+                draggable="true"
+                (dragstart)="onCategoryDragStart(cat.slug)"
+                (dragover)="onCategoryDragOver($event)"
+                (drop)="onCategoryDrop(cat.slug)"
+              >
                 <div>
                   <p class="font-semibold text-slate-900">{{ cat.name }}</p>
                   <p class="text-xs text-slate-500">Slug: {{ cat.slug }} · Order: {{ cat.sort_order }}</p>
@@ -405,6 +412,7 @@ export class AdminComponent implements OnInit {
   categorySlug = '';
   maintenanceEnabledValue = false;
   maintenanceEnabled = signal<boolean>(false);
+  draggingSlug: string | null = null;
   selectedIds = new Set<string>();
   allSelected = false;
 
@@ -690,6 +698,41 @@ export class AdminComponent implements OnInit {
           this.toast.success('Category order saved');
         },
         error: () => this.toast.error('Failed to reorder categories')
+      });
+  }
+
+  onCategoryDragStart(slug: string): void {
+    this.draggingSlug = slug;
+  }
+
+  onCategoryDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  onCategoryDrop(targetSlug: string): void {
+    if (!this.draggingSlug || this.draggingSlug === targetSlug) {
+      this.draggingSlug = null;
+      return;
+    }
+    const sorted = [...this.categories].sort((a, b) => a.sort_order - b.sort_order);
+    const fromIdx = sorted.findIndex((c) => c.slug === this.draggingSlug);
+    const toIdx = sorted.findIndex((c) => c.slug === targetSlug);
+    if (fromIdx === -1 || toIdx === -1) {
+      this.draggingSlug = null;
+      return;
+    }
+    const [moved] = sorted.splice(fromIdx, 1);
+    sorted.splice(toIdx, 0, moved);
+    sorted.forEach((c, idx) => (c.sort_order = idx));
+    this.admin
+      .reorderCategories(sorted.map((c) => ({ slug: c.slug, sort_order: c.sort_order })))
+      .subscribe({
+        next: (cats) => {
+          this.categories = cats.sort((a, b) => a.sort_order - b.sort_order);
+          this.toast.success('Category order saved');
+        },
+        error: () => this.toast.error('Failed to reorder categories'),
+        complete: () => (this.draggingSlug = null)
       });
   }
 

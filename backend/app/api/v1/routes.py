@@ -66,9 +66,17 @@ def robots() -> Response:
 
 @api_router.get("/feeds/products.json", tags=["sitemap"])
 async def product_feed(session: AsyncSession = Depends(get_session)) -> list[dict]:
-    result = await session.execute(select(Product.slug, Product.name, Product.base_price, Product.currency))
+    result = await session.execute(select(Product.slug, Product.name, Product.base_price, Product.currency, Product.updated_at))
     rows = result.all()
+    base = settings.frontend_origin.rstrip("/")
     return [
-        {"slug": slug, "name": name, "price": float(price), "currency": currency}
-        for slug, name, price, currency in rows
+        {
+            "slug": slug,
+            "name": name,
+            "price": float(price),
+            "currency": currency,
+            "url": f"{base}/products/{slug}",
+            "updated_at": updated_at.isoformat() if updated_at else None,
+        }
+        for slug, name, price, currency, updated_at in rows
     ]
