@@ -264,6 +264,26 @@ import { ToastService } from '../../core/toast.service';
                   <p class="text-xs text-slate-500">{{ c.key }}</p>
                 </div>
                 <span class="text-xs text-slate-500">v{{ c.version }}</span>
+                <app-button size="sm" variant="ghost" label="Edit" (action)="selectContent(c)"></app-button>
+              </div>
+            </div>
+            <div *ngIf="selectedContent" class="grid gap-2 pt-3 border-t border-slate-200">
+              <p class="text-sm font-semibold text-slate-900">Editing: {{ selectedContent.key }}</p>
+              <app-input label="Title" [(value)]="contentForm.title"></app-input>
+              <label class="grid text-sm font-medium text-slate-700">
+                Status
+                <select class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="contentForm.status">
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </label>
+              <label class="grid gap-1 text-sm font-medium text-slate-700">
+                Body
+                <textarea rows="4" class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="contentForm.body_markdown"></textarea>
+              </label>
+              <div class="flex gap-2">
+                <app-button size="sm" label="Save content" (action)="saveContent()"></app-button>
+                <app-button size="sm" variant="ghost" label="Cancel" (action)="cancelContent()"></app-button>
               </div>
             </div>
           </section>
@@ -392,6 +412,12 @@ export class AdminComponent implements OnInit {
   selectedUserRole: string | null = null;
 
   contentBlocks: AdminContent[] = [];
+  selectedContent: AdminContent | null = null;
+  contentForm = {
+    title: '',
+    body_markdown: '',
+    status: 'draft'
+  };
   coupons: AdminCoupon[] = [];
   newCoupon: Partial<AdminCoupon> = { code: '', percentage_off: 0, active: true, currency: 'USD' };
 
@@ -648,5 +674,36 @@ export class AdminComponent implements OnInit {
       },
       error: () => this.toast.error('Failed to update coupon')
     });
+  }
+
+  selectContent(content: AdminContent): void {
+    this.selectedContent = content;
+    this.contentForm = {
+      title: content.title,
+      body_markdown: content.body_markdown || '',
+      status: content.status || 'draft'
+    };
+  }
+
+  saveContent(): void {
+    if (!this.selectedContent) return;
+    this.admin
+      .updateContent(this.selectedContent.key, {
+        title: this.contentForm.title,
+        body_markdown: this.contentForm.body_markdown,
+        status: this.contentForm.status as any
+      })
+      .subscribe({
+        next: (updated) => {
+          this.contentBlocks = this.contentBlocks.map((c) => (c.key === updated.key ? updated : c));
+          this.toast.success('Content updated');
+          this.selectedContent = null;
+        },
+        error: () => this.toast.error('Failed to update content')
+      });
+  }
+
+  cancelContent(): void {
+    this.selectedContent = null;
   }
 }

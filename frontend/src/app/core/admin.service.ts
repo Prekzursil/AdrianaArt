@@ -45,6 +45,8 @@ export interface AdminContent {
   title: string;
   updated_at: string;
   version: number;
+  body_markdown?: string;
+  status?: string;
 }
 
 export interface AdminCoupon {
@@ -119,6 +121,10 @@ export class AdminService {
 
   content(): Observable<AdminContent[]> {
     return this.api.get<AdminContent[]>('/admin/dashboard/content');
+  }
+
+  updateContent(key: string, payload: Partial<AdminContent>): Observable<AdminContent> {
+    return this.api.patch<AdminContent>(`/content/admin/${key}`, payload);
   }
 
   coupons(): Observable<AdminCoupon[]> {
