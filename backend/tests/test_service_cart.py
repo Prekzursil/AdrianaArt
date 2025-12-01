@@ -40,7 +40,7 @@ def test_cart_service_add_and_totals():
             )
             await session.refresh(cart, attribute_names=["items"])
             assert len(cart.items) == 1
-            totals = await cart_service.serialize_cart(cart)
+            totals = await cart_service.serialize_cart(session, cart)
             assert totals.totals.total > Decimal("0")
 
     asyncio.run(run_flow())
