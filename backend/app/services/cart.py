@@ -16,7 +16,6 @@ from app.models.promo import PromoCode
 from app.models.order import Order
 from app.models.user import User
 from app.models.order import ShippingMethod
-from app.schemas.promo import PromoCodeRead
 from app.services import email as email_service
 
 
