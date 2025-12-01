@@ -11,9 +11,8 @@ import { ToastService } from '../../core/toast.service';
 import { AuthService } from '../../core/auth.service';
 import { AccountService, Address, Order, AddressCreateRequest } from '../../core/account.service';
 import { forkJoin } from 'rxjs';
-import { loadStripe, Stripe, StripeElements, StripeCardElement } from '@stripe/stripe-js';
+import { loadStripe, Stripe, StripeElements, StripeCardElement, StripeCardElementChangeEvent } from '@stripe/stripe-js';
 import { ApiService } from '../../core/api.service';
-import { AddressFormComponent } from '../../shared/address-form.component';
 
 @Component({
   selector: 'app-account',
@@ -222,7 +221,7 @@ export class AccountComponent implements OnInit, AfterViewInit, OnDestroy {
   savingCard = false;
   cardReady = false;
   cardError: string | null = null;
-  private stripe?: Stripe;
+  private stripe: Stripe | null = null;
   private elements?: StripeElements;
   private card?: StripeCardElement;
   private clientSecret: string | null = null;
@@ -504,7 +503,7 @@ export class AccountComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.card || !this.cardElementRef) return;
     this.card.mount(this.cardElementRef.nativeElement);
     this.cardReady = true;
-    this.card.on('change', (event) => {
+    this.card.on('change', (event: StripeCardElementChangeEvent) => {
       this.cardError = event.error ? event.error.message ?? 'Card error' : null;
     });
   }
@@ -543,8 +542,6 @@ export class AccountComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
   }
-
-  paymentMethods: any[] = [];
 
   private loadPaymentMethods(): void {
     this.api.get<any[]>('/payment-methods').subscribe({
