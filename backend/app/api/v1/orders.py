@@ -324,10 +324,10 @@ async def get_order(order_id: UUID, current_user=Depends(get_current_user), sess
 
 
 @router.post("/{order_id}/reorder", response_model=CartRead)
-    async def reorder_order(
-        order_id: UUID,
-        current_user=Depends(get_current_user),
-        session: AsyncSession = Depends(get_session),
-    ) -> CartRead:
-        cart = await cart_service.reorder_from_order(session, current_user.id, order_id)
-        return await cart_service.serialize_cart(session, cart)
+async def reorder_order(
+    order_id: UUID,
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> CartRead:
+    cart = await cart_service.reorder_from_order(session, current_user.id, order_id)
+    return await cart_service.serialize_cart(session, cart)
