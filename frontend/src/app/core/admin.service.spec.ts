@@ -80,4 +80,29 @@ describe('AdminService', () => {
     expect(req.request.body).toEqual({ enabled: true });
     req.flush({ enabled: true });
   });
+
+  it('should fetch low stock items', () => {
+    service.lowStock().subscribe((items) => {
+      expect(items.length).toBe(1);
+    });
+    const req = httpMock.expectOne('/api/v1/admin/dashboard/low-stock');
+    expect(req.request.method).toBe('GET');
+    req.flush([{ id: '1', name: 'P', stock_quantity: 1, sku: 'SKU', slug: 'p' }]);
+  });
+
+  it('should update user role and revoke sessions', () => {
+    service.updateUserRole('u1', 'admin').subscribe((res) => {
+      expect(res.role).toBe('admin');
+    });
+    const roleReq = httpMock.expectOne('/api/v1/admin/dashboard/users/u1/role');
+    expect(roleReq.request.method).toBe('PATCH');
+    roleReq.flush({ id: 'u1', role: 'admin' });
+
+    service.revokeSessions('u1').subscribe((res) => {
+      expect(res).toBeNull();
+    });
+    const revokeReq = httpMock.expectOne('/api/v1/admin/dashboard/sessions/u1/revoke');
+    expect(revokeReq.request.method).toBe('POST');
+    revokeReq.flush(null);
+  });
 });
