@@ -66,6 +66,7 @@ export interface AdminCategory {
   name: string;
   slug: string;
   description?: string | null;
+  sort_order?: number;
 }
 
 export interface AdminProductDetail extends AdminProduct {
@@ -163,6 +164,10 @@ export class AdminService {
     return this.api.delete<AdminCategory>(`/catalog/categories/${slug}`);
   }
 
+  reorderCategories(items: { slug: string; sort_order: number }[]): Observable<AdminCategory[]> {
+    return this.api.post<AdminCategory[]>('/catalog/categories/reorder', items);
+  }
+
   getProduct(slug: string): Observable<AdminProductDetail> {
     return this.api.get<AdminProductDetail>(`/catalog/products/${slug}`);
   }
@@ -205,5 +210,13 @@ export class AdminService {
 
   updateUserRole(userId: string, role: string): Observable<AdminUser> {
     return this.api.patch<AdminUser>(`/admin/dashboard/users/${userId}/role`, { role });
+  }
+
+  getMaintenance(): Observable<{ enabled: boolean }> {
+    return this.api.get<{ enabled: boolean }>('/admin/dashboard/maintenance');
+  }
+
+  setMaintenance(enabled: boolean): Observable<{ enabled: boolean }> {
+    return this.api.post<{ enabled: boolean }>('/admin/dashboard/maintenance', { enabled });
   }
 }

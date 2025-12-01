@@ -179,9 +179,13 @@ import { ToastService } from '../../core/toast.service';
               <div *ngFor="let cat of categories" class="flex items-center justify-between rounded-lg border border-slate-200 p-3">
                 <div>
                   <p class="font-semibold text-slate-900">{{ cat.name }}</p>
-                  <p class="text-xs text-slate-500">Slug: {{ cat.slug }}</p>
+                  <p class="text-xs text-slate-500">Slug: {{ cat.slug }} · Order: {{ cat.sort_order }}</p>
                 </div>
-                <app-button size="sm" variant="ghost" label="Delete" (action)="deleteCategory(cat.slug)"></app-button>
+                <div class="flex gap-2">
+                  <app-button size="sm" variant="ghost" label="↑" (action)="moveCategory(cat, -1)"></app-button>
+                  <app-button size="sm" variant="ghost" label="↓" (action)="moveCategory(cat, 1)"></app-button>
+                  <app-button size="sm" variant="ghost" label="Delete" (action)="deleteCategory(cat.slug)"></app-button>
+                </div>
               </div>
             </div>
           </section>
@@ -347,6 +351,21 @@ import { ToastService } from '../../core/toast.service';
 
           <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
             <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-slate-900">Maintenance & feeds</h2>
+              <app-button size="sm" label="Save" (action)="saveMaintenance()"></app-button>
+            </div>
+            <div class="flex items-center gap-3 text-sm">
+              <label class="flex items-center gap-2">
+                <input type="checkbox" [(ngModel)]="maintenanceEnabledValue" /> Maintenance mode
+              </label>
+              <a class="text-indigo-600" href="/api/v1/sitemap.xml" target="_blank" rel="noopener">Sitemap</a>
+              <a class="text-indigo-600" href="/api/v1/robots.txt" target="_blank" rel="noopener">Robots.txt</a>
+              <a class="text-indigo-600" href="/api/v1/feeds/products.json" target="_blank" rel="noopener">Product feed</a>
+            </div>
+          </section>
+
+          <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold text-slate-900">Low stock</h2>
               <span class="text-xs text-slate-500">Below 5 units</span>
             </div>
@@ -384,6 +403,8 @@ export class AdminComponent implements OnInit {
   categories: AdminCategory[] = [];
   categoryName = '';
   categorySlug = '';
+  maintenanceEnabledValue = false;
+  maintenanceEnabled = signal<boolean>(false);
   selectedIds = new Set<string>();
   allSelected = false;
 
@@ -453,6 +474,7 @@ export class AdminComponent implements OnInit {
       }
     });
     this.admin.getCategories().subscribe({ next: (cats) => (this.categories = cats) });
+    this.admin.getMaintenance().subscribe({ next: (m) => this.maintenanceEnabled.set(m.enabled) });
     this.loading.set(false);
   }
 
@@ -652,6 +674,25 @@ export class AdminComponent implements OnInit {
     });
   }
 
+  moveCategory(cat: AdminCategory, delta: number): void {
+    const sorted = [...this.categories].sort((a, b) => a.sort_order - b.sort_order);
+    const index = sorted.findIndex((c) => c.slug === cat.slug);
+    const swapIndex = index + delta;
+    if (index < 0 || swapIndex < 0 || swapIndex >= sorted.length) return;
+    const tmp = sorted[index].sort_order;
+    sorted[index].sort_order = sorted[swapIndex].sort_order;
+    sorted[swapIndex].sort_order = tmp;
+    this.admin
+      .reorderCategories(sorted.map((c) => ({ slug: c.slug, sort_order: c.sort_order })))
+      .subscribe({
+        next: (cats) => {
+          this.categories = cats.sort((a, b) => a.sort_order - b.sort_order);
+          this.toast.success('Category order saved');
+        },
+        error: () => this.toast.error('Failed to reorder categories')
+      });
+  }
+
   createCoupon(): void {
     if (!this.newCoupon.code) {
       this.toast.error('Coupon code is required');
@@ -705,5 +746,16 @@ export class AdminComponent implements OnInit {
 
   cancelContent(): void {
     this.selectedContent = null;
+  }
+
+  saveMaintenance(): void {
+    this.admin.setMaintenance(this.maintenanceEnabledValue).subscribe({
+      next: (res) => {
+        this.maintenanceEnabled.set(res.enabled);
+        this.maintenanceEnabledValue = res.enabled;
+        this.toast.success('Maintenance mode updated');
+      },
+      error: () => this.toast.error('Failed to update maintenance mode')
+    });
   }
 }
