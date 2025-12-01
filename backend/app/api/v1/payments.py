@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.core.dependencies import get_current_user, get_current_user_optional
+from app.core.dependencies import get_current_user_optional
 from app.db.session import get_session
 from app.models.cart import Cart
 from app.services import payments

@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.models.cart import Cart, CartItem
-from app.models.catalog import Product, ProductVariant, ProductImage
+from app.models.catalog import Product, ProductVariant
 from app.schemas.cart import CartItemCreate, CartItemUpdate, CartRead, CartItemRead, Totals
 from app.schemas.promo import PromoCodeRead, PromoCodeCreate
 from app.schemas.cart_sync import CartSyncItem

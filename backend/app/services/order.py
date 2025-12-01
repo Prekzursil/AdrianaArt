@@ -13,7 +13,6 @@ from app.models.cart import Cart
 from app.models.order import Order, OrderItem, OrderStatus, ShippingMethod, OrderEvent
 from app.schemas.order import OrderUpdate, ShippingMethodCreate
 from app.services import payments
-from app.schemas.checkout import GuestCheckoutRequest  # type: ignore
 
 
 async def build_order_from_cart(
