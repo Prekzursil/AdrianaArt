@@ -1,17 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, AfterViewInit, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, signal, ViewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ContainerComponent } from '../../layout/container.component';
 import { BreadcrumbComponent } from '../../shared/breadcrumb.component';
 import { ButtonComponent } from '../../shared/button.component';
 import { LocalizedCurrencyPipe } from '../../shared/localized-currency.pipe';
+import { AddressFormComponent } from '../../shared/address-form.component';
 import { ToastService } from '../../core/toast.service';
 import { AuthService } from '../../core/auth.service';
-import { AccountService, Address, Order } from '../../core/account.service';
+import { AccountService, Address, Order, AddressCreateRequest } from '../../core/account.service';
 import { forkJoin } from 'rxjs';
 import { loadStripe, Stripe, StripeElements, StripeCardElement } from '@stripe/stripe-js';
 import { ApiService } from '../../core/api.service';
+import { AddressFormComponent } from '../../shared/address-form.component';
 
 @Component({
   selector: 'app-account',
@@ -23,7 +25,8 @@ import { ApiService } from '../../core/api.service';
     ContainerComponent,
     BreadcrumbComponent,
     ButtonComponent,
-    LocalizedCurrencyPipe
+    LocalizedCurrencyPipe,
+    AddressFormComponent
   ],
   template: `
     <app-container classes="py-10 grid gap-6">
@@ -79,9 +82,16 @@ import { ApiService } from '../../core/api.service';
         <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold text-slate-900">Addresses</h2>
-            <app-button size="sm" variant="ghost" label="Add address" (action)="addAddress()"></app-button>
+            <app-button size="sm" variant="ghost" label="Add address" (action)="openAddressForm()"></app-button>
           </div>
-          <div *ngIf="addresses().length === 0" class="text-sm text-slate-700">No addresses yet.</div>
+          <div *ngIf="showAddressForm" class="rounded-lg border border-slate-200 p-3">
+            <app-address-form
+              [model]="addressModel"
+              (save)="saveAddress($event)"
+              (cancel)="closeAddressForm()"
+            ></app-address-form>
+          </div>
+          <div *ngIf="addresses().length === 0 && !showAddressForm" class="text-sm text-slate-700">No addresses yet.</div>
           <div *ngFor="let addr of addresses()" class="rounded-lg border border-slate-200 p-3 grid gap-1 text-sm text-slate-700">
             <div class="flex items-center justify-between">
               <span class="font-semibold text-slate-900">{{ addr.label || 'Address' }}</span>
@@ -90,7 +100,7 @@ import { ApiService } from '../../core/api.service';
                 <span *ngIf="addr.is_default_billing" class="rounded-full bg-slate-100 px-2 py-0.5">Default billing</span>
               </div>
               <div class="flex gap-2">
-                <app-button size="sm" variant="ghost" label="Edit" (action)="editAddress(addr.id)"></app-button>
+                <app-button size="sm" variant="ghost" label="Edit" (action)="editAddress(addr)"></app-button>
                 <app-button size="sm" variant="ghost" label="Remove" (action)="removeAddress(addr.id)"></app-button>
               </div>
             </div>
@@ -185,7 +195,7 @@ import { ApiService } from '../../core/api.service';
     </app-container>
   `
 })
-export class AccountComponent implements OnInit, AfterViewInit {
+export class AccountComponent implements OnInit, AfterViewInit, OnDestroy {
   crumbs = [
     { label: 'Home', url: '/' },
     { label: 'Account' }
@@ -217,6 +227,16 @@ export class AccountComponent implements OnInit, AfterViewInit {
   private card?: StripeCardElement;
   private clientSecret: string | null = null;
   @ViewChild('cardHost') cardElementRef?: ElementRef<HTMLDivElement>;
+  showAddressForm = false;
+  editingAddressId: string | null = null;
+  addressModel: AddressCreateRequest = {
+    line1: '',
+    city: '',
+    postal_code: '',
+    country: 'US'
+  };
+  private idleTimer?: any;
+  idleWarning = signal<string | null>(null);
 
   constructor(
     private toast: ToastService,
@@ -231,6 +251,9 @@ export class AccountComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.loadData();
     this.loadPaymentMethods();
+    this.resetIdleTimer();
+    window.addEventListener('mousemove', this.resetIdleTimer.bind(this));
+    window.addEventListener('keydown', this.resetIdleTimer.bind(this));
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -282,20 +305,65 @@ export class AccountComponent implements OnInit, AfterViewInit {
     if (this.page > 1) this.page -= 1;
   }
 
-  addAddress(): void {
-    this.toast.info('Address management coming soon.', 'Use backend API to add new addresses.');
+  openAddressForm(existing?: Address): void {
+    this.showAddressForm = true;
+    this.editingAddressId = existing?.id ?? null;
+    this.addressModel = {
+      line1: existing?.line1 || '',
+      line2: existing?.line2 || '',
+      city: existing?.city || '',
+      region: existing?.region || '',
+      postal_code: existing?.postal_code || '',
+      country: existing?.country || 'US',
+      label: existing?.label || 'Home',
+      is_default_shipping: existing?.is_default_shipping,
+      is_default_billing: existing?.is_default_billing
+    };
   }
 
-  editAddress(id: string): void {
-    this.toast.info('Edit address not yet wired in UI', id);
+  closeAddressForm(): void {
+    this.showAddressForm = false;
+    this.editingAddressId = null;
+  }
+
+  saveAddress(payload: AddressCreateRequest): void {
+    if (this.editingAddressId) {
+      this.account.updateAddress(this.editingAddressId, payload).subscribe({
+        next: (addr) => {
+          this.toast.success('Address updated');
+          this.addresses.set(this.addresses().map((a) => (a.id === this.editingAddressId ? addr : a)));
+          this.closeAddressForm();
+        },
+        error: (err) => this.toast.error(err?.error?.detail || 'Could not update address.')
+      });
+    } else {
+      this.account.createAddress(payload).subscribe({
+        next: (addr) => {
+          this.toast.success('Address added');
+          this.addresses.set([...this.addresses(), addr]);
+          this.closeAddressForm();
+        },
+        error: (err) => this.toast.error(err?.error?.detail || 'Could not add address.')
+      });
+    }
+  }
+
+  editAddress(addr: Address): void {
+    this.openAddressForm(addr);
   }
 
   removeAddress(id: string): void {
-    this.toast.info('Address removal will be handled via API soon.', id);
+    if (!confirm('Remove this address?')) return;
+    this.account.deleteAddress(id).subscribe({
+      next: () => {
+        this.toast.success('Address removed');
+        this.addresses.set(this.addresses().filter((a) => a.id !== id));
+      },
+      error: () => this.toast.error('Could not remove address.')
+    });
   }
 
   addCard(): void {
-  startAddCard(): void {
     this.cardError = null;
     this.savingCard = false;
     this.cardElementVisible = true;
@@ -355,6 +423,7 @@ export class AccountComponent implements OnInit, AfterViewInit {
       next: (tokens) => {
         if (tokens) {
           this.toast.success('Session refreshed');
+          this.resetIdleTimer();
         } else {
           this.toast.error('No refresh token available');
         }
@@ -373,6 +442,28 @@ export class AccountComponent implements OnInit, AfterViewInit {
   private computeTotalPages(total?: number): void {
     const count = total ?? this.filteredOrders().length;
     this.totalPages = Math.max(1, Math.ceil(count / this.pageSize));
+  }
+
+  private resetIdleTimer(): void {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+    }
+    this.idleWarning.set(null);
+    this.idleTimer = setTimeout(() => {
+      this.idleWarning.set('You have been logged out due to inactivity.');
+      this.signOut();
+    }, 30 * 60 * 1000); // 30 minutes
+  }
+
+  ngOnDestroy(): void {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+    }
+    if (this.card) {
+      this.card.destroy();
+    }
+    window.removeEventListener('mousemove', this.resetIdleTimer.bind(this));
+    window.removeEventListener('keydown', this.resetIdleTimer.bind(this));
   }
 
   private async setupStripe(): Promise<void> {
