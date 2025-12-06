@@ -296,7 +296,7 @@ Below is a structured checklist you can turn into issues.
 - [x] Loading skeletons/spinners for lists and details.
 - [x] Toast notifications for key actions.
 - [x] Image optimization (srcset/lazy loading/modern formats).
-- [ ] SEO meta tags per page; Open Graph; sitemap/robots.
+- [x] SEO meta tags per page; Open Graph; sitemap/robots.
 - [ ] Lighthouse perf + accessibility fixes.
 - [ ] Keyboard navigation, contrast, accessible labels.
 - [ ] Prefetch critical API calls on navigation.
@@ -306,8 +306,8 @@ Below is a structured checklist you can turn into issues.
 - [x] Skip-to-content link.
 - [x] Motion-reduced animations option.
 - [ ] 404/500 error pages with helpful actions.
-- [ ] Structured data (JSON-LD) for products.
-- [ ] Breadcrumb structured data for SEO.
+- [x] Structured data (JSON-LD) for products.
+- [x] Breadcrumb structured data for SEO.
 - [ ] Perf budget and bundle analysis (Angular).
 
 ## Internationalization & Localization (RO/EN)

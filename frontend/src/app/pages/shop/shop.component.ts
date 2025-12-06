@@ -10,6 +10,7 @@ import { ProductCardComponent } from '../../shared/product-card.component';
 import { SkeletonComponent } from '../../shared/skeleton.component';
 import { ToastService } from '../../core/toast.service';
 import { BreadcrumbComponent } from '../../shared/breadcrumb.component';
+import { Meta, Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-shop',
@@ -223,10 +224,22 @@ export class ShopComponent implements OnInit {
     private catalog: CatalogService,
     private route: ActivatedRoute,
     private router: Router,
-    private toast: ToastService
+    private toast: ToastService,
+    private title: Title,
+    private meta: Meta
   ) {}
 
   ngOnInit(): void {
+    this.title.setTitle('Shop | AdrianaArt');
+    this.meta.updateTag({
+      name: 'description',
+      content: 'Browse categories, filter by price and tags, and find handcrafted ceramics on AdrianaArt.'
+    });
+    this.meta.updateTag({ property: 'og:title', content: 'Shop handcrafted ceramics | AdrianaArt' });
+    this.meta.updateTag({
+      property: 'og:description',
+      content: 'Search and filter handcrafted ceramics by category, price, and tags.'
+    });
     this.fetchCategories();
     this.route.queryParams.subscribe((params) => {
       this.syncFiltersFromQuery(params);
