@@ -4,6 +4,7 @@ from urllib.parse import urlparse, parse_qs
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.db.base import Base
@@ -41,6 +42,12 @@ def _parse_state_from_start(client: TestClient) -> str:
     auth_url = res.json()["auth_url"]
     qs = parse_qs(urlparse(auth_url).query)
     return qs["state"][0]
+
+
+def _parse_state_from_link(client: TestClient) -> str:
+    res = client.get("/api/v1/auth/google/link/start", headers={"Authorization": "Bearer fake"})
+    assert res.status_code in (200, 401)  # real token required, but this helper not used in secured call
+    return ""
 
 
 def test_google_start_builds_url(monkeypatch: pytest.MonkeyPatch, test_app):
@@ -143,3 +150,54 @@ def test_google_callback_creates_user(monkeypatch: pytest.MonkeyPatch, test_app)
             assert user is not None
             assert user.google_email == "newuser@example.com"
     asyncio.run(verify_db())
+
+
+def test_google_link_and_unlink(monkeypatch: pytest.MonkeyPatch, test_app):
+    client: TestClient = test_app["client"]  # type: ignore
+    SessionLocal = test_app["session_factory"]  # type: ignore
+    monkeypatch.setattr(settings, "google_client_id", "client-id")
+    monkeypatch.setattr(settings, "google_client_secret", "client-secret")
+    monkeypatch.setattr(settings, "google_redirect_uri", "http://localhost/callback")
+
+    # Register and login to get token
+    res = client.post("/api/v1/auth/register", json={"email": "link@example.com", "password": "linkpass"})
+    assert res.status_code == 201
+    token = res.json()["tokens"]["access_token"]
+
+    async def fake_exchange(code: str):
+        return {
+            "sub": "link-sub",
+            "email": "link@example.com",
+            "email_verified": True,
+            "name": "Link User",
+            "picture": "http://example.com/pic.png",
+        }
+
+    monkeypatch.setattr(auth_service, "exchange_google_code", fake_exchange)
+    state = _parse_state_from_start(client)  # reuse start to build state template
+    # rebuild state for link with correct uid
+    async def get_user_id():
+        async with SessionLocal() as session:
+            result = await session.execute(select(User).where(User.email == "link@example.com"))
+            return str(result.scalar_one().id)
+    uid = asyncio.run(get_user_id())
+    from app.api.v1.auth import _build_google_state  # type: ignore
+    state = _build_google_state("google_link", uid)
+
+    res = client.post(
+        "/api/v1/auth/google/link",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"code": "abc", "state": state, "password": "linkpass"},
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["google_sub"] == "link-sub"
+
+    # Unlink
+    res = client.post(
+        "/api/v1/auth/google/unlink",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"password": "linkpass"},
+    )
+    assert res.status_code == 200, res.text
+    assert res.json()["google_sub"] is None

@@ -1,5 +1,6 @@
 from pathlib import Path
 import secrets
+import logging
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
@@ -31,6 +32,7 @@ from app.services import email as email_service
 from app.services import storage
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 register_rate_limit = per_identifier_limiter(
     lambda r: r.client.host if r.client else "anon", settings.auth_rate_limit_register, 60
@@ -41,18 +43,22 @@ reset_request_rate_limit = limiter("auth:reset_request", settings.auth_rate_limi
 reset_confirm_rate_limit = limiter("auth:reset_confirm", settings.auth_rate_limit_reset_confirm, 60)
 
 
-def _build_google_state() -> str:
+def _build_google_state(kind: str, user_id: str | None = None) -> str:
     payload = {
         "sub": "google-oauth",
-        "type": "google_state",
+        "type": kind,
         "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
     }
+    if user_id:
+        payload["uid"] = user_id
     return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
-def _validate_google_state(state: str) -> None:
+def _validate_google_state(state: str, expected_type: str, expected_user_id: str | None = None) -> None:
     data = security.decode_token(state)
-    if not data or data.get("type") != "google_state":
+    if not data or data.get("type") != expected_type:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid state")
+    if expected_user_id and data.get("uid") != expected_user_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid state")
 
 
@@ -258,7 +264,7 @@ async def confirm_password_reset(
 async def google_start() -> dict:
     if not settings.google_client_id or not settings.google_redirect_uri:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google OAuth not configured")
-    state = _build_google_state()
+    state = _build_google_state("google_state")
     params = {
         "client_id": settings.google_client_id,
         "redirect_uri": settings.google_redirect_uri,
@@ -278,7 +284,7 @@ async def google_callback(
     session: AsyncSession = Depends(get_session),
     response: Response = None,
 ) -> AuthResponse:
-    _validate_google_state(payload.state)
+    _validate_google_state(payload.state, "google_state")
     profile = await auth_service.exchange_google_code(payload.code)
     sub = profile.get("sub")
     email = profile.get("email")
@@ -296,6 +302,7 @@ async def google_callback(
         tokens = await auth_service.issue_tokens_for_user(session, existing_sub)
         if response:
             set_refresh_cookie(response, tokens["refresh_token"])
+        logger.info("google_login_existing", extra={"user_id": str(existing_sub.id)})
         return AuthResponse(user=UserResponse.model_validate(existing_sub), tokens=TokenPair(**tokens))
 
     existing_email = await auth_service.get_user_by_email(session, email)
@@ -319,7 +326,89 @@ async def google_callback(
     session.add(user)
     await session.commit()
     await session.refresh(user)
+    logger.info("google_login_first_time", extra={"user_id": str(user.id)})
     tokens = await auth_service.issue_tokens_for_user(session, user)
     if response:
         set_refresh_cookie(response, tokens["refresh_token"])
     return AuthResponse(user=UserResponse.model_validate(user), tokens=TokenPair(**tokens))
+
+
+@router.get("/google/link/start", response_model=dict)
+async def google_link_start(current_user: User = Depends(get_current_user)) -> dict:
+    if not settings.google_client_id or not settings.google_redirect_uri:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google OAuth not configured")
+    state = _build_google_state("google_link", str(current_user.id))
+    params = {
+        "client_id": settings.google_client_id,
+        "redirect_uri": settings.google_redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account",
+        "state": state,
+    }
+    url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
+    return {"auth_url": url}
+
+
+class GoogleLinkCallback(BaseModel):
+    code: str
+    state: str
+    password: str
+
+
+@router.post("/google/link", response_model=UserResponse)
+async def google_link(
+    payload: GoogleLinkCallback,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> UserResponse:
+    _validate_google_state(payload.state, "google_link", str(current_user.id))
+    if not security.verify_password(payload.password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid password")
+    profile = await auth_service.exchange_google_code(payload.code)
+    sub = profile.get("sub")
+    email = profile.get("email")
+    name = profile.get("name")
+    picture = profile.get("picture")
+    if not sub or not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google profile")
+    domain = email.split("@")[-1]
+    if settings.google_allowed_domains and domain not in settings.google_allowed_domains:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email domain not allowed")
+    existing_sub = await auth_service.get_user_by_google_sub(session, sub)
+    if existing_sub and existing_sub.id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Google account already linked elsewhere")
+    current_user.google_sub = sub
+    current_user.google_email = email
+    current_user.google_picture_url = picture
+    current_user.email_verified = bool(profile.get("email_verified")) or current_user.email_verified
+    if not current_user.name:
+        current_user.name = name
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(current_user)
+    logger.info("user_linked_google", extra={"user_id": str(current_user.id)})
+    return UserResponse.model_validate(current_user)
+
+
+class UnlinkRequest(BaseModel):
+    password: str
+
+
+@router.post("/google/unlink", response_model=UserResponse)
+async def google_unlink(
+    payload: UnlinkRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> UserResponse:
+    if not security.verify_password(payload.password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid password")
+    current_user.google_sub = None
+    current_user.google_email = None
+    current_user.google_picture_url = None
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(current_user)
+    logger.info("user_unlinked_google", extra={"user_id": str(current_user.id)})
+    return UserResponse.model_validate(current_user)

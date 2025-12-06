@@ -334,13 +334,13 @@ Below is a structured checklist you can turn into issues.
 - [x] `/auth/google/callback` exchanges code, fetches profile, maps to local user.
 - [x] Handle email collision: prompt linking instead of duplicate creation when email matches existing user.
 - [x] Google login when `google_sub` exists issues standard access/refresh tokens.
-- [ ] `/auth/google/link` for logged-in users to link Google (password confirmation).
-- [ ] `/auth/google/unlink` to disconnect Google profile (must retain password).
-- [ ] Validation to prevent linking a Google account already linked elsewhere.
+- [x] `/auth/google/link` for logged-in users to link Google (password confirmation).
+- [x] `/auth/google/unlink` to disconnect Google profile (must retain password).
+- [x] Validation to prevent linking a Google account already linked elsewhere.
 - [ ] Frontend login/register “Continue with Google” flow and callback handling.
 - [ ] Account settings “Connected accounts” section with link/unlink actions.
-- [ ] Log security events for linking/unlinking and first-time Google logins.
-- [ ] Unit tests for Google OAuth flows (happy path, link existing, conflicting emails, unlink).
+- [x] Log security events for linking/unlinking and first-time Google logins.
+- [x] Unit tests for Google OAuth flows (happy path, link existing, conflicting emails, unlink).
 - [ ] README docs for Google OAuth setup/testing (console steps, redirect URLs).
 
 ## Admin Dashboard – CMS & UX Enhancements
