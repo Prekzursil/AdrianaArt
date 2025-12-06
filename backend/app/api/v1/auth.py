@@ -1,16 +1,21 @@
 from pathlib import Path
+import secrets
+from datetime import datetime, timedelta, timezone
+from urllib.parse import urlencode
+
+from jose import jwt
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import security
 from app.core.config import settings
 from app.core.dependencies import get_current_user, require_admin
 from app.core.rate_limit import limiter, per_identifier_limiter
 from app.core.security import decode_token
 from app.db.session import get_session
 from app.models.user import User
-from app.core import security
 from app.schemas.auth import (
     AuthResponse,
     EmailVerificationConfirm,
@@ -34,6 +39,21 @@ login_rate_limit = limiter("auth:login", settings.auth_rate_limit_login, 60)
 refresh_rate_limit = limiter("auth:refresh", settings.auth_rate_limit_refresh, 60)
 reset_request_rate_limit = limiter("auth:reset_request", settings.auth_rate_limit_reset_request, 60)
 reset_confirm_rate_limit = limiter("auth:reset_confirm", settings.auth_rate_limit_reset_confirm, 60)
+
+
+def _build_google_state() -> str:
+    payload = {
+        "sub": "google-oauth",
+        "type": "google_state",
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+
+
+def _validate_google_state(state: str) -> None:
+    data = security.decode_token(state)
+    if not data or data.get("type") != "google_state":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid state")
 
 
 def set_refresh_cookie(response: Response, token: str) -> None:
@@ -64,6 +84,11 @@ class ChangePasswordRequest(BaseModel):
 
 class PreferredLanguageUpdate(BaseModel):
     preferred_language: str = Field(pattern="^(en|ro)$", description="Language code, e.g., en or ro")
+
+
+class GoogleCallback(BaseModel):
+    code: str
+    state: str
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
@@ -227,3 +252,74 @@ async def confirm_password_reset(
 ) -> dict[str, str]:
     await auth_service.confirm_reset_token(session, payload.token, payload.new_password)
     return {"status": "updated"}
+
+
+@router.get("/google/start", response_model=dict)
+async def google_start() -> dict:
+    if not settings.google_client_id or not settings.google_redirect_uri:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google OAuth not configured")
+    state = _build_google_state()
+    params = {
+        "client_id": settings.google_client_id,
+        "redirect_uri": settings.google_redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account",
+        "state": state,
+    }
+    url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
+    return {"auth_url": url}
+
+
+@router.post("/google/callback", response_model=AuthResponse)
+async def google_callback(
+    payload: GoogleCallback,
+    session: AsyncSession = Depends(get_session),
+    response: Response = None,
+) -> AuthResponse:
+    _validate_google_state(payload.state)
+    profile = await auth_service.exchange_google_code(payload.code)
+    sub = profile.get("sub")
+    email = profile.get("email")
+    name = profile.get("name")
+    picture = profile.get("picture")
+    email_verified = bool(profile.get("email_verified"))
+    if not sub or not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google profile")
+    domain = email.split("@")[-1]
+    if settings.google_allowed_domains and domain not in settings.google_allowed_domains:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email domain not allowed")
+
+    existing_sub = await auth_service.get_user_by_google_sub(session, sub)
+    if existing_sub:
+        tokens = await auth_service.issue_tokens_for_user(session, existing_sub)
+        if response:
+            set_refresh_cookie(response, tokens["refresh_token"])
+        return AuthResponse(user=UserResponse.model_validate(existing_sub), tokens=TokenPair(**tokens))
+
+    existing_email = await auth_service.get_user_by_email(session, email)
+    if existing_email and existing_email.google_sub and existing_email.google_sub != sub:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Google account already linked elsewhere")
+    if existing_email and not existing_email.google_sub:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account exists; linking required")
+
+    password_placeholder = security.hash_password(secrets.token_urlsafe(16))
+    user = User(
+        email=email,
+        hashed_password=password_placeholder,
+        name=name,
+        avatar_url=picture,
+        google_sub=sub,
+        google_email=email,
+        google_picture_url=picture,
+        email_verified=email_verified,
+        preferred_language="en",
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    tokens = await auth_service.issue_tokens_for_user(session, user)
+    if response:
+        set_refresh_cookie(response, tokens["refresh_token"])
+    return AuthResponse(user=UserResponse.model_validate(user), tokens=TokenPair(**tokens))

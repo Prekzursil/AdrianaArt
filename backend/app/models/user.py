@@ -24,6 +24,9 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     preferred_language: Mapped[str | None] = mapped_column(String(10), nullable=True, default="en")
     email_verified: Mapped[bool] = mapped_column(default=False, nullable=False)
+    google_sub: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True, index=True)
+    google_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    google_picture_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False, server_default=UserRole.customer.value)
     created_at: Mapped[datetime] = mapped_column(

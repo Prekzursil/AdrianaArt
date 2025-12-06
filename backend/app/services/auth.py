@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 import secrets
 import uuid
+from typing import Any
 
+import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -14,6 +16,11 @@ from app.schemas.user import UserCreate
 
 async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
     result = await session.execute(select(User).where(User.email == email))
+    return result.scalar_one_or_none()
+
+
+async def get_user_by_google_sub(session: AsyncSession, google_sub: str) -> User | None:
+    result = await session.execute(select(User).where(User.google_sub == google_sub))
     return result.scalar_one_or_none()
 
 
@@ -176,3 +183,30 @@ async def validate_refresh_token(session: AsyncSession, token: str) -> RefreshSe
     if not stored or stored.revoked or not expires_at or expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
     return stored
+
+
+async def exchange_google_code(code: str) -> dict[str, Any]:
+    if not settings.google_client_id or not settings.google_client_secret or not settings.google_redirect_uri:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google OAuth not configured")
+    token_url = "https://oauth2.googleapis.com/token"
+    userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+    async with httpx.AsyncClient(timeout=10) as client:
+        token_resp = await client.post(
+            token_url,
+            data={
+                "code": code,
+                "client_id": settings.google_client_id,
+                "client_secret": settings.google_client_secret,
+                "redirect_uri": settings.google_redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+        if token_resp.status_code != 200:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to exchange Google code")
+        access_token = token_resp.json().get("access_token")
+        if not access_token:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing Google access token")
+        user_resp = await client.get(userinfo_url, headers={"Authorization": f"Bearer {access_token}"})
+        if user_resp.status_code != 200:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to fetch Google profile")
+        return user_resp.json()
