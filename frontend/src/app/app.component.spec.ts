@@ -3,11 +3,23 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { AppComponent } from './app.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { of } from 'rxjs';
+import { AuthService } from './core/auth.service';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, HttpClientTestingModule, TranslateModule.forRoot(), AppComponent]
+      imports: [RouterTestingModule, HttpClientTestingModule, TranslateModule.forRoot(), AppComponent],
+      providers: [
+        {
+          provide: AuthService,
+          useValue: {
+            user: () => null,
+            isAuthenticated: () => false,
+            updatePreferredLanguage: () => of(null)
+          }
+        }
+      ]
     }).compileComponents();
   });
 

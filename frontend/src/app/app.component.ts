@@ -7,6 +7,7 @@ import { ToastComponent } from './shared/toast.component';
 import { ToastService } from './core/toast.service';
 import { ThemeService, ThemePreference } from './core/theme.service';
 import { TranslateService } from '@ngx-translate/core';
+import { AuthService } from './core/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -34,9 +35,15 @@ export class AppComponent {
   preference = this.theme.preference();
   language = 'en';
 
-  constructor(private toast: ToastService, private theme: ThemeService, private translate: TranslateService) {
+  constructor(
+    private toast: ToastService,
+    private theme: ThemeService,
+    private translate: TranslateService,
+    private auth: AuthService
+  ) {
     const savedLang = typeof localStorage !== 'undefined' ? localStorage.getItem('lang') : null;
-    this.language = savedLang || (translate.getBrowserLang() === 'ro' ? 'ro' : 'en');
+    const userLang = this.auth.user()?.preferred_language;
+    this.language = savedLang || userLang || (translate.getBrowserLang() === 'ro' ? 'ro' : 'en');
     this.translate.use(this.language);
   }
 
@@ -51,6 +58,9 @@ export class AppComponent {
     this.translate.use(lang);
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('lang', lang);
+    }
+    if (this.auth.isAuthenticated()) {
+      this.auth.updatePreferredLanguage(lang).subscribe();
     }
   }
 }

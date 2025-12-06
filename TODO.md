@@ -314,7 +314,7 @@ Below is a structured checklist you can turn into issues.
 - [x] Pick frontend i18n strategy (Angular i18n vs ngx-translate) and set up RO/EN language switching.
 - [x] Base translation files for `en` and `ro` (navigation, footer, auth, cart, checkout, admin).
 - [x] Language toggle in header with persisted choice (localStorage/cookie).
-- [ ] Store preferred language on user profile and default to it after login.
+- [x] Store preferred language on user profile and default to it after login.
 - [x] Internationalize storefront text (home, shop, product detail, cart, checkout, account) – frontend strings wired to i18n.
 - [x] Internationalize storefront shell text for home + shop pages (partial storefront i18n).
 - [ ] RO/EN translations for validation/error messages in forms (login, register, checkout, admin).
