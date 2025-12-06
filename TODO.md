@@ -298,10 +298,10 @@ Below is a structured checklist you can turn into issues.
 - [x] Image optimization (srcset/lazy loading/modern formats).
 - [x] SEO meta tags per page; Open Graph; sitemap/robots.
 - [ ] Lighthouse perf + accessibility fixes.
-- [ ] Keyboard navigation, contrast, accessible labels.
-- [ ] Prefetch critical API calls on navigation.
-- [ ] Asset compression and caching headers guidance.
-- [ ] ARIA labels for form controls and buttons.
+- [x] Keyboard navigation, contrast, accessible labels.
+- [x] Prefetch critical API calls on navigation.
+- [x] Asset compression and caching headers guidance.
+- [x] ARIA labels for form controls and buttons.
 - [x] Focus styles consistent across components.
 - [x] Skip-to-content link.
 - [x] Motion-reduced animations option.
