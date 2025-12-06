@@ -347,9 +347,9 @@ Below is a structured checklist you can turn into issues.
 - [x] Admin UI for editing homepage hero per language (headline, subtitle, CTA, hero image).
 - [x] Admin UI for managing Collections (named groups of products to feature).
 - [x] Drag-and-drop ordering for homepage sections (hero, collections, bestsellers, new arrivals).
-- [ ] Admin UI for global assets (logo, favicon, social preview image).
-- [ ] SEO settings in admin to set meta title/description per page per language.
-- [ ] WYSIWYG/markdown editor for About/FAQ/Shipping content with RO/EN tabs.
+- [x] Admin UI for global assets (logo, favicon, social preview image).
+- [x] SEO settings in admin to set meta title/description per page per language.
+- [x] WYSIWYG/markdown editor for About/FAQ/Shipping content with RO/EN tabs.
 - [ ] Live preview mode in admin for page changes before publishing.
 - [ ] Version metadata (“last updated by/at”) for content blocks.
 - [ ] Admin dashboard overview with key metrics (open orders, recent orders, low-stock, sales last 30d).
