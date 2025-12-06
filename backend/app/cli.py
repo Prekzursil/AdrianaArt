@@ -68,20 +68,14 @@ async def export_data(output: Path) -> None:
                         for img in p.images
                     ],
                     "options": [
-                        {
-                            "id": str(opt.id),
-                            "name": opt.name,
-                            "values": opt.values,
-                        }
-                        for opt in p.options
+                        {"id": str(opt.id), "name": opt.option_name, "value": opt.option_value} for opt in p.options
                     ],
                     "variants": [
                         {
                             "id": str(v.id),
-                            "sku": v.sku,
-                            "price": float(v.price),
+                            "name": v.name,
+                            "price_delta": float(v.additional_price_delta),
                             "stock_quantity": v.stock_quantity,
-                            "options": v.options,
                         }
                         for v in p.variants
                     ],
@@ -95,7 +89,7 @@ async def export_data(output: Path) -> None:
                 "line1": a.line1,
                 "line2": a.line2,
                 "city": a.city,
-                "state": a.state,
+                "region": a.region,
                 "postal_code": a.postal_code,
                 "country": a.country,
             }
@@ -135,34 +129,34 @@ async def import_data(input_path: Path) -> None:
     async with SessionLocal() as session:
         # users
         for u in payload.get("users", []):
-            obj = await session.get(User, u["id"])
-            if not obj:
-                obj = User(id=u["id"], email=u["email"], hashed_password="placeholder", role=UserRole.customer)
-            obj.name = u.get("name")
-            obj.avatar_url = u.get("avatar_url")
-            obj.preferred_language = u.get("preferred_language")
-            obj.email_verified = u.get("email_verified", False)
+            user_obj: User | None = await session.get(User, u["id"])
+            if not user_obj:
+                user_obj = User(id=u["id"], email=u["email"], hashed_password="placeholder", role=UserRole.customer)
+            user_obj.name = u.get("name")
+            user_obj.avatar_url = u.get("avatar_url")
+            user_obj.preferred_language = u.get("preferred_language")
+            user_obj.email_verified = u.get("email_verified", False)
             role = u.get("role")
             if role and role in UserRole._value2member_map_:
-                obj.role = UserRole(role)
-            session.add(obj)
+                user_obj.role = UserRole(role)
+            session.add(user_obj)
         # categories
         for c in payload.get("categories", []):
-            obj = await session.get(Category, c["id"])
-            if not obj:
-                obj = Category(id=c["id"], slug=c["slug"], name=c["name"])
-            obj.slug = c["slug"]
-            obj.name = c["name"]
-            obj.description = c.get("description")
-            obj.sort_order = c.get("sort_order", 0)
-            session.add(obj)
+            category_obj: Category | None = await session.get(Category, c["id"])
+            if not category_obj:
+                category_obj = Category(id=c["id"], slug=c["slug"], name=c["name"])
+            category_obj.slug = c["slug"]
+            category_obj.name = c["name"]
+            category_obj.description = c.get("description")
+            category_obj.sort_order = c.get("sort_order", 0)
+            session.add(category_obj)
         # tags
         tag_cache: Dict[str, Tag] = {}
         for p in payload.get("products", []):
             for slug in p.get("tags", []) or []:
                 if slug in tag_cache:
                     continue
-                existing = (await session.execute(select(Tag).where(Tag.slug == slug))).scalar_one_or_none()
+                existing: Tag | None = (await session.execute(select(Tag).where(Tag.slug == slug))).scalar_one_or_none()
                 if existing:
                     tag_cache[slug] = existing
                 else:
@@ -172,30 +166,33 @@ async def import_data(input_path: Path) -> None:
         await session.flush()
         # products
         for p in payload.get("products", []):
-            obj = await session.get(Product, p["id"])
-            if not obj:
-                obj = Product(id=p["id"], category_id=p["category_id"], sku=p["sku"], slug=p["slug"], name=p["name"])
-            obj.category_id = p["category_id"]
-            obj.sku = p["sku"]
-            obj.slug = p["slug"]
-            obj.name = p["name"]
-            obj.short_description = p.get("short_description")
-            obj.long_description = p.get("long_description")
-            obj.base_price = p.get("base_price", 0)
-            obj.currency = p.get("currency", "USD")
-            obj.is_featured = p.get("is_featured", False)
-            obj.stock_quantity = p.get("stock_quantity", 0)
-            obj.status = p.get("status", obj.status)
-            obj.publish_at = p.get("publish_at")
-            obj.meta_title = p.get("meta_title")
-            obj.meta_description = p.get("meta_description")
-            obj.tags = [tag_cache[slug] for slug in p.get("tags", []) or []]
-            session.add(obj)
+            product_obj: Product | None = await session.get(Product, p["id"])
+            if not product_obj:
+                product_obj = Product(
+                    id=p["id"], category_id=p["category_id"], sku=p["sku"], slug=p["slug"], name=p["name"]
+                )
+            product_obj.category_id = p["category_id"]
+            product_obj.sku = p["sku"]
+            product_obj.slug = p["slug"]
+            product_obj.name = p["name"]
+            product_obj.short_description = p.get("short_description")
+            product_obj.long_description = p.get("long_description")
+            product_obj.base_price = p.get("base_price", 0)
+            product_obj.currency = p.get("currency", "USD")
+            product_obj.is_featured = p.get("is_featured", False)
+            product_obj.stock_quantity = p.get("stock_quantity", 0)
+            if "status" in p and p["status"]:
+                product_obj.status = p["status"]
+            product_obj.publish_at = p.get("publish_at")
+            product_obj.meta_title = p.get("meta_title")
+            product_obj.meta_description = p.get("meta_description")
+            product_obj.tags = [tag_cache[slug] for slug in p.get("tags", []) or []]
+            session.add(product_obj)
             # images
             if p.get("images"):
-                obj.images.clear()
+                product_obj.images.clear()
                 for img in p["images"]:
-                    obj.images.append(
+                    product_obj.images.append(
                         ProductImage(
                             id=img.get("id"),
                             url=img.get("url"),
@@ -205,41 +202,44 @@ async def import_data(input_path: Path) -> None:
                     )
             # options
             if p.get("options"):
-                obj.options.clear()
+                product_obj.options.clear()
                 for opt in p["options"]:
-                    obj.options.append(ProductOption(id=opt.get("id"), name=opt.get("name"), values=opt.get("values", [])))
+                    name = opt.get("name") or opt.get("option_name")
+                    value = opt.get("value") or opt.get("option_value") or (opt.get("values") or [None])[0]
+                    product_obj.options.append(
+                        ProductOption(id=opt.get("id"), option_name=name or "", option_value=value or "")
+                    )
             # variants
             if p.get("variants"):
-                obj.variants.clear()
+                product_obj.variants.clear()
                 for v in p["variants"]:
-                    obj.variants.append(
+                    product_obj.variants.append(
                         ProductVariant(
                             id=v.get("id"),
-                            sku=v.get("sku"),
-                            price=v.get("price"),
+                            name=v.get("name") or v.get("sku") or "Variant",
+                            additional_price_delta=v.get("price_delta", v.get("price", 0)),
                             stock_quantity=v.get("stock_quantity", 0),
-                            options=v.get("options", {}),
                         )
                     )
         # addresses
         for a in payload.get("addresses", []):
-            obj = await session.get(Address, a["id"])
-            if not obj:
-                obj = Address(id=a["id"], user_id=a.get("user_id"))
-            obj.user_id = a.get("user_id")
-            obj.line1 = a.get("line1")
-            obj.line2 = a.get("line2")
-            obj.city = a.get("city")
-            obj.state = a.get("state")
-            obj.postal_code = a.get("postal_code")
-            obj.country = a.get("country")
-            session.add(obj)
+            address_obj: Address | None = await session.get(Address, a["id"])
+            if not address_obj:
+                address_obj = Address(id=a["id"], user_id=a.get("user_id"))
+            address_obj.user_id = a.get("user_id")
+            address_obj.line1 = a.get("line1")
+            address_obj.line2 = a.get("line2")
+            address_obj.city = a.get("city")
+            address_obj.region = a.get("region") or a.get("state")
+            address_obj.postal_code = a.get("postal_code")
+            address_obj.country = a.get("country")
+            session.add(address_obj)
         # shipping methods
         sm_lookup: Dict[str, ShippingMethod] = {}
         for o in payload.get("orders", []):
             sid = o.get("shipping_method_id")
             if sid and sid not in sm_lookup:
-                existing = await session.get(ShippingMethod, sid)
+                existing: ShippingMethod | None = await session.get(ShippingMethod, sid)
                 if existing:
                     sm_lookup[sid] = existing
                 else:
@@ -249,30 +249,32 @@ async def import_data(input_path: Path) -> None:
         await session.flush()
         # orders
         for o in payload.get("orders", []):
-            obj = await session.get(Order, o["id"])
-            if not obj:
-                obj = Order(id=o["id"], user_id=o.get("user_id"), status=o.get("status"))
-            obj.user_id = o.get("user_id")
-            obj.status = o.get("status", obj.status)
-            obj.total_amount = o.get("total_amount", 0)
-            obj.currency = o.get("currency", "USD")
-            obj.reference_code = o.get("reference_code")
-            obj.shipping_address_id = o.get("shipping_address_id")
-            obj.billing_address_id = o.get("billing_address_id")
+            order_obj: Order | None = await session.get(Order, o["id"])
+            if not order_obj:
+                order_obj = Order(id=o["id"], user_id=o.get("user_id"), status=o.get("status"))
+            order_obj.user_id = o.get("user_id")
+            if o.get("status"):
+                order_obj.status = o["status"]
+            order_obj.total_amount = o.get("total_amount", 0)
+            order_obj.currency = o.get("currency", "USD")
+            order_obj.reference_code = o.get("reference_code")
+            order_obj.shipping_address_id = o.get("shipping_address_id")
+            order_obj.billing_address_id = o.get("billing_address_id")
             if o.get("shipping_method_id"):
-                obj.shipping_method_id = o.get("shipping_method_id")
-            obj.items.clear()
+                order_obj.shipping_method_id = o.get("shipping_method_id")
+            order_obj.items.clear()
             for item in o.get("items", []):
-                obj.items.append(
+                order_obj.items.append(
                     OrderItem(
                         id=item.get("id"),
                         product_id=item.get("product_id"),
+                        variant_id=item.get("variant_id"),
                         quantity=item.get("quantity", 1),
                         unit_price=item.get("unit_price", 0),
                         subtotal=item.get("subtotal", 0),
                     )
                 )
-            session.add(obj)
+            session.add(order_obj)
         await session.commit()
     print("Import completed")
 

@@ -62,20 +62,8 @@ async def export_json(session: AsyncSession) -> Dict[str, Any]:
                     {"id": str(img.id), "url": img.url, "alt_text": img.alt_text, "sort_order": img.sort_order}
                     for img in p.images
                 ],
-                "options": [
-                    {"id": str(opt.id), "name": opt.name, "values": opt.values}
-                    for opt in p.options
-                ],
-                "variants": [
-                    {
-                        "id": str(v.id),
-                        "sku": v.sku,
-                        "price": float(v.price),
-                        "stock_quantity": v.stock_quantity,
-                        "options": v.options,
-                    }
-                    for v in p.variants
-                ],
+                "options": [{"id": str(opt.id), "name": opt.option_name, "value": opt.option_value} for opt in p.options],
+                "variants": [{"id": str(v.id), "name": v.name, "price_delta": float(v.additional_price_delta), "stock_quantity": v.stock_quantity} for v in p.variants],
             }
         )
     addresses = (await session.execute(select(Address))).scalars().all()
@@ -86,7 +74,7 @@ async def export_json(session: AsyncSession) -> Dict[str, Any]:
             "line1": a.line1,
             "line2": a.line2,
             "city": a.city,
-            "state": a.state,
+            "region": a.region,
             "postal_code": a.postal_code,
             "country": a.country,
         }
