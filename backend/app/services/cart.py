@@ -105,6 +105,16 @@ def _calculate_shipping_amount(subtotal: Decimal, shipping_method: ShippingMetho
     return base + per * subtotal
 
 
+def _to_decimal(value: float | Decimal | int) -> Decimal:
+    if isinstance(value, Decimal):
+        dec = value
+    else:
+        dec = Decimal(str(value)) if settings.enforce_decimal_prices else Decimal(value)
+    if settings.enforce_decimal_prices:
+        dec = dec.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return dec
+
+
 def _compute_discount(subtotal: Decimal, promo: PromoCodeRead | None) -> Decimal:
     if not promo:
         return Decimal("0")
@@ -125,15 +135,15 @@ def _calculate_totals(
     promo: PromoCodeRead | None = None,
     currency: str | None = "USD",
 ) -> Totals:
-    subtotal = sum(Decimal(item.unit_price_at_add) * item.quantity for item in cart.items)
-    subtotal = Decimal(subtotal)
+    subtotal = sum(_to_decimal(item.unit_price_at_add) * item.quantity for item in cart.items)
+    subtotal = _to_decimal(subtotal)
     discount_val = _compute_discount(subtotal, promo)
     taxable = subtotal - discount_val
     if taxable < 0:
         taxable = Decimal("0")
-    tax = taxable * Decimal("0.1")
-    shipping = _calculate_shipping_amount(subtotal, shipping_method)
-    total = taxable + tax + shipping
+    tax = _to_decimal(taxable * Decimal("0.1"))
+    shipping = _to_decimal(_calculate_shipping_amount(subtotal, shipping_method))
+    total = _to_decimal(taxable + tax + shipping)
     if total < 0:
         total = Decimal("0.00")
     return Totals(subtotal=subtotal, tax=tax, shipping=shipping, total=total, currency=currency)
@@ -142,8 +152,8 @@ def _calculate_totals(
 def calculate_totals(
     cart: Cart, shipping_method: ShippingMethod | None = None, promo: PromoCodeRead | None = None
 ) -> tuple[Totals, Decimal]:
-    subtotal = sum(Decimal(item.unit_price_at_add) * item.quantity for item in cart.items)
-    discount_val = _compute_discount(Decimal(subtotal), promo)
+    subtotal = sum(_to_decimal(item.unit_price_at_add) * item.quantity for item in cart.items)
+    discount_val = _compute_discount(_to_decimal(subtotal), promo)
     currency = next(
         (getattr(item.product, "currency", None) for item in cart.items if getattr(item, "product", None)), "USD"
     ) or "USD"
