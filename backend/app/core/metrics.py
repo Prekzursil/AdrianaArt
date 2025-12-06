@@ -2,7 +2,7 @@ from collections import Counter
 from threading import Lock
 from typing import Dict
 
-_metrics = Counter()
+_metrics: Counter[str] = Counter()
 _lock = Lock()
 
 

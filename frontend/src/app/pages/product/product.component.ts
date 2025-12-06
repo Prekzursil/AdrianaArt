@@ -222,6 +222,7 @@ export class ProductComponent implements OnInit, OnDestroy {
   private ldScript?: HTMLScriptElement;
   private langSub?: Subscription;
   private canonicalEl?: HTMLLinkElement;
+  private document: Document;
   crumbs = [
     { label: 'nav.home', url: '/' },
     { label: 'nav.shop', url: '/shop' }
@@ -235,8 +236,10 @@ export class ProductComponent implements OnInit, OnDestroy {
     private meta: Meta,
     private cartStore: CartStore,
     private translate: TranslateService,
-    @Inject(DOCUMENT) private document: Document
-  ) {}
+    @Inject(DOCUMENT) doc: Document
+  ) {
+    this.document = doc;
+  }
 
   ngOnDestroy(): void {
     if (this.ldScript && typeof document !== 'undefined') {
