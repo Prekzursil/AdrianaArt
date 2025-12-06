@@ -226,17 +226,17 @@ export class ShopComponent implements OnInit {
     private router: Router,
     private toast: ToastService,
     private title: Title,
-    private meta: Meta
+    private metaService: Meta
   ) {}
 
   ngOnInit(): void {
     this.title.setTitle('Shop | AdrianaArt');
-    this.meta.updateTag({
+    this.metaService.updateTag({
       name: 'description',
       content: 'Browse categories, filter by price and tags, and find handcrafted ceramics on AdrianaArt.'
     });
-    this.meta.updateTag({ property: 'og:title', content: 'Shop handcrafted ceramics | AdrianaArt' });
-    this.meta.updateTag({
+    this.metaService.updateTag({ property: 'og:title', content: 'Shop handcrafted ceramics | AdrianaArt' });
+    this.metaService.updateTag({
       property: 'og:description',
       content: 'Search and filter handcrafted ceramics by category, price, and tags.'
     });
