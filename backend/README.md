@@ -20,6 +20,11 @@ Key env vars:
 - `STRIPE_SECRET_KEY` (required for live payment flows), `STRIPE_WEBHOOK_SECRET` (if processing webhooks)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `GOOGLE_ALLOWED_DOMAINS` (optional list) for Google OAuth
 
+### Google OAuth quick notes
+- Configure a Google OAuth client (Web) with authorized redirect URI matching `GOOGLE_REDIRECT_URI`.
+- Set env vars above; allowed domains is optional for restricting enterprise domains.
+- Flows: `/auth/google/start` for login, `/auth/google/callback` to exchange code; `/auth/google/link` and `/auth/google/unlink` for authenticated users (link requires password confirmation).
+
 ## Database and migrations
 
 - Default `DATABASE_URL` uses async Postgres via `postgresql+asyncpg://...`.
