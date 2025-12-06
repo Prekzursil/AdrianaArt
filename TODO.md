@@ -328,12 +328,12 @@ Below is a structured checklist you can turn into issues.
 - [ ] Tests rendering pages in RO/EN to verify translations/directionality.
 
 ## Auth – Google OAuth & Account Linking
-- [ ] Add Google identity fields to `User` (google_sub, google_email, google_picture_url) + migration.
-- [ ] Settings for Google OAuth client ID/secret, redirect URI, allowed domains.
-- [ ] `/auth/google/start` builds consent URL and redirects.
-- [ ] `/auth/google/callback` exchanges code, fetches profile, maps to local user.
-- [ ] Handle email collision: prompt linking instead of duplicate creation when email matches existing user.
-- [ ] Google login when `google_sub` exists issues standard access/refresh tokens.
+- [x] Add Google identity fields to `User` (google_sub, google_email, google_picture_url) + migration.
+- [x] Settings for Google OAuth client ID/secret, redirect URI, allowed domains.
+- [x] `/auth/google/start` builds consent URL and redirects.
+- [x] `/auth/google/callback` exchanges code, fetches profile, maps to local user.
+- [x] Handle email collision: prompt linking instead of duplicate creation when email matches existing user.
+- [x] Google login when `google_sub` exists issues standard access/refresh tokens.
 - [ ] `/auth/google/link` for logged-in users to link Google (password confirmation).
 - [ ] `/auth/google/unlink` to disconnect Google profile (must retain password).
 - [ ] Validation to prevent linking a Google account already linked elsewhere.

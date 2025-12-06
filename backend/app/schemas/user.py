@@ -22,6 +22,9 @@ class UserRead(UserBase):
     id: UUID
     avatar_url: str | None = None
     preferred_language: str | None = None
+    google_sub: str | None = None
+    google_email: str | None = None
+    google_picture_url: str | None = None
     role: UserRole
     created_at: datetime
     updated_at: datetime
