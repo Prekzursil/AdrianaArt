@@ -1,8 +1,8 @@
 from collections import Counter
 from threading import Lock
-from typing import Dict
+from typing import Dict, Counter as CounterType
 
-_metrics: Counter[str] = Counter()
+_metrics: CounterType[str] = Counter()
 _lock = Lock()
 
 

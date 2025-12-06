@@ -1,5 +1,5 @@
 import { CommonModule, NgOptimizedImage, DOCUMENT } from '@angular/common';
-import { Component, OnDestroy, OnInit, Inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, Inject, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CatalogService, Product } from '../../core/catalog.service';
@@ -222,7 +222,7 @@ export class ProductComponent implements OnInit, OnDestroy {
   private ldScript?: HTMLScriptElement;
   private langSub?: Subscription;
   private canonicalEl?: HTMLLinkElement;
-  private document: Document;
+  private document: Document = inject(DOCUMENT);
   crumbs = [
     { label: 'nav.home', url: '/' },
     { label: 'nav.shop', url: '/shop' }
@@ -235,11 +235,8 @@ export class ProductComponent implements OnInit, OnDestroy {
     private title: Title,
     private meta: Meta,
     private cartStore: CartStore,
-    private translate: TranslateService,
-    @Inject(DOCUMENT) doc: Document
-  ) {
-    this.document = doc;
-  }
+    private translate: TranslateService
+  ) {}
 
   ngOnDestroy(): void {
     if (this.ldScript && typeof document !== 'undefined') {
