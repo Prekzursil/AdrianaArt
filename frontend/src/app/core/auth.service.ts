@@ -14,6 +14,7 @@ export interface AuthUser {
   email: string;
   name?: string | null;
   email_verified?: boolean;
+  preferred_language?: string | null;
   role: string;
   created_at?: string;
   updated_at?: string;
@@ -62,6 +63,17 @@ export class AuthService {
       current_password: current,
       new_password: newPassword
     });
+  }
+
+  updatePreferredLanguage(lang: string): Observable<AuthUser> {
+    if (!this.isAuthenticated()) {
+      return of(this.userSignal() as AuthUser);
+    }
+    return this.api.patch<AuthUser>('/auth/me/language', { preferred_language: lang }).pipe(
+      tap((user) => {
+        this.setUser(user);
+      })
+    );
   }
 
   requestEmailVerification(): Observable<{ detail: string }> {

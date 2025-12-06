@@ -29,6 +29,7 @@ class UserResponse(BaseModel):
     email: str
     name: str | None = None
     avatar_url: str | None = None
+    preferred_language: str | None = None
     email_verified: bool = False
     role: UserRole
     created_at: datetime

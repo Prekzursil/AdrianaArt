@@ -9,6 +9,7 @@ from app.models.user import UserRole
 class UserBase(BaseModel):
     email: EmailStr
     name: str | None = None
+    preferred_language: str | None = None
 
 
 class UserCreate(UserBase):
@@ -20,6 +21,7 @@ class UserRead(UserBase):
 
     id: UUID
     avatar_url: str | None = None
+    preferred_language: str | None = None
     role: UserRole
     created_at: datetime
     updated_at: datetime

@@ -22,6 +22,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    preferred_language: Mapped[str | None] = mapped_column(String(10), nullable=True, default="en")
     email_verified: Mapped[bool] = mapped_column(default=False, nullable=False)
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False, server_default=UserRole.customer.value)

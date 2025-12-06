@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Response, UploadFile, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -60,6 +60,10 @@ def clear_refresh_cookie(response: Response) -> None:
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
+
+class PreferredLanguageUpdate(BaseModel):
+    preferred_language: str = Field(pattern="^(en|ro)$", description="Language code, e.g., en or ro")
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
@@ -160,6 +164,19 @@ async def confirm_email_verification(
 
 @router.get("/me", response_model=UserResponse)
 async def read_me(current_user: User = Depends(get_current_user)) -> UserResponse:
+    return UserResponse.model_validate(current_user)
+
+
+@router.patch("/me/language", response_model=UserResponse)
+async def update_language(
+    payload: PreferredLanguageUpdate,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> UserResponse:
+    current_user.preferred_language = payload.preferred_language
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(current_user)
     return UserResponse.model_validate(current_user)
 
 
