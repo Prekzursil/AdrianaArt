@@ -350,10 +350,10 @@ Below is a structured checklist you can turn into issues.
 - [x] Admin UI for global assets (logo, favicon, social preview image).
 - [x] SEO settings in admin to set meta title/description per page per language.
 - [x] WYSIWYG/markdown editor for About/FAQ/Shipping content with RO/EN tabs.
-- [ ] Live preview mode in admin for page changes before publishing.
-- [ ] Version metadata (“last updated by/at”) for content blocks.
-- [ ] Admin dashboard overview with key metrics (open orders, recent orders, low-stock, sales last 30d).
-- [ ] Admin tools for inline/bulk stock editing in product table.
+- [x] Live preview mode in admin for page changes before publishing.
+- [x] Version metadata (“last updated by/at”) for content blocks.
+- [x] Admin dashboard overview with key metrics (open orders, recent orders, low-stock, sales last 30d).
+- [x] Admin tools for inline/bulk stock editing in product table.
 - [ ] Duplicate product action in admin (clone with images, mark draft).
 - [ ] Admin controls for bestseller/highlight badges on storefront cards.
 - [ ] Scheduling for product publish/unpublish; show upcoming scheduled products.

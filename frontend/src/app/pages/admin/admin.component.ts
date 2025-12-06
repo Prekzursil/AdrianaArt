@@ -25,6 +25,7 @@ import {
 } from '../../core/admin.service';
 import { ToastService } from '../../core/toast.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-admin',
@@ -69,6 +70,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
               <app-card [title]="'adminUi.cards.lowStock' | translate" [subtitle]="summary()?.low_stock + ' items'"></app-card>
               <app-card [title]="'adminUi.cards.sales30' | translate" [subtitle]="(summary()?.sales_30d || 0) | localizedCurrency : 'USD'"></app-card>
               <app-card [title]="'adminUi.cards.orders30' | translate" [subtitle]="summary()?.orders_30d + ' orders'"></app-card>
+              <app-card title="Open orders" [subtitle]="openOrdersCount() + ' pending'"></app-card>
+              <app-card title="Recent orders" [subtitle]="recentOrdersCount() + ' in last view'"></app-card>
+              <app-card title="Low stock items" [subtitle]="(lowStock?.length || 0) + ' tracked'"></app-card>
             </div>
           </section>
 
@@ -270,6 +274,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
                   [disabled]="!selectedIds.size"
                   (action)="deleteSelected()"
                 ></app-button>
+                <div class="flex items-center gap-2 text-xs">
+                  <app-input label="Bulk stock" type="number" [(value)]="bulkStock"></app-input>
+                  <app-button size="sm" label="Apply to selected" [disabled]="!selectedIds.size || bulkStock === null" (action)="saveBulkStock()"></app-button>
+                </div>
               </div>
             </div>
             <div class="overflow-auto">
@@ -300,7 +308,15 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
                     <td>{{ product.price | localizedCurrency : product.currency || 'USD' }}</td>
                     <td><span class="text-xs rounded-full bg-slate-100 px-2 py-1">{{ product.status }}</span></td>
                     <td>{{ product.category }}</td>
-                    <td>{{ product.stock_quantity }}</td>
+                    <td class="flex items-center gap-2">
+                      <input
+                        class="w-20 rounded border border-slate-200 px-2 py-1"
+                        type="number"
+                        [ngModel]="stockEdits[product.id] ?? product.stock_quantity"
+                        (ngModelChange)="setStock(product.id, $event)"
+                      />
+                      <app-button size="xs" variant="ghost" label="Save" (action)="saveStock(product)"></app-button>
+                    </td>
                     <td class="flex gap-2 py-2">
                       <app-button size="sm" variant="ghost" [label]="'adminUi.products.actions.update' | translate" (action)="loadProduct(product.slug)"></app-button>
                     </td>
@@ -680,6 +696,7 @@ export class AdminComponent implements OnInit {
     body_markdown: '',
     status: 'draft'
   };
+  showContentPreview = false;
   assetsForm = { logo_url: '', favicon_url: '', social_image_url: '' };
   assetsMessage: string | null = null;
   assetsError: string | null = null;
@@ -694,6 +711,8 @@ export class AdminComponent implements OnInit {
   infoError: string | null = null;
   coupons: AdminCoupon[] = [];
   newCoupon: Partial<AdminCoupon> = { code: '', percentage_off: 0, active: true, currency: 'USD' };
+  stockEdits: Record<string, number> = {};
+  bulkStock: number | null = null;
 
   productAudit: AdminAudit['products'] = [];
   contentAudit: AdminAudit['content'] = [];
@@ -856,6 +875,38 @@ export class AdminComponent implements OnInit {
       },
       error: () => this.toast.error(this.t('adminUi.categories.errors.delete'))
     });
+  }
+
+  setStock(id: string, value: number): void {
+    this.stockEdits[id] = Number(value);
+  }
+
+  saveStock(product: AdminProduct): void {
+    const newStock = this.stockEdits[product.id] ?? product.stock_quantity;
+    this.admin.updateProduct(product.slug, { stock_quantity: newStock } as any).subscribe({
+      next: () => {
+        product.stock_quantity = newStock;
+        this.toast.success(this.t('adminUi.products.success.save'));
+      },
+      error: () => this.toast.error(this.t('adminUi.products.errors.save'))
+    });
+  }
+
+  async saveBulkStock(): Promise<void> {
+    if (this.bulkStock === null || !this.selectedIds.size) return;
+    const tasks = Array.from(this.selectedIds).map((id) => {
+      const prod = this.products.find((p) => p.id === id);
+      if (!prod) return Promise.resolve();
+      return firstValueFrom(this.admin.updateProduct(prod.slug, { stock_quantity: this.bulkStock! } as any)).then(() => {
+        prod.stock_quantity = this.bulkStock!;
+      });
+    });
+    try {
+      await Promise.all(tasks);
+      this.toast.success(this.t('adminUi.products.success.save'));
+    } catch {
+      this.toast.error(this.t('adminUi.products.errors.save'));
+    }
   }
 
   onImageUpload(event: Event): void {
@@ -1071,6 +1122,7 @@ export class AdminComponent implements OnInit {
           favicon_url: block.meta?.['favicon_url'] || '',
           social_image_url: block.meta?.['social_image_url'] || ''
         };
+        this.assetsMessage = null;
       },
       error: () => {
         this.assetsForm = { logo_url: '', favicon_url: '', social_image_url: '' };
@@ -1115,6 +1167,7 @@ export class AdminComponent implements OnInit {
           title: block.title || '',
           description: block.meta?.['description'] || ''
         };
+        this.seoMessage = null;
       },
       error: () => {
         this.seoForm = { title: '', description: '' };
