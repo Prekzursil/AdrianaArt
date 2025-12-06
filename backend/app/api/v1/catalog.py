@@ -192,6 +192,7 @@ async def upload_product_image(
         file,
         allowed_content_types=("image/png", "image/jpeg", "image/webp", "image/gif"),
         max_bytes=5 * 1024 * 1024,
+        generate_thumbnails=True,
     )
     await catalog_service.add_product_image_from_path(
         session, product, url=path, alt_text=filename, sort_order=len(product.images) + 1

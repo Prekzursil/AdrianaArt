@@ -300,6 +300,7 @@ async def delete_product_image(session: AsyncSession, product: Product, image_id
     delete_file(image.url)
     await session.delete(image)
     await session.commit()
+    await _log_product_action(session, product.id, "image_deleted", None, {"image_id": image_id, "url": image.url})
 
 
 async def update_product_image_sort(session: AsyncSession, product: Product, image_id: str, sort_order: int) -> Product:
