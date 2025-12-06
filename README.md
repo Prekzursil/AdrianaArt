@@ -42,11 +42,55 @@ You can swap pieces later, but the initial design assumes:
 
 ### DevOps / Tooling
 
-- **Containers**: Docker & docker‑compose for local stack
-- **CI**: GitHub Actions (backend tests, frontend tests, lint, type‑check)
+- **Containers**: Docker & docker-compose for local stack
+- **CI**: GitHub Actions (backend tests, frontend tests, lint, type-check)
 - **Lint / Format**:
   - Backend: `black`, `isort`, `ruff`, `mypy`
   - Frontend: ESLint, Prettier, Angular strict TypeScript
+
+## 3.1 Data portability & backups (how to move/restore)
+
+- Export all data (users, categories, products with images/options/variants/tags, addresses, orders) to JSON:
+
+  ```bash
+  cd backend
+  python -m app.cli export-data --output export.json
+  ```
+
+- Import JSON into a fresh database (idempotent upserts):
+
+  ```bash
+  cd backend
+  DATABASE_URL=postgresql+asyncpg://... python -m app.cli import-data --input export.json
+  ```
+
+- Full backup helper (Postgres dump + JSON + uploads):
+
+  ```bash
+  cd infra/backup
+  ./export_all.sh  # requires DATABASE_URL env and pg_dump installed
+  ```
+
+- Verify a backup can restore:
+
+  ```bash
+  ./infra/backup/check_backup.sh backups/backup-YYYYMMDD-HHMMSS.tar.gz
+  ```
+
+- Move to a new server (one-command outline):
+  1) Copy the `backups/backup-*.tar.gz` archive + `uploads/` directory (if outside the archive).
+  2) On the new host: install Docker or Postgres + Python deps; set `DATABASE_URL`.
+  3) Restore DB via `pg_restore` from the `.dump` in the archive.
+  4) Restore media by extracting `uploads/`.
+  5) Run `alembic upgrade head` to sync schema.
+  6) Run `python -m app.cli import-data --input export-*.json` to upsert JSON entities.
+  7) Start the app and hit `/api/v1/health`.
+
+- Schedule backups (example cron, daily at 3:00):
+
+  ```
+  0 3 * * * cd /opt/adrianaart/infra/backup && DATABASE_URL=... ./export_all.sh >> /var/log/adrianaart-backup.log 2>&1
+  ```
 
 ---
 
