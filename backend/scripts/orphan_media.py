@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 from pathlib import Path
-from typing import set as SetType
 
 from sqlalchemy import select
 
