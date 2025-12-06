@@ -74,6 +74,100 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
           <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
             <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-slate-900">Global assets</h2>
+              <app-button size="sm" variant="ghost" label="Reload" (action)="loadAssets()"></app-button>
+            </div>
+            <div class="grid md:grid-cols-3 gap-3 text-sm">
+              <app-input label="Logo URL" [(value)]="assetsForm.logo_url"></app-input>
+              <app-input label="Favicon URL" [(value)]="assetsForm.favicon_url"></app-input>
+              <app-input label="Social preview image URL" [(value)]="assetsForm.social_image_url"></app-input>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <app-button size="sm" label="Save assets" (action)="saveAssets()"></app-button>
+              <span class="text-xs text-emerald-700" *ngIf="assetsMessage">{{ assetsMessage }}</span>
+              <span class="text-xs text-rose-700" *ngIf="assetsError">{{ assetsError }}</span>
+            </div>
+          </section>
+
+          <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-slate-900">SEO meta (per page & language)</h2>
+              <div class="flex gap-2 text-sm">
+                <label class="flex items-center gap-2">
+                  Page
+                  <select class="rounded border border-slate-200 px-2 py-1" [(ngModel)]="seoPage" (ngModelChange)="loadSeo()">
+                    <option value="home">Home</option>
+                    <option value="shop">Shop</option>
+                    <option value="product">Product</option>
+                    <option value="category">Category</option>
+                    <option value="about">About</option>
+                  </select>
+                </label>
+                <div class="flex items-center gap-2">
+                  <button class="px-3 py-1 rounded border" [class.bg-slate-900]="seoLang === 'en'" [class.text-white]="seoLang === 'en'" (click)="selectSeoLang('en')">
+                    EN
+                  </button>
+                  <button class="px-3 py-1 rounded border" [class.bg-slate-900]="seoLang === 'ro'" [class.text-white]="seoLang === 'ro'" (click)="selectSeoLang('ro')">
+                    RO
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-3 text-sm">
+              <app-input label="Meta title" [(value)]="seoForm.title"></app-input>
+              <label class="grid text-sm font-medium text-slate-700 md:col-span-2">
+                Meta description
+                <textarea rows="2" class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="seoForm.description"></textarea>
+              </label>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <app-button size="sm" label="Save SEO" (action)="saveSeo()"></app-button>
+              <span class="text-xs text-emerald-700" *ngIf="seoMessage">{{ seoMessage }}</span>
+              <span class="text-xs text-rose-700" *ngIf="seoError">{{ seoError }}</span>
+            </div>
+          </section>
+
+          <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-slate-900">Static pages (RO/EN)</h2>
+              <div class="flex gap-2 text-sm">
+                <button class="px-3 py-1 rounded border" [class.bg-slate-900]="infoLang === 'en'" [class.text-white]="infoLang === 'en'" (click)="selectInfoLang('en')">
+                  EN
+                </button>
+                <button class="px-3 py-1 rounded border" [class.bg-slate-900]="infoLang === 'ro'" [class.text-white]="infoLang === 'ro'" (click)="selectInfoLang('ro')">
+                  RO
+                </button>
+              </div>
+            </div>
+            <div class="grid gap-3 text-sm">
+              <label class="grid gap-1 font-medium text-slate-700">
+                About content
+                <textarea rows="3" class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="infoForm.about"></textarea>
+              </label>
+              <div class="flex gap-2">
+                <app-button size="sm" label="Save About" (action)="saveInfo('page.about', infoForm.about)"></app-button>
+              </div>
+              <label class="grid gap-1 font-medium text-slate-700">
+                FAQ content
+                <textarea rows="3" class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="infoForm.faq"></textarea>
+              </label>
+              <div class="flex gap-2">
+                <app-button size="sm" label="Save FAQ" (action)="saveInfo('page.faq', infoForm.faq)"></app-button>
+              </div>
+              <label class="grid gap-1 font-medium text-slate-700">
+                Shipping/Returns content
+                <textarea rows="3" class="rounded-lg border border-slate-200 px-3 py-2" [(ngModel)]="infoForm.shipping"></textarea>
+              </label>
+              <div class="flex gap-2">
+                <app-button size="sm" label="Save Shipping" (action)="saveInfo('page.shipping', infoForm.shipping)"></app-button>
+                <span class="text-xs text-emerald-700" *ngIf="infoMessage">{{ infoMessage }}</span>
+                <span class="text-xs text-rose-700" *ngIf="infoError">{{ infoError }}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold text-slate-900">Homepage hero (per language)</h2>
               <div class="flex gap-2 text-sm">
                 <button
@@ -586,6 +680,18 @@ export class AdminComponent implements OnInit {
     body_markdown: '',
     status: 'draft'
   };
+  assetsForm = { logo_url: '', favicon_url: '', social_image_url: '' };
+  assetsMessage: string | null = null;
+  assetsError: string | null = null;
+  seoLang: 'en' | 'ro' = 'en';
+  seoPage: 'home' | 'shop' | 'product' | 'category' | 'about' = 'home';
+  seoForm = { title: '', description: '' };
+  seoMessage: string | null = null;
+  seoError: string | null = null;
+  infoLang: 'en' | 'ro' = 'en';
+  infoForm = { about: '', faq: '', shipping: '' };
+  infoMessage: string | null = null;
+  infoError: string | null = null;
   coupons: AdminCoupon[] = [];
   newCoupon: Partial<AdminCoupon> = { code: '', percentage_off: 0, active: true, currency: 'USD' };
 
@@ -634,6 +740,9 @@ export class AdminComponent implements OnInit {
     this.loadHero(this.heroLang);
     this.loadSections();
     this.loadCollections();
+    this.loadAssets();
+    this.loadSeo();
+    this.loadInfo();
     this.admin.getMaintenance().subscribe({
       next: (m) => {
         this.maintenanceEnabled.set(m.enabled);
@@ -950,6 +1059,139 @@ export class AdminComponent implements OnInit {
 
   cancelContent(): void {
     this.selectedContent = null;
+  }
+
+  loadAssets(): void {
+    this.assetsError = null;
+    this.assetsMessage = null;
+    this.admin.getContent('site.assets').subscribe({
+      next: (block) => {
+        this.assetsForm = {
+          logo_url: block.meta?.['logo_url'] || '',
+          favicon_url: block.meta?.['favicon_url'] || '',
+          social_image_url: block.meta?.['social_image_url'] || ''
+        };
+      },
+      error: () => {
+        this.assetsForm = { logo_url: '', favicon_url: '', social_image_url: '' };
+      }
+    });
+  }
+
+  saveAssets(): void {
+    const payload = {
+      title: 'Site assets',
+      status: 'published',
+      meta: { ...this.assetsForm }
+    };
+    const onSuccess = () => {
+      this.assetsMessage = 'Assets saved';
+      this.assetsError = null;
+    };
+    this.admin.updateContentBlock('site.assets', payload).subscribe({
+      next: onSuccess,
+      error: () =>
+        this.admin.createContent('site.assets', payload).subscribe({
+          next: onSuccess,
+          error: () => {
+            this.assetsError = 'Could not save assets';
+            this.assetsMessage = null;
+          }
+        })
+    });
+  }
+
+  selectSeoLang(lang: 'en' | 'ro'): void {
+    this.seoLang = lang;
+    this.loadSeo();
+  }
+
+  loadSeo(): void {
+    this.seoMessage = null;
+    this.seoError = null;
+    this.admin.getContent(`seo.${this.seoPage}`, this.seoLang).subscribe({
+      next: (block) => {
+        this.seoForm = {
+          title: block.title || '',
+          description: block.meta?.['description'] || ''
+        };
+      },
+      error: () => {
+        this.seoForm = { title: '', description: '' };
+      }
+    });
+  }
+
+  saveSeo(): void {
+    const payload = {
+      title: this.seoForm.title,
+      status: 'published',
+      lang: this.seoLang,
+      meta: { description: this.seoForm.description }
+    };
+    const key = `seo.${this.seoPage}`;
+    const onSuccess = () => {
+      this.seoMessage = 'SEO saved';
+      this.seoError = null;
+    };
+    this.admin.updateContentBlock(key, payload).subscribe({
+      next: onSuccess,
+      error: () =>
+        this.admin.createContent(key, payload).subscribe({
+          next: onSuccess,
+          error: () => {
+            this.seoError = 'Could not save SEO';
+            this.seoMessage = null;
+          }
+        })
+    });
+  }
+
+  selectInfoLang(lang: 'en' | 'ro'): void {
+    this.infoLang = lang;
+    this.loadInfo();
+  }
+
+  loadInfo(): void {
+    const loadKey = (key: string, target: 'about' | 'faq' | 'shipping') => {
+      this.admin.getContent(key, this.infoLang).subscribe({
+        next: (block) => {
+          this.infoForm[target] = block.body_markdown || '';
+        },
+        error: () => {
+          this.infoForm[target] = '';
+        }
+      });
+    };
+    loadKey('page.about', 'about');
+    loadKey('page.faq', 'faq');
+    loadKey('page.shipping', 'shipping');
+  }
+
+  saveInfo(key: 'page.about' | 'page.faq' | 'page.shipping', body: string): void {
+    this.infoMessage = null;
+    this.infoError = null;
+    const payload = {
+      title: key,
+      body_markdown: body,
+      status: 'published',
+      lang: this.infoLang
+    };
+    const onSuccess = () => {
+      this.infoMessage = 'Content saved';
+      this.infoError = null;
+    };
+    this.admin.updateContentBlock(key, payload).subscribe({
+      next: onSuccess,
+      error: () =>
+        this.admin.createContent(key, payload).subscribe({
+          next: onSuccess,
+          error: () => {
+            this.infoError = 'Could not save content';
+            this.infoMessage = null;
+          }
+        })
+    });
   }
 
   // Homepage hero

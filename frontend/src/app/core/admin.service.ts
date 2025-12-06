@@ -47,6 +47,9 @@ export interface AdminContent {
   version: number;
   body_markdown?: string;
   status?: string;
+  meta?: Record<string, any> | null;
+  lang?: string | null;
+  sort_order?: number | null;
 }
 
 export interface AdminCoupon {
@@ -119,6 +122,15 @@ export interface ContentBlock {
   sort_order?: number;
 }
 
+export interface ContentSavePayload {
+  title: string;
+  body_markdown?: string;
+  status?: string;
+  meta?: Record<string, any>;
+  lang?: string | null;
+  sort_order?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   constructor(private api: ApiService) {}
@@ -145,6 +157,10 @@ export class AdminService {
 
   updateContent(key: string, payload: Partial<AdminContent>): Observable<AdminContent> {
     return this.api.patch<AdminContent>(`/content/admin/${key}`, payload);
+  }
+
+  updateContentBlock(key: string, payload: ContentSavePayload): Observable<ContentBlock> {
+    return this.api.patch<ContentBlock>(`/content/admin/${key}`, payload);
   }
 
   coupons(): Observable<AdminCoupon[]> {
@@ -240,7 +256,6 @@ export class AdminService {
     return this.api.post<{ enabled: boolean }>('/admin/dashboard/maintenance', { enabled });
   }
 
-  // Featured collections
   listFeaturedCollections(): Observable<FeaturedCollection[]> {
     return this.api.get<FeaturedCollection[]>('/catalog/collections/featured');
   }
@@ -253,7 +268,6 @@ export class AdminService {
     return this.api.patch<FeaturedCollection>(`/catalog/collections/featured/${slug}`, payload);
   }
 
-  // Content blocks (admin)
   getContent(key: string, lang?: string): Observable<ContentBlock> {
     const suffix = lang ? `?lang=${lang}` : '';
     return this.api.get<ContentBlock>(`/content/admin/${key}${suffix}`);
