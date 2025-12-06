@@ -43,14 +43,14 @@ describe('ThemeService', () => {
     expect(service.mode()()).toBe('dark');
   });
 
-  it('cycles through light/dark/system with toggle', () => {
+  it('cycles through system -> light -> dark with toggle', () => {
     mockMatchMedia(false);
     const service = new ThemeService();
     const seen: ThemePreference[] = [];
-    ['light', 'dark', 'system'].forEach(() => {
+    ['system', 'light', 'dark'].forEach(() => {
       service.toggle();
       seen.push(service.preference()());
     });
-    expect(seen).toEqual(['dark', 'system', 'light']);
+    expect(seen).toEqual(['light', 'dark', 'system']);
   });
 });

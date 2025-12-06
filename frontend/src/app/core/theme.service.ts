@@ -31,7 +31,7 @@ export class ThemeService {
   }
 
   toggle(): void {
-    const order: ThemePreference[] = ['light', 'dark', 'system'];
+    const order: ThemePreference[] = ['system', 'light', 'dark'];
     const next = order[(order.indexOf(this.preferenceSignal()) + 1) % order.length];
     this.setPreference(next);
   }
