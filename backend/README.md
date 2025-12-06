@@ -19,6 +19,7 @@ Key env vars:
 - `SMTP_*`, `FRONTEND_ORIGIN`
 - `STRIPE_SECRET_KEY` (required for live payment flows), `STRIPE_WEBHOOK_SECRET` (if processing webhooks)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `GOOGLE_ALLOWED_DOMAINS` (optional list) for Google OAuth
+- `DATABASE_URL` is also used by backup scripts and CLI import/export.
 
 ### Google OAuth quick notes
 - Configure a Google OAuth client (Web) with authorized redirect URI matching `GOOGLE_REDIRECT_URI` (e.g., `http://localhost:4200/auth/google/callback` in dev).
@@ -42,3 +43,36 @@ alembic revision --autogenerate -m "describe change"  # after models exist
 ```bash
 pytest
 ```
+
+## Data portability & backups
+
+- Export JSON (users/categories/products/addresses/orders):
+
+  ```bash
+  python -m app.cli export-data --output export.json
+  ```
+
+- Import JSON (idempotent upserts, placeholder password for new users):
+
+  ```bash
+  DATABASE_URL=postgresql+asyncpg://... python -m app.cli import-data --input export.json
+  ```
+
+- Full backup helper (Postgres dump + JSON + uploads):
+
+  ```bash
+  cd ../infra/backup
+  DATABASE_URL=... ./export_all.sh
+  ```
+
+- Backup verification:
+
+  ```bash
+  ./check_backup.sh /path/to/backup-YYYYMMDD-HHMMSS.tar.gz
+  ```
+
+- Move/restore:
+  1) Restore DB via `pg_restore` from the `.dump`.
+  2) Restore `uploads/` media folder.
+  3) Run `alembic upgrade head`.
+  4) Run `python -m app.cli import-data --input export-*.json`.
