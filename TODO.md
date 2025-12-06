@@ -292,7 +292,7 @@ Below is a structured checklist you can turn into issues.
 - [x] E2E: admin flow create coupon → apply to order (mock payment) + verify dashboard reflects coupon usage.
 
 ## UX, Performance, SEO & Accessibility
-- [ ] Mobile-first responsive design across pages(full mobile compatibility).
+- [x] Mobile-first responsive design across pages(full mobile compatibility).
 - [x] Loading skeletons/spinners for lists and details.
 - [x] Toast notifications for key actions.
 - [x] Image optimization (srcset/lazy loading/modern formats).
