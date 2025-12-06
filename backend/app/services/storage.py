@@ -34,13 +34,11 @@ def save_upload(
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid upload destination")
 
-    # bounded read
     read_len = max_bytes + 1 if max_bytes is not None else -1
     content = file.file.read(read_len)
     if max_bytes is not None and len(content) > max_bytes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File too large")
 
-    # MIME validation
     if allowed_content_types:
         if not file.content_type or file.content_type not in allowed_content_types:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type")
@@ -50,33 +48,32 @@ def save_upload(
             if sniff_mime not in allowed_content_types:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file type")
 
-    # unique, safe filename
-    orig_suffix = Path(file.filename or "").suffix.lower()
-    dest_name = Path(filename or "").name if filename else ""
-    if not dest_name:
-        dest_name = f"{uuid.uuid4().hex}{orig_suffix or '.bin'}"
-    destination = dest_root / dest_name
+    original_suffix = Path(file.filename or "").suffix.lower()
+    safe_name = Path(filename or "").name if filename else ""
+    if not safe_name:
+        safe_name = f"{uuid.uuid4().hex}{original_suffix or '.bin'}"
+    destination = dest_root / safe_name
     destination.write_bytes(content)
 
     if generate_thumbnails and allowed_content_types:
         _generate_thumbnails(destination)
 
-    # return web path
-    rel = destination.relative_to(base_root).as_posix()
-    return f"/media/{rel}", destination.name
+    rel_path = destination.relative_to(base_root).as_posix()
+    return f"/media/{rel_path}", destination.name
 
 
 def delete_file(filepath: str) -> None:
     if filepath.startswith("/media/"):
-        path = Path(settings.media_root) / filepath.removeprefix("/media/")
+        rel = filepath.removeprefix("/media/")
+        path = Path(settings.media_root) / rel
     else:
         path = Path(filepath)
     if path.exists():
         path.unlink()
         for suffix in ("-sm", "-md", "-lg"):
-            sib = path.with_name(f"{path.stem}{suffix}{path.suffix}")
-            if sib.exists():
-                sib.unlink()
+            sibling = path.with_name(f"{path.stem}{suffix}{path.suffix}")
+            if sibling.exists():
+                sibling.unlink()
 
 
 def _generate_thumbnails(path: Path) -> None:

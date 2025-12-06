@@ -372,8 +372,8 @@ Below is a structured checklist you can turn into issues.
 ## Media & File Handling Improvements
 - [x] `storage.save_upload` generates unique filenames (UUID + extension) to avoid collisions/traversal.
 - [x] Server-side validation for uploaded image type and size across endpoints.
-- [x] Thumbnail/preview generation for product images (small/medium/large).
 - [x] Store relative media paths and derive full URLs via MEDIA_ROOT/CDN base.
+- [x] Thumbnail/preview generation for product images (small/medium/large).
 - [x] Script to scan for orphaned media files and delete/archive safely.
 - [x] Ensure product/image deletes remove files from disk/S3 and log the operation.
 
