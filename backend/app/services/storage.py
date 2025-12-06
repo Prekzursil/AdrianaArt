@@ -30,8 +30,9 @@ def save_upload(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid upload destination")
 
     # Read (bounded) content
-    content = file.file.read(max_bytes + 1 if max_bytes else None)
-    if max_bytes and len(content) > max_bytes:
+    bytes_to_read = max_bytes + 1 if max_bytes is not None else -1
+    content = file.file.read(bytes_to_read)
+    if max_bytes is not None and len(content) > max_bytes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File too large")
 
     # Validate MIME and sniff basic type
@@ -62,10 +63,10 @@ def save_upload(
 
 
 def delete_file(filepath: str) -> None:
-    path_str = filepath
     if filepath.startswith("/media/"):
         rel = filepath.removeprefix("/media/")
-        path_str = Path(settings.media_root) / rel
-    path = Path(path_str)
+        path = Path(settings.media_root) / rel
+    else:
+        path = Path(filepath)
     if path.exists():
         path.unlink()
