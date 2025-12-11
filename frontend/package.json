@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "start": "ng serve",
+    "prestart": "node scripts/generate-config.mjs",
+    "start": "ng serve --proxy-config proxy.conf.json --host 0.0.0.0",
+    "prebuild": "node scripts/generate-config.mjs",
     "build": "ng build",
+    "pretest": "node scripts/generate-config.mjs",
     "test": "ng test",
     "lint": "ng lint"
   },
@@ -35,6 +38,7 @@
     "@typescript-eslint/parser": "^7.17.0",
     "autoprefixer": "^10.4.19",
     "chokidar": "^3.6.0",
+    "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "glob-parent": "^5.1.2",

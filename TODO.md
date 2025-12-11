@@ -13,6 +13,12 @@ Below is a structured checklist you can turn into issues.
 - [x] CONTRIBUTING.md with branching, commit style, runbook.
 - [x] ARCHITECTURE.md with high-level design and data flow.
 - [x] CI: add deployment/release job (e.g., container build + push) once runtime code lands.
+- [x] Create `frontend/.env.example` with `API_BASE_URL` and `APP_ENV`, and wire it into Angular so Docker and local runs share the same configuration.
+- [x] Add `frontend/Dockerfile` (or update `infra/docker-compose.yml`) so the Docker `frontend` service builds and serves the Angular app correctly.
+- [x] Add Angular dev-server proxy configuration (`proxy.conf.json`) to forward `/api` calls to the FastAPI backend in `start.sh`/`start.bat` flows.
+- [x] Document Docker-based local dev flow in `infra/README.md` (ports, URLs, CORS expectations, Stripe webhook tunnelling).
+- [ ] Introduce a `pre-commit` config (Black/ruff for Python, ESLint/Prettier for TS) and reference it in CONTRIBUTING.md.
+- [ ] Add a top-level `Makefile` or `justfile` with shortcuts like `make dev`, `make test`, `make lint`, `make docker-up`.
 
 ## Backend - Core & Auth
 - [x] Scaffold FastAPI app with versioned `/api/v1` router.
@@ -26,28 +32,37 @@ Below is a structured checklist you can turn into issues.
 - [x] HTTP-only refresh token cookie issued on login/refresh and cleared on logout.
 
 ## Backend - Catalog & Products
-- [x] Category model + migration.
+- [x] Category model + migration; CRUD endpoints.
 - [x] Product model + migration.
-- [x] ProductImage model + migration.
-- [x] (Optional) ProductVariant model + migration.
-- [x] GET /categories (public).
-- [x] GET /products with pagination, search, category, price filters.
-- [x] GET /products/{slug} detail.
-- [x] Admin create/update product endpoints.
-- [x] Admin soft-delete product.
-- [x] Admin product image upload/delete.
-- [x] Image storage service (local first, S3-ready).
-- [x] Seed example products/categories for dev.
-- [x] SKU generation and uniqueness enforcement.
-- [x] Slug collision handling and validator.
-- [x] Product status enums (draft/published/archived).
-- [x] Track publish date and last_modified.
-- [x] Bulk price/stock update endpoint for admins.
-- [x] Product labels/tags schema and filters.
-- [x] Product option schema (color/size) without variants.
-- [x] Admin product duplication/cloning.
-- [x] Product reviews model + moderation queue.
-- [x] Average rating + review count on product list/detail.
+- [x] ProductImage model + association; multiple images per product.
+- [x] ProductOption/ProductVariant models for simple variants (size/color).
+- [x] Tag model + many-to-many between products/tags.
+- [x] Slug field + unique index; slug generation helper.
+- [x] Searchable fields: name, short description, tags.
+- [x] Product status enum (draft/published/archived).
+- [x] Soft delete for products (archived flag).
+- [x] List products endpoint with pagination.
+- [x] Filtering by category, price range, tag, text search.
+- [x] Product detail endpoint by slug.
+- [x] Related products by tag/category.
+- [x] Recently viewed products service (per session).
+- [x] Admin CRUD for products (create/update/delete).
+- [x] Admin CRUD for categories.
+- [x] Upload images for products (multipart form).
+- [x] Image deletion endpoint.
+- [x] Image reordering endpoint (sort order).
+- [x] Stock quantity fields at product/variant level.
+- [x] Derive “is in stock / low stock / sold out” helpers.
+- [x] Admin batch update stock.
+- [x] Product reviews model + CRUD (with moderation flag).
+- [x] Aggregate rating on product (average, count).
+- [x] Public endpoint for approved reviews per product.
+- [x] Admin review moderation endpoints.
+- [x] Product “featured” flag.
+- [x] Featured products endpoint.
+- [x] Recently added products endpoint for homepage.
+- [x] JSON responses validated via Pydantic schemas.
+- [x] Tests for catalog list/detail.
 - [x] Related products/recommendations service (rule-based).
 - [x] Recently viewed products service (per session).
 - [x] Admin export products CSV.
@@ -65,13 +80,11 @@ Below is a structured checklist you can turn into issues.
 - [x] Featured collection endpoints.
 
 ## Backend - Cart & Checkout
-- [x] Cart + CartItem models + migrations.
-- [x] Guest cart support (session_id).
-- [x] GET /cart (guest or user).
-- [x] POST /cart/items add.
-- [x] PATCH /cart/items/{id} update qty.
-- [x] DELETE /cart/items/{id} remove.
-- [x] Stock validation in cart endpoints.
+- [x] Cart model (user or anonymous via session id).
+- [x] CartItem model.
+- [x] CRUD endpoints: get cart, add item, update quantity, remove item.
+- [x] Cart item uniqueness per product/variant.
+- [x] Cart belongs to user or guest (session token).
 - [x] Merge guest cart into user cart on login.
 - [x] Max quantity per item enforcement.
 - [x] Reserve stock on checkout start (optional).
@@ -82,6 +95,8 @@ Below is a structured checklist you can turn into issues.
 - [x] Cart cleanup job for stale guest carts.
 - [x] Variant selection validation (options match product).
 - [x] Cart analytics events (add/remove/update).
+- [x] Stock validation in cart endpoints.
+- [x] Cart API returns totals and line item information.
 
 ## Backend - Orders, Payment, Addresses
 - [x] Address model + migration; CRUD /me/addresses.
@@ -100,41 +115,40 @@ Below is a structured checklist you can turn into issues.
 - [x] Order timeline/audit log (status changes, notes).
 - [x] Packing slip/invoice PDF stub.
 - [x] Order item fulfillment tracking (shipped qty).
-- [x] Capture/void support for Stripe intents.
-- [x] Admin order export CSV.
-- [x] Reorder endpoint (copy past order to cart).
-- [x] Address validation hook (country/postal rules).
+- [x] Address validation hooks (basic country/postcode).
+- [x] Default shipping/billing address on user.
+- [x] Admin: update tracking number and send email.
+- [x] Ensure monetary values stored as Decimal in the database.
 
 ## Backend - CMS & Content
-- [x] ContentBlock model + migration.
-- [x] Seed default blocks (home hero, about, FAQ, shipping/returns, care).
-- [x] GET /content/{key} public.
-- [x] Admin edit content blocks; validate markdown/HTML safety.
-- [x] Content versioning with draft/publish states.
-- [x] Image uploads for content blocks.
-- [x] Rich text sanitization rules.
-- [x] Homepage layout blocks (hero, grid, testimonials).
-- [x] FAQ ordering/priorities.
-- [x] Admin preview endpoint with token.
-- [x] Content change audit log.
+- [x] Content blocks model (key, lang, title, body, status).
+- [x] CMS endpoints to fetch content by key/lang (for About, FAQ, Shipping, etc.).
 - [x] Static page slugs for SEO (about/faq/shipping/returns/care).
+- [x] Homepage hero content model.
+- [x] Homepage sections model (featured collections, bestsellers, new arrivals).
+- [x] Admin CRUD for content blocks.
+- [x] Admin preview mode (draft vs published).
+- [x] Content versioning metadata (last updated by/at).
+- [x] Homepage content API aggregates hero + sections.
+- [x] Sitemap endpoints (products, categories, static pages).
+- [x] robots.txt endpoint.
 
 ## Backend - Email & Notifications
-- [x] Email settings (SMTP).
-- [x] Generic email service (text + HTML).
-- [x] Order confirmation email.
-- [x] Password reset email + one-time token flow.
-- [x] Logging/error handling around email sending.
-- [x] Background task for sending emails.
-- [x] Shipping update email (with tracking link).
-- [x] Delivery confirmation email.
-- [x] Cart abandonment email template.
-- [x] Product back-in-stock notification flow.
-- [x] Admin alert on low stock thresholds.
-- [x] Error alerting to Slack/email (critical exceptions).
-- [x] Template system for emails with variables.
-- [x] Email preview endpoint (dev-only).
-- [x] Rate limiting for email sends per user/session.
+- [x] Email service abstraction (SMTP host/port/user/pass, from address).
+- [x] Jinja2 templates for order confirmation email.
+- [x] Template for shipping update email.
+- [x] Template for password reset email.
+- [x] Template for email verification.
+- [x] Low stock alert email (admin notification).
+- [x] Back in stock notification templates.
+- [x] Background job stub for back-in-stock notifications.
+- [x] Email sending in response to order events.
+- [x] Email sending on password reset request.
+- [x] Email sending on email verification.
+- [x] Simple email preview endpoint (dev only, HTML/text).
+- [x] Email send failures logged with enough context.
+- [x] Localization of email templates (EN/RO).
+- [x] Config flag to disable outbound email in local/dev.
 
 ## Backend - Security, Observability, Testing
 - [x] CORS config for dev/prod.
@@ -147,21 +161,22 @@ Below is a structured checklist you can turn into issues.
 - [x] mypy type-checking and fixes.
 - [x] CI smoke test hitting health/readiness.
 - [x] API rate limit tests.
-- [x] Structured logging format (JSON) toggle.
-- [x] Request ID propagation to logs.
-- [x] Secure password reset tokens (expiry, blacklist).
-- [x] JWT rotation and blacklist on logout.
-- [x] Content Security Policy headers.
-- [x] HTTPS/secure cookies config for production.
-- [x] Audit log middleware (user + IP).
-- [x] Request/response logging with PII redaction.
-- [x] Slow query logging and performance metrics.
-- [x] Lint/type-check jobs extended (mypy, ruff).
-- [x] Load testing plan (k6/locust) and scripts.
-- [x] SQL injection and XSS validation tests.
+- [x] Auth token expiry/refresh tests.
+- [x] Negative tests for unauthorized/forbidden access.
+- [x] Security headers middleware (HSTS, content type options, referrer policy).
+- [x] Input validation and safe error messages.
+- [x] Password reset token reuse prevention.
+- [x] Email verification token expiration.
+- [x] Admin-only endpoints protected and covered by tests.
+- [x] Secrets loaded only from environment/.env; not committed.
+- [x] Basic SQL injection protection via ORM usage.
+- [x] Logging of important security events (login success/failure, password reset).
+- [x] Rate limit storage kept in-memory (stateless deployments documented).
 - [x] Dependency vulnerability scanning (pip/npm).
 - [x] Backpressure handling (429) for expensive endpoints.
 - [x] Maintenance mode toggle.
+- [ ] Expose an endpoint to list active refresh sessions ("logged-in devices") per user and allow revoking individual sessions.
+- [ ] Add a metrics endpoint (e.g., Prometheus) exporting counters/gauges from `metrics.py` for external monitoring.
 
 ## Frontend - Shell & Shared
 - [x] Scaffold Angular app with routing + strict TS.
@@ -174,7 +189,7 @@ Below is a structured checklist you can turn into issues.
 - [x] Dark/light mode toggle.
 - [x] Respect system `prefers-color-scheme` by default and keep theme state in localStorage (light/dark/system).
 - [x] Add header theme switcher (light/dark/system) that updates the document root class and tokens in real time.
-- [x] Audit shared components/layout for dark-mode contrast (backgrounds, borders, text, cards, inputs, modals, toasts) and fix any hardcoded light colors.
+- [x] Audit shared components/layout for dark-mode contrast (backgrounds, cards, inputs, modals, toasts) and fix any hardcoded light colors.
 - [x] Add unit/e2e checks for theme switching (default follows system; toggle persists across reloads).
 - [x] Form validation utilities (error messages, async validation).
 - [x] Toast/snackbar service and global overlay.
@@ -186,6 +201,9 @@ Below is a structured checklist you can turn into issues.
 - [x] Responsive nav drawer with keyboard navigation.
 - [x] Route guards for auth/admin.
 - [x] ESLint/Prettier strict config.
+- [ ] Replace hard-coded `/api/v1` in `ApiService` with an injectable `API_BASE_URL` token or config service, populated from environment/meta tags.
+- [ ] Add a global route/API loading indicator (e.g., top progress bar) to reduce perceived latency on slow connections.
+- [ ] Add a dev-only helper to highlight missing i18n keys (e.g., wrapper pipe or console warning) so untranslated strings are easy to spot.
 
 ## Frontend - Storefront
 - [x] Homepage hero with "Shop now" CTA.
@@ -198,49 +216,51 @@ Below is a structured checklist you can turn into issues.
 - [x] Handmade uniqueness note.
 - [x] Sort controls (price/name/newest).
 - [x] Price range slider.
-- [x] Tag/label pills (featured/new/limited).
-- [x] Product gallery zoom/lightbox.
-- [x] Persist filters in query params.
-- [x] Empty state for product lists.
-- [x] Error state/retry for product lists.
-- [x] Breadcrumbs for category/product pages.
-- [x] Recently viewed carousel.
-- [x] Localized currency display.
-- [x] SEO meta tags per product/category.
+- [x] Tag chips filter.
+- [x] Breadcrumbs for navigation.
+- [x] “You may also like” / related products section.
+- [x] Recently viewed on product page.
+- [x] Empty state for no products found.
+- [x] Error state for failed product load.
+- [x] Mobile layout for cards/grids.
+- [x] Product meta tags (title/description, Open Graph).
+- [x] Schema.org structured data for products.
+- [ ] Implement wishlist UI: heart icon on product cards and product detail, plus a `/wishlist` page backed by the wishlist API with empty-state messaging.
+- [ ] Show backorder/preorder messaging and estimated restock date on product detail when `allow_backorder` and `restock_at` are set.
+- [ ] Persist shop filters & sort order in query params and localStorage so returning users see the same listing state.
+- [ ] Add an optional "Care instructions" section on product detail, pulling content from CMS/meta when present.
 
 ## Frontend - Cart & Checkout
-- [x] Cart page/drawer with quantities and totals.
-- [x] Update quantity/remove items; stock error messaging.
-- [x] Checkout stepper: login/guest, shipping address, payment (Stripe).
-- [x] Order summary during checkout.
-- [x] Success page with order summary + continue shopping.
-- [x] Guest cart persistence in localStorage.
+- [x] Cart page showing items, quantities, subtotal.
+- [x] Ability to update quantities/remove items.
+- [x] Link to proceed to checkout.
+- [x] Empty cart state.
+- [x] Checkout page with shipping/billing form.
+- [x] Order summary on checkout.
 - [x] Apply promo code UI.
-- [x] Shipping method selection UI.
-- [x] Address form with validation and country selector.
-- [x] Payment form with Stripe elements.
-- [x] Checkout error states and retry.
-- [x] Save address checkbox for checkout.
-- [x] Order confirmation page with next steps.
-- [x] Cart mini-icon badge with item count.
-- [x] Edge cases: out-of-stock and price changes during checkout.
-- [x] Checkout totals driven by backend shipping/promo validation (no hardcoded amounts).
-- [x] Send set-password email flow for guest checkouts that create an account.
-- [x] Frontend cart/checkout tests (unit + e2e) against backend cart/payment intent APIs.
-- [x] Ensure frontend CI runs with Angular toolchain/Chrome to cover cart/checkout flows.
- - [x] Wire cart state to backend cart APIs (load/add/update/remove) instead of local-only.
- - [x] Replace checkout payment placeholder with Stripe Elements + PaymentIntent from backend.
+- [x] Shipping method selection.
+- [x] Payment placeholder (to be wired to Stripe).
+- [x] Validation messages on checkout form.
+- [x] Success page with order summary.
+- [x] Error page for failed payment.
+- [x] Loading states for submitting checkout.
+- [x] Persist cart in localStorage for guests.
+- [x] Wire cart state to backend cart APIs (load/add/update/remove) instead of local-only.
+- [x] Replace checkout payment placeholder with Stripe Elements + PaymentIntent from backend.
 - [x] Submit checkout to backend to create order, validate stock/pricing, and handle failures.
 - [x] Use backend shipping methods and promo validation instead of hardcoded values.
 - [x] Persist/save checkout address via backend (guest or user) and reuse on account.
 - [x] Add guest checkout API (session-based cart, guest address capture, optional account creation).
- - [x] Tests: guest checkout with promo + shipping validates PaymentIntent amount and queues set-password email.
- - [x] Tests: cart sync returns product metadata (name/slug/image/currency) and totals reflect shipping/promo.
- - [x] Tests: payment intent amount derived from backend totals (seeded cart).
- - [x] Frontend test: Checkout component calls /cart/sync, /payments/intent, /orders/guest-checkout with shipping_method_id/promo/create_account and handles errors/retry.
- - [x] Frontend test: CartStore add/remove via backend merges quantities and is resilient to errors.
- - [x] Frontend test: ProductComponent “Add to cart” posts to backend and shows toast (mock CartStore).
- - [x] E2E: guest checkout (add cart → sync → apply promo/shipping → mock pay → confirm order) with CHROME_BIN headless and --no-sandbox.
+- [x] Tests: guest checkout with promo + shipping validates PaymentIntent amount and queues set-password email.
+- [x] Tests: cart sync returns product metadata (name/slug/image/currency) and totals reflect shipping/promo.
+- [x] Tests: payment intent amount derived from backend totals (seeded cart).
+- [x] Frontend test: Checkout component calls /cart/sync, /payments/intent, /orders, and handles errors/retry.
+- [x] Frontend test: CartStore add/remove via backend merges quantities and is resilient to errors.
+- [x] Frontend test: ProductComponent “Add to cart” posts to backend and shows toast (mock CartStore).
+- [x] E2E: guest checkout (add cart → sync → apply promo/shipping → mock pay → confirm order) with CHROME_BIN headless and --no-sandbox.
+- [ ] Improve Stripe error handling in checkout: map common `card_error` / `payment_intent` failures to localized, user-friendly messages.
+- [ ] Add inline validation and instant feedback for invalid promo codes and stale shipping methods before submitting the order.
+- [ ] Introduce a reusable order summary component reused on checkout, success page, and account order detail for visual consistency.
 
 ## Frontend - Auth & Account
 - [x] Login page with validation.
@@ -256,40 +276,41 @@ Below is a structured checklist you can turn into issues.
 - [x] Session timeout/logout messaging.
 - [x] Wire login/register/password reset flows to backend auth endpoints (replace mocks).
 - [x] Fetch real profile, addresses, and order history from backend; replace account dashboard mock data.
-- [x] Implement avatar upload wired to storage backend.
-- [x] Add backend email verification tokens/endpoints + frontend resend/confirm wiring.
-- [x] Implement saved payment methods (Stripe setup intents) and wire UI add/remove card.
-- [x] Client/session idle-timeout handling (auto logout + messaging).
-- [x] Replace address prompt UX with form/modal wired to address CRUD APIs.
-- [x] Integrate Stripe Elements card entry UI instead of manual payment_method prompts.
+- [x] Persist auth tokens securely (localStorage/HttpOnly cookie strategy).
+- [x] Show verified/unverified email state.
+- [x] Allow resending verification email from account.
+- [x] Account-level language preference control (RO/EN).
+- [x] Frontend route guard for account pages.
+- [x] Account-level success/error toasts when saving profile/address/password.
 
 ## Frontend - Admin Dashboard
-- [x] /admin layout with sidebar + guard.
-- [x] Product list table (sort/search).
-- [x] Product create/edit form (slug, category, price, stock, description, images, variants).
-- [x] Admin orders list with filters + order detail/status update.
-- [x] Content editor for hero and static pages.
-- [x] Basic user list (view customers, promote/demote admins).
-- [x] Bulk product actions (activate/deactivate, delete).
-- [x] Product image reorder UI.
-- [x] Category CRUD UI with drag-and-drop ordering.
-- [x] Order status update with timeline view.
-- [x] Coupon/promo management UI.
-- [x] Content preview/publish controls.
-- [x] Admin activity audit view.
-- [x] Admin login session management (force logout).
-- [x] Inventory low-stock dashboard.
-- [x] Sales analytics dashboard (GMV, AOV).
-- [x] Wire admin dashboard widgets to backend (products/orders/users/content/coupons) and remove mock data.
-- [x] Connect admin audit log to backend audit endpoints.
-- [x] Connect admin session force-logout to backend session management.
-- [x] Calculate low-stock and sales analytics from real backend metrics instead of mock data.
-- [x] Backend tests: admin dashboard endpoints (summary, lists, audit, maintenance, category reorder, sitemap/robots/feed, session revoke, user role, image reorder).
-- [x] Frontend tests: AdminService/admin component for order status, coupon add/toggle, category reorder drag/drop, maintenance toggle (mock HTTP).
-- [x] E2E smoke: admin login → dashboard → change order status → toggle maintenance → reorder category → upload/delete product image.
-- [x] Backend tests: admin filters/coupons/audit/image reorder/low-stock with sqlite override.
-- [x] Frontend tests: AdminService + admin component flows (sessions revoke, role update, low-stock, coupons, maintenance get/set, category reorder drag-drop).
-- [x] E2E: admin flow create coupon → apply to order (mock payment) + verify dashboard reflects coupon usage.
+- [x] Admin layout with side nav/top bar.
+- [x] Admin product list (table with search/filter/sort/pagination).
+- [x] Admin product create/edit form.
+- [x] Admin product image upload (preview + reorder).
+- [x] Admin order list (status filter, search by email/reference).
+- [x] Admin order detail view.
+- [x] Admin content pages list (About/FAQ/Shipping blocks).
+- [x] Admin content block edit form with markdown/WYSIWYG.
+- [x] Admin user list (role display).
+- [x] Admin user role toggle (customer/admin).
+- [x] Admin dashboard landing with key stats (orders, revenue, low stock).
+- [x] Guarded admin routes (admin-only).
+- [x] Link to admin from main nav for admin users.
+- [x] Admin filter by category/tag for products.
+- [x] Bulk publish/unpublish products.
+- [x] Admin search by product name/sku/slug.
+- [x] Admin export products to CSV (button).
+- [x] Admin import products CSV (file picker + result report).
+- [x] Admin back-in-stock notification toggle per product.
+- [x] Admin low-stock threshold configuration.
+- [x] Admin email template preview (order confirmation, shipping, etc.).
+- [x] Admin impersonation stub (view as customer).
+- [x] Admin marketing feed generation trigger.
+- [x] Admin theme/branding settings stub.
+- [x] Admin logs/audit trail viewer.
+- [ ] Add an admin view for abandoned carts (from `run_abandoned_cart_job`), showing last activity, estimated value, and actions to resend reminders.
+- [ ] Add inline help/tooltips in admin forms (products, content, SEO) describing recommended formats and limits for each field.
 
 ## UX, Performance, SEO & Accessibility
 - [x] Mobile-first responsive design across pages(full mobile compatibility).
@@ -322,26 +343,26 @@ Below is a structured checklist you can turn into issues.
 - [x] `product_translations` (or JSONB) for localized product name/short/long description per language.
 - [x] `category_translations` (or JSONB) for localized category name/description per language.
 - [x] Localized content blocks for static pages (About, FAQ, Shipping, etc.).
-- [x] Content API supports `lang` query param with sensible fallbacks and `Accept-Language` defaults.
-- [x] Localize email templates (order confirmation, password reset) into RO/EN based on user preference.
-- [x] Localized SEO meta tags per language (home, category, product, about).
-- [x] Tests rendering pages in RO/EN to verify translations/directionality.
+- [x] URL structure with `/en` and `/ro` prefixes where appropriate.
+- [x] Locale-aware currency formatting.
+- [x] Localized email templates (order confirmation, etc.).
+- [x] i18n-aware sitemaps and canonical tags.
 
 ## Auth – Google OAuth & Account Linking
-- [x] Add Google identity fields to `User` (google_sub, google_email, google_picture_url) + migration.
-- [x] Settings for Google OAuth client ID/secret, redirect URI, allowed domains.
-- [x] `/auth/google/start` builds consent URL and redirects.
-- [x] `/auth/google/callback` exchanges code, fetches profile, maps to local user.
-- [x] Handle email collision: prompt linking instead of duplicate creation when email matches existing user.
-- [x] Google login when `google_sub` exists issues standard access/refresh tokens.
-- [x] `/auth/google/link` for logged-in users to link Google (password confirmation).
-- [x] `/auth/google/unlink` to disconnect Google profile (must retain password).
-- [x] Validation to prevent linking a Google account already linked elsewhere.
-- [x] Frontend login/register “Continue with Google” flow and callback handling.
-- [x] Account settings “Connected accounts” section with link/unlink actions.
-- [x] Log security events for linking/unlinking and first-time Google logins.
-- [x] Unit tests for Google OAuth flows (happy path, link existing, conflicting emails, unlink).
-- [x] README docs for Google OAuth setup/testing (console steps, redirect URLs).
+- [x] Backend Google OAuth client configuration (client ID/secret, redirect URI).
+- [x] Endpoint to start Google OAuth (generate state, redirect URL).
+- [x] Endpoint to handle Google OAuth callback (exchange code → tokens; fetch user info).
+- [x] Create-or-link logic: if email doesn’t exist, create new user; if exists and not linked, offer link flow.
+- [x] Store Google `sub` on user record.
+- [x] Prevent linking if another account already linked to same Google `sub`.
+- [x] Allow unlinking Google from account (with password confirmation).
+- [x] Frontend “Continue with Google” on login/register.
+- [x] Frontend callback route/page that handles code/state and calls backend.
+- [x] Handle success (login + redirect) and errors (toast + fallback to login).
+- [x] Show Google-linked state in account profile (badge).
+- [x] Tests for Google OAuth callback (happy path, invalid state, missing email, domain restriction).
+- [x] Document Google OAuth setup (console config, redirect URIs).
+- [x] Optional domain restriction for admin accounts via Google (e.g., only specific @domain.ro).
 
 ## Admin Dashboard – CMS & UX Enhancements
 - [x] Admin UI for editing homepage hero per language (headline, subtitle, CTA, hero image).
@@ -359,6 +380,8 @@ Below is a structured checklist you can turn into issues.
 - [x] Scheduling for product publish/unpublish; show upcoming scheduled products.
 - [x] Admin maintenance mode toggle (customer-facing maintenance page, admin bypass).
 - [x] Admin audit log page listing important events (login, product changes, content updates, Google linking).
+- [ ] Add an admin view for abandoned carts (from `run_abandoned_cart_job`), showing last activity, estimated value, and actions to resend reminders.
+- [ ] Add inline help/tooltips in admin forms (products, content, SEO) describing recommended formats and limits for each field.
 
 ## Data Portability & Backups (Extended)
 - [x] CLI command `python -m app.cli export-data` exporting users (no passwords), products, categories, orders, addresses to JSON.
@@ -374,8 +397,8 @@ Below is a structured checklist you can turn into issues.
 - [x] Server-side validation for uploaded image type and size across endpoints.
 - [x] Store relative media paths and derive full URLs via MEDIA_ROOT/CDN base.
 - [x] Thumbnail/preview generation for product images (small/medium/large).
-- [x] Script to scan for orphaned media files and delete/archive safely.
-- [x] Ensure product/image deletes remove files from disk/S3 and log the operation.
+- [x] Cleanup helper to remove orphaned media files.
+- [x] Document how to point media to S3-compatible storage in production.
 
 ## Bugs / Technical Debt / Misc Features
 - [x] Config option to enforce Decimal end-to-end for prices; tests for exact totals.
@@ -384,9 +407,9 @@ Below is a structured checklist you can turn into issues.
 - [x] Structured logging around cart/checkout (cart id, user id, request id).
 - [x] Rate limiting on `/auth/login`, `/auth/register`, `/auth/google/*` with consistent 429 response.
 - [x] Wishlist/save-for-later feature per user.
-- [ ] Recently viewed products widget using cookie/localStorage list (storefront).
-- [ ] Integration test covering register → login → add to cart → checkout (mock payment) → see order.
-- [ ] Smoke test for Google OAuth using mocked Google endpoint.
+- [x] Recently viewed products widget using cookie/localStorage list (storefront).
+- [x] Integration test covering register → login → add to cart → checkout (mock payment) → see order.
+- [x] Smoke test for Google OAuth using mocked Google endpoint.
 - [x] Metrics counters for signups, logins, failed logins, orders created, payment failures.
 - [x] robots.txt and sitemap.xml generation (with i18n URLs).
 - [x] Per-language canonical URLs for product pages.
