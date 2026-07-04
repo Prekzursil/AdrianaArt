@@ -7,7 +7,7 @@ import {
   parseTriplet,
   type Pairing,
 } from './pairing-matrix';
-import { ARCHETYPES, getToken } from './token-taxonomy';
+import { ARCHETYPES, stateColorDefault } from './token-taxonomy';
 
 describe('PAIRINGS', () => {
   it('is non-empty with unique ids', () => {
@@ -19,9 +19,15 @@ describe('PAIRINGS', () => {
   it('references only known colour tokens for both endpoints', () => {
     for (const pair of PAIRINGS) {
       for (const name of [pair.foreground, pair.background]) {
-        const token = getToken(name);
-        expect(token).withContext(`${name} must be a taxonomy token`).toBeTruthy();
-        expect(token?.kind).withContext(`${name} must be a colour token`).toBe('color');
+        // Endpoints span the full storefront colour vocabulary (STATE_TOKENS),
+        // not just the admin-facing seed set — every one must resolve to a light
+        // compiled default (i.e. be a known colour token).
+        expect(stateColorDefault(name))
+          .withContext(`${name} must be a known colour token`)
+          .toBeDefined();
+        expect(() => colorFor(name))
+          .withContext(`${name} must resolve to an sRGB triplet`)
+          .not.toThrow();
       }
     }
   });
@@ -60,6 +66,43 @@ describe('PAIRINGS', () => {
     expect(backgrounds.has('--background')).toBe(true);
     expect(backgrounds.has('--surface')).toBe(true);
     expect(foregrounds.has('--accent')).toBe(true);
+  });
+
+  it('gates EVERY admin-editable background surface that renders text (WU5 gap)', () => {
+    // No editable background surface may lack a text-contrast pairing, or an admin
+    // could set it to a contrast-failing value through the shipped control and ship
+    // an illegible render past the gate. `--surface-raised` is intentionally absent
+    // (skeleton / divider bars only — no text).
+    const backgrounds = new Set(PAIRINGS.map((p) => p.background));
+    for (const surface of [
+      '--background',
+      '--surface',
+      '--surface-muted',
+      '--surface-inverse',
+      '--field',
+      '--accent-subtle',
+    ]) {
+      expect(backgrounds.has(surface)).withContext(`${surface} must be gated`).toBe(true);
+    }
+    expect(backgrounds.has('--surface-raised')).toBe(false);
+  });
+
+  it('gates the FIXED (non-admin-editable) foregrounds on editable surfaces', () => {
+    // The exact pairings the WU5 gap left open: a fixed white/dark glyph on an
+    // editable surface. Each is tagged `body` (the size the small UI text renders).
+    const byId = new Map(PAIRINGS.map((p) => [p.id, p] as const));
+    for (const [id, fg, bg] of [
+      ['inverse-on-surface-inverse', '--text-inverse', '--surface-inverse'],
+      ['heading-on-field', '--text-heading', '--field'],
+      ['text-on-surface-muted', '--text', '--surface-muted'],
+      ['accent-strong-on-accent-subtle', '--accent-strong', '--accent-subtle'],
+    ] as const) {
+      const pair = byId.get(id);
+      expect(pair).withContext(`${id} must exist`).toBeTruthy();
+      expect(pair?.foreground).toBe(fg);
+      expect(pair?.background).toBe(bg);
+      expect(pair?.size).toBe('body');
+    }
   });
 
   it('tags both body and large sizes across the matrix', () => {

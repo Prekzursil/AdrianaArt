@@ -250,6 +250,23 @@ export function getToken(name: string): TaxonomyToken | undefined {
   return SEED_BY_NAME.get(name);
 }
 
+const STATE_BY_NAME: ReadonlyMap<string, StateToken> = new Map(
+  STATE_TOKENS.map((token) => [token.name, token]),
+);
+
+/**
+ * The LIGHT compiled default (`R G B` triplet) of ANY storefront colour token, or
+ * `undefined` if the name is not a known colour token. `STATE_TOKENS` is the COMPLETE
+ * colour vocabulary (a superset of the admin-facing `SEED_TOKENS`, with matching values
+ * for the shared subset) — every WU5 role/state shade the contrast pairing matrix gates
+ * (`--surface-muted`/-inverse, `--field`, `--text-inverse`, `--accent-subtle`, …) lives
+ * here, not in `SEED_TOKENS`. This is the canonical light-mode value the contrast gate
+ * and live validator resolve a pairing endpoint against.
+ */
+export function stateColorDefault(name: string): string | undefined {
+  return STATE_BY_NAME.get(name)?.light;
+}
+
 /** The seed color tokens (Tailwind-consumed `R G B` triplets). */
 export function colorTokens(): readonly TaxonomyToken[] {
   return SEED_TOKENS.filter((token) => token.kind === 'color');

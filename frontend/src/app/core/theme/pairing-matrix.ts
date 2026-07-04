@@ -17,7 +17,7 @@
  */
 
 import { AA_THRESHOLDS, contrastRatio, passesAa, type RgbTriplet, type TextSize } from './contrast';
-import { type Archetype, ARCHETYPES, getToken } from './token-taxonomy';
+import { type Archetype, ARCHETYPES, stateColorDefault } from './token-taxonomy';
 
 /** A curated, pre-validated foreground-on-background pairing. */
 export interface Pairing {
@@ -56,11 +56,20 @@ function pairing(
 }
 
 /**
- * The curated pairing matrix — three categories (text-on-background,
- * text-on-surface, accent-on-neutral), each global across the archetypes and
- * pre-validated at its tagged size. `--accent` is the storefront's link/text
- * colour (WU0 §1A), so its pairings place it as the foreground on the neutral
- * canvas + surface.
+ * The curated pairing matrix. It gates EVERY admin-editable background surface WU5
+ * shipped (`--background` / `--surface` / `--surface-muted` / `--surface-inverse` /
+ * `--field` / `--accent-subtle`) against every foreground token that co-renders on it
+ * in the storefront — INCLUDING the FIXED (non-admin-editable) foregrounds
+ * `--text-inverse` (on the dark inverse chips / CTAs / cart badge) and `--text-heading`
+ * (in the field inputs), whose surface an admin CAN recolour. Without these an admin
+ * could set an editable surface (e.g. `--surface-inverse` white) through the shipped
+ * control and publish an illegible ~1:1 render past the 'authoritative' gate.
+ * `--surface-raised` is intentionally absent: it paints only skeleton / divider bars
+ * (no text). Each pairing is global across the archetypes and pre-validated at its
+ * tagged size — the small UI chips / labels / inputs render at `body`, so their
+ * pairings are `body` even for heading-role foregrounds; the hero
+ * `heading-on-{background,surface}` (`large`) pairings model the display type.
+ * Kept in EXACT parity with `theme_contrast.py` PAIRINGS (same ids, same sizes).
  */
 export const PAIRINGS: readonly Pairing[] = [
   // text-on-background
@@ -70,7 +79,28 @@ export const PAIRINGS: readonly Pairing[] = [
     '--text-heading',
     '--background',
     'large',
-    'headings on the page canvas',
+    'hero / display headings on the page canvas',
+  ),
+  pairing(
+    'heading-sm-on-background',
+    '--text-heading',
+    '--background',
+    'body',
+    'body-size heading text (buttons / option labels) on the page canvas',
+  ),
+  pairing(
+    'strong-on-background',
+    '--text-strong',
+    '--background',
+    'body',
+    'emphasised chip / badge labels on the page canvas',
+  ),
+  pairing(
+    'secondary-on-background',
+    '--text-secondary',
+    '--background',
+    'body',
+    'secondary descriptions on the page canvas',
   ),
   pairing(
     'muted-on-background',
@@ -86,7 +116,65 @@ export const PAIRINGS: readonly Pairing[] = [
     '--text-heading',
     '--surface',
     'large',
-    'headings on raised surfaces',
+    'hero / display headings on raised surfaces',
+  ),
+  pairing(
+    'heading-sm-on-surface',
+    '--text-heading',
+    '--surface',
+    'body',
+    'body-size heading text (menu hover / icon buttons) on raised surfaces',
+  ),
+  pairing(
+    'strong-on-surface',
+    '--text-strong',
+    '--surface',
+    'body',
+    'emphasised icon-button labels on raised surfaces',
+  ),
+  pairing(
+    'secondary-on-surface',
+    '--text-secondary',
+    '--surface',
+    'body',
+    'secondary chip labels on raised surfaces',
+  ),
+  // text-on-surface-muted (the sunken / hover fill)
+  pairing(
+    'text-on-surface-muted',
+    '--text',
+    '--surface-muted',
+    'body',
+    'body copy / labels on the sunken / hover fill',
+  ),
+  pairing(
+    'strong-on-surface-muted',
+    '--text-strong',
+    '--surface-muted',
+    'body',
+    'emphasised pill labels on the hover fill',
+  ),
+  pairing(
+    'heading-on-surface-muted',
+    '--text-heading',
+    '--surface-muted',
+    'body',
+    'heading text on the hover fill (menu hover / active buttons)',
+  ),
+  // fixed-foreground pairings on editable surfaces (the WU5 gap this rework closes)
+  pairing(
+    'inverse-on-surface-inverse',
+    '--text-inverse',
+    '--surface-inverse',
+    'body',
+    'FIXED white glyphs on the inverse chips / CTAs / cart badge',
+  ),
+  pairing(
+    'heading-on-field',
+    '--text-heading',
+    '--field',
+    'body',
+    'FIXED input text glyphs on the text-field fill',
   ),
   // text-on-accent (accent as the link/text foreground on neutral backgrounds)
   pairing(
@@ -97,6 +185,13 @@ export const PAIRINGS: readonly Pairing[] = [
     'link text on the page canvas',
   ),
   pairing('accent-on-surface', '--accent', '--surface', 'body', 'link text on raised surfaces'),
+  pairing(
+    'accent-strong-on-accent-subtle',
+    '--accent-strong',
+    '--accent-subtle',
+    'body',
+    'category-chip labels on the accent-tinted surface',
+  ),
 ];
 
 /** Parse a frozen `R G B` triplet string into an sRGB tuple for contrast maths. */
@@ -108,13 +203,20 @@ export function parseTriplet(value: string): RgbTriplet {
   return [parts[0], parts[1], parts[2]];
 }
 
-/** Resolve a pairing endpoint token name to its compiled-default sRGB colour. */
+/**
+ * Resolve a pairing endpoint token name to its LIGHT compiled-default sRGB colour.
+ *
+ * Endpoints span the FULL storefront colour vocabulary (`STATE_TOKENS`), not just the
+ * admin-facing seed set — the WU5 role/state shades a pairing gates (`--surface-muted`,
+ * `--surface-inverse`, `--field`, `--text-inverse`, `--accent-subtle`, …) live there.
+ * A non-colour token name (or an unknown one) has no light default and throws.
+ */
 export function colorFor(name: string): RgbTriplet {
-  const token = getToken(name);
-  if (token?.kind !== 'color') {
+  const light = stateColorDefault(name);
+  if (light === undefined) {
     throw new Error(`not a known colour token: ${name}`);
   }
-  return parseTriplet(token.compiledDefault);
+  return parseTriplet(light);
 }
 
 /** The computed WCAG contrast ratio of a pairing (from compiled defaults). */

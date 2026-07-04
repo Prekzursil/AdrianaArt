@@ -30,9 +30,26 @@ describe('pairingsForToken', () => {
   });
 
   it('returns nothing for a token in no pairing', () => {
-    expect(pairingsForToken('--surface-inverse')).toEqual([]);
+    // `--border` is a real colour token that participates in no contrast pairing;
+    // `--surface-raised` is an editable background that intentionally gates nothing
+    // (skeleton / divider bars only — no text).
+    expect(pairingsForToken('--border')).toEqual([]);
+    expect(pairingsForToken('--surface-raised')).toEqual([]);
     expect(pairingsForToken('--font-body')).toEqual([]);
     expect(pairingsForToken('--not-a-token')).toEqual([]);
+  });
+
+  it('gates the editable inverse surface against its FIXED white glyphs (WU5 gap)', () => {
+    // `--surface-inverse` is an admin-editable background whose chips / CTAs / cart
+    // badge render the FIXED `--text-inverse`; the live validator must now surface a
+    // pairing for it so an admin editing it to a failing value is caught in the UI.
+    const pairings = pairingsForToken('--surface-inverse');
+    expect(pairings.length).toBeGreaterThan(0);
+    expect(
+      pairings.some(
+        (pair) => pair.background === '--surface-inverse' && pair.foreground === '--text-inverse',
+      ),
+    ).toBe(true);
   });
 });
 

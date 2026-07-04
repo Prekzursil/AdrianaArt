@@ -183,6 +183,17 @@ CONTRAST_BYPASS_DRAFT = {
 # The effective-set gate merges the compiled default (--background = white) and
 # rejects it.
 PARTIAL_CONTRAST_BYPASS_DRAFT = {"--text": "200 200 200"}
+# REWORK NEGATIVE (WU5-gap) — an admin-editable BACKGROUND surface whose text is a
+# FIXED (non-editable) foreground. WU5 shipped `--surface-inverse` as a normal-tier
+# control, but the chips / CTAs / cart badge it paints render `--text-inverse`
+# (white, not admin-editable). Setting `--surface-inverse` to white makes
+# white-on-white (~1:1) — individually WU2-valid, but the `inverse-on-surface-inverse`
+# pairing (added to the matrix) rejects it over the effective set.
+SURFACE_INVERSE_CONTRAST_BYPASS_DRAFT = {"--surface-inverse": "255 255 255"}
+# The same class via `--field`: the editable input fill renders the FIXED
+# `--text-heading` (dark) glyphs. A dark `--field` yields dark-on-dark (~1.2:1),
+# caught by the `heading-on-field` pairing.
+FIELD_CONTRAST_BYPASS_DRAFT = {"--field": "30 41 59"}
 
 
 def _published(client: TestClient) -> dict:
@@ -484,6 +495,78 @@ def test_publish_partial_draft_contrast_bypass_is_rejected(
     assert _count(factory, ThemeAuditLog, action="publish") == 0
 
 
+def test_publish_editable_surface_with_fixed_foreground_is_rejected(
+    seeded_app: Dict[str, object],
+) -> None:
+    """REWORK NEGATIVE #3 — an editable background + a FIXED (non-editable) foreground.
+
+    WU5 shipped ``--surface-inverse`` as an admin control, but every surface it
+    paints (header/cart chips, the 'Add to cart' CTA, the cart badge) renders the
+    FIXED ``--text-inverse`` (white — NOT an admin control). Before the matrix
+    covered this pair, an admin could set ``--surface-inverse`` white through the
+    shipped control and publish white-on-white (~1:1) past the 'authoritative'
+    gate — the same illegible-past-the-gate class as the partial-token bypass, but
+    reachable straight from the UI. The ``inverse-on-surface-inverse`` pairing now
+    rejects it 422 over the effective (default-merged) set.
+    """
+    client: TestClient = seeded_app["client"]  # type: ignore[assignment]
+    factory = seeded_app["session_factory"]  # type: ignore[assignment]
+    token = _create_admin_token(factory)
+    headers = _auth_headers(token)
+
+    # The individually-valid triplet passes the WU2 draft-save...
+    saved = client.put(
+        "/api/v1/theme/draft",
+        json={"tokens": SURFACE_INVERSE_CONTRAST_BYPASS_DRAFT},
+        headers=headers,
+    )
+    assert saved.status_code == 200, saved.text
+    # ...but publish is rejected because the fixed white glyphs vanish on it.
+    resp = client.post("/api/v1/theme/publish", json={}, headers=headers)
+    assert resp.status_code == 422, resp.text
+    detail = resp.json()["detail"]
+    failing_ids = {f["pairing"] for f in detail["failures"]}
+    assert "inverse-on-surface-inverse" in failing_ids
+    failure = next(
+        f for f in detail["failures"] if f["pairing"] == "inverse-on-surface-inverse"
+    )
+    assert failure["foreground"] == "--text-inverse"
+    assert failure["background"] == "--surface-inverse"
+    assert failure["target"] == 4.5
+    assert failure["ratio"] < 4.5
+    # Nothing shipped: the live theme is still the seeded default, no publish audit.
+    assert _published(client)["tokens"] == default_theme_tokens()
+    assert _count(factory, ThemeAuditLog, action="publish") == 0
+
+
+def test_publish_editable_field_with_fixed_foreground_is_rejected(
+    seeded_app: Dict[str, object],
+) -> None:
+    """REWORK NEGATIVE #4 — the ``--field`` variant of the same WU5 gap.
+
+    The editable ``--field`` input fill renders the FIXED ``--text-heading`` glyphs;
+    a dark ``--field`` makes dark-on-dark. The ``heading-on-field`` pairing rejects
+    it 422 — an editable background surface may not lack a text-contrast pairing.
+    """
+    client: TestClient = seeded_app["client"]  # type: ignore[assignment]
+    factory = seeded_app["session_factory"]  # type: ignore[assignment]
+    token = _create_admin_token(factory)
+    headers = _auth_headers(token)
+
+    saved = client.put(
+        "/api/v1/theme/draft",
+        json={"tokens": FIELD_CONTRAST_BYPASS_DRAFT},
+        headers=headers,
+    )
+    assert saved.status_code == 200, saved.text
+    resp = client.post("/api/v1/theme/publish", json={}, headers=headers)
+    assert resp.status_code == 422, resp.text
+    failing_ids = {f["pairing"] for f in resp.json()["detail"]["failures"]}
+    assert "heading-on-field" in failing_ids
+    assert _published(client)["tokens"] == default_theme_tokens()
+    assert _count(factory, ThemeAuditLog, action="publish") == 0
+
+
 # --------------------------------------------------------------------------- #
 # POST /theme/rollback/{version}
 # --------------------------------------------------------------------------- #
@@ -680,6 +763,42 @@ def test_compiled_defaults_is_canonical_and_registry_valid() -> None:
         assert pair.background in defaults, pair.background
     # The seeded defaults are the known-safe set — they pass every pairing.
     assert theme_contrast.validate_contrast(defaults) == []
+
+
+def test_pairing_matrix_covers_every_editable_background_surface() -> None:
+    """Systematic-completeness guard (WU5 gap): no editable background that renders
+    text may lack a text-contrast pairing.
+
+    WU5 shipped these admin-editable background surfaces as normal-tier controls;
+    each renders at least one (often FIXED, non-editable) foreground token in the
+    storefront. Every one MUST appear as a pairing background so setting it to a
+    contrast-failing value is rejected at the gate — the defect this rework closes.
+    ``--surface-raised`` is intentionally absent: it only paints skeleton/divider
+    bars (no text), so it has no foreground to gate.
+    """
+    backgrounds = {pair.background for pair in theme_contrast.PAIRINGS}
+    for surface in (
+        "--background",
+        "--surface",
+        "--surface-muted",
+        "--surface-inverse",
+        "--field",
+        "--accent-subtle",
+    ):
+        assert surface in backgrounds, surface
+    # The specific fixed-foreground pairings the WU5 gap left open, now closed, each
+    # tagged body (4.5) — the size the small UI text actually renders at.
+    by_id = {pair.id: pair for pair in theme_contrast.PAIRINGS}
+    for pairing_id, fg, bg in (
+        ("inverse-on-surface-inverse", "--text-inverse", "--surface-inverse"),
+        ("heading-on-field", "--text-heading", "--field"),
+        ("text-on-surface-muted", "--text", "--surface-muted"),
+        ("accent-strong-on-accent-subtle", "--accent-strong", "--accent-subtle"),
+    ):
+        pair = by_id[pairing_id]
+        assert pair.foreground == fg
+        assert pair.background == bg
+        assert pair.size == "body"
 
 
 # --------------------------------------------------------------------------- #

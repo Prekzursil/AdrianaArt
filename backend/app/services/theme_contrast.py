@@ -88,8 +88,19 @@ class Pairing:
 
 
 # The curated pairing matrix — a faithful mirror of ``pairing-matrix.ts``
-# ``PAIRINGS``: text-on-background, text-on-surface, and accent-on-neutral, each
-# global across the archetypes and tagged with its AA size (4.5 body / 3 large).
+# ``PAIRINGS``. It gates EVERY admin-editable background surface WU5 shipped
+# (``--background``/-surface/-surface-muted/-surface-inverse/-field/-accent-subtle)
+# against every foreground token that co-renders on it in the storefront —
+# INCLUDING the FIXED (non-admin-editable) foregrounds ``--text-inverse`` (on the
+# dark inverse chips/CTAs/cart badge) and ``--text-heading`` (in the field inputs),
+# whose surface an admin CAN recolour. Without these an admin could set an editable
+# surface (e.g. ``--surface-inverse`` white) through the shipped control and publish
+# an illegible ~1:1 render past the 'authoritative' gate. ``--surface-raised`` is
+# intentionally absent: it paints only skeleton/divider bars (no text). Each pairing
+# is tagged with its AA size (4.5 body / 3 large) — the small UI chips/labels/inputs
+# render at body, so their pairings are body even for heading-role foregrounds; the
+# hero ``heading-on-{background,surface}`` (large) pairings model the display type.
+# Kept in EXACT parity with ``pairing-matrix.ts`` PAIRINGS (same ids, same sizes).
 PAIRINGS: tuple[Pairing, ...] = (
     Pairing(
         "text-on-background",
@@ -103,7 +114,28 @@ PAIRINGS: tuple[Pairing, ...] = (
         "--text-heading",
         "--background",
         "large",
-        "headings on the page canvas",
+        "hero / display headings on the page canvas",
+    ),
+    Pairing(
+        "heading-sm-on-background",
+        "--text-heading",
+        "--background",
+        "body",
+        "body-size heading text (buttons / option labels) on the page canvas",
+    ),
+    Pairing(
+        "strong-on-background",
+        "--text-strong",
+        "--background",
+        "body",
+        "emphasised chip / badge labels on the page canvas",
+    ),
+    Pairing(
+        "secondary-on-background",
+        "--text-secondary",
+        "--background",
+        "body",
+        "secondary descriptions on the page canvas",
     ),
     Pairing(
         "muted-on-background",
@@ -120,7 +152,63 @@ PAIRINGS: tuple[Pairing, ...] = (
         "--text-heading",
         "--surface",
         "large",
-        "headings on raised surfaces",
+        "hero / display headings on raised surfaces",
+    ),
+    Pairing(
+        "heading-sm-on-surface",
+        "--text-heading",
+        "--surface",
+        "body",
+        "body-size heading text (menu hover / icon buttons) on raised surfaces",
+    ),
+    Pairing(
+        "strong-on-surface",
+        "--text-strong",
+        "--surface",
+        "body",
+        "emphasised icon-button labels on raised surfaces",
+    ),
+    Pairing(
+        "secondary-on-surface",
+        "--text-secondary",
+        "--surface",
+        "body",
+        "secondary chip labels on raised surfaces",
+    ),
+    Pairing(
+        "text-on-surface-muted",
+        "--text",
+        "--surface-muted",
+        "body",
+        "body copy / labels on the sunken / hover fill",
+    ),
+    Pairing(
+        "strong-on-surface-muted",
+        "--text-strong",
+        "--surface-muted",
+        "body",
+        "emphasised pill labels on the hover fill",
+    ),
+    Pairing(
+        "heading-on-surface-muted",
+        "--text-heading",
+        "--surface-muted",
+        "body",
+        "heading text on the hover fill (menu hover / active buttons)",
+    ),
+    Pairing(
+        "inverse-on-surface-inverse",
+        "--text-inverse",
+        "--surface-inverse",
+        "body",
+        "FIXED white glyphs on the inverse chips / CTAs / cart badge",
+    ),
+    Pairing(
+        "heading-on-field",
+        "--text-heading",
+        "--field",
+        "body",
+        "FIXED input text glyphs on the text-field fill",
     ),
     Pairing(
         "accent-on-background",
@@ -135,6 +223,13 @@ PAIRINGS: tuple[Pairing, ...] = (
         "--surface",
         "body",
         "link text on raised surfaces",
+    ),
+    Pairing(
+        "accent-strong-on-accent-subtle",
+        "--accent-strong",
+        "--accent-subtle",
+        "body",
+        "category-chip labels on the accent-tinted surface",
     ),
 )
 
