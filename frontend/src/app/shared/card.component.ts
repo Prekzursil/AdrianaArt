@@ -7,10 +7,10 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   imports: [NgIf, NgClass],
   template: `
     <div
-      class="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 md:p-6 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:shadow-none"
+      class="rounded-2xl border border-border bg-background shadow-sm p-4 md:p-6 text-text dark:shadow-none"
       [ngClass]="
         clickable
-          ? 'cursor-pointer hover:border-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500/40 dark:hover:border-slate-700'
+          ? 'cursor-pointer hover:border-border-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent/40'
           : ''
       "
       [attr.role]="clickable ? 'button' : null"
@@ -18,10 +18,10 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
       (click)="onClick($event)"
       (keydown)="onKeyDown($event)"
     >
-      <div *ngIf="title" class="text-base font-semibold text-slate-900 dark:text-slate-50 mb-2">
+      <div *ngIf="title" class="text-base font-semibold text-text-heading mb-2">
         {{ title }}
       </div>
-      <div *ngIf="subtitle" class="text-sm text-slate-600 dark:text-slate-300">{{ subtitle }}</div>
+      <div *ngIf="subtitle" class="text-sm text-text-secondary">{{ subtitle }}</div>
       <ng-content></ng-content>
     </div>
   `,

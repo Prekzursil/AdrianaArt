@@ -24,6 +24,7 @@ from app.services.theme_contrast import (
     relative_luminance,
 )
 from app.services.theme_derive import derive_tokens
+from app.services.theme_render_pairs import extract_render_pairs, extract_template
 from app.services.theme_service import default_theme_tokens
 
 
@@ -107,25 +108,48 @@ def test_gate_targets_heading_at_body_on_every_neutral_surface() -> None:
         assert f.ratio < AA_BODY
 
 
-def test_render_pairings_cover_every_rendered_derived_surface() -> None:
-    # Render-completeness backstop (prevents bypass #8): every DERIVED surface the
-    # storefront renders TEXT on MUST appear as a gated background, so a future
-    # ungated state shade cannot silently reappear. Provenance: the audited
-    # frontend/src render map (see RENDER_PAIRINGS docstring).
-    gated_bg = {p.background for p in RENDER_PAIRINGS}
-    rendered_text_surfaces = {
-        "--background",
-        "--surface",
-        "--surface-muted",
-        "--field",
-        "--background-subtle",
-        "--surface-inverse",
-        "--surface-inverse-hover",
-        "--accent",
-        "--accent-subtle",
-    }
-    missing = rendered_text_surfaces - gated_bg
-    assert not missing, f"ungated rendered surfaces (bypass #8 risk): {missing}"
+#: The storefront CORE templates that paint themed text (the render map the gate
+#: must cover). Relative to ``frontend/src``. This is the surface set the earlier
+#: tautological backstop hand-enumerated; here it is the INPUT to a real parse.
+_CORE_TEMPLATE_FILES: tuple[str, ...] = (
+    "app/layout/header.component.ts",
+    "app/layout/footer.component.ts",
+    "app/pages/home/home.component.ts",
+    "app/pages/shop/shop.component.ts",
+    "app/pages/product/product.component.ts",
+    "app/shared/product-card.component.ts",
+    "app/shared/banner-block.component.ts",
+    "app/shared/card.component.ts",
+    "app/app.component.ts",
+)
+
+
+def _frontend_src() -> Path:
+    return Path(__file__).parent.parent.parent / "frontend" / "src"
+
+
+def _rendered_pairs_from_templates() -> set[tuple[str, str]]:
+    src = _frontend_src()
+    pairs: set[tuple[str, str]] = set()
+    for rel in _CORE_TEMPLATE_FILES:
+        template = extract_template((src / rel).read_text(encoding="utf-8"))
+        pairs |= extract_render_pairs(template)
+    return pairs
+
+
+def test_render_pairings_gate_every_rendered_text_pair() -> None:
+    # Render-completeness backstop (prevents bypass #8), NON-TAUTOLOGICAL: the
+    # rendered (fg,bg) pair set is DERIVED by parsing the ACTUAL storefront core
+    # templates (theme_render_pairs), not hand-enumerated. Every themed text pair
+    # the storefront paints on a concrete single-token surface MUST be a gated
+    # RENDER_PAIRINGS row — so a future themed text on an ungated surface (or a
+    # rendered ramp key, residual #4) turns this RED instead of silently shipping.
+    gated = {(p.foreground, p.background) for p in RENDER_PAIRINGS}
+    rendered = _rendered_pairs_from_templates()
+    # The parse must actually find pairs — guard against a silent no-op regression.
+    assert rendered, "no themed (fg,bg) pairs parsed from the storefront templates"
+    ungated = {pair for pair in rendered if pair not in gated}
+    assert not ungated, f"ungated rendered (fg,bg) pairs (bypass #8 risk): {sorted(ungated)}"
 
 
 def test_render_pairings_reference_present_tokens_and_pass_defaults() -> None:
