@@ -188,6 +188,9 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
     BannerBlockComponent,
     CarouselBlockComponent,
   ],
+  styles: [
+    'h1, h2, h3 { font-family: var(--font-heading, Cinzel, ui-serif, Georgia, serif); }',
+  ],
   template: `
     <section class="grid gap-10">
       <h1 class="sr-only" data-route-heading="true" tabindex="-1">{{ 'app.name' | translate }}</h1>
@@ -215,7 +218,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
           <ng-container *ngSwitchCase="'featured_products'">
             <div class="grid gap-4">
               <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
+                <h2 class="text-xl font-semibold text-text-heading dark:text-slate-50">
                   {{ 'home.featured' | translate }}
                 </h2>
                 <app-button
@@ -260,7 +263,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
 
               <div
                 *ngIf="!featuredLoading() && !featuredError() && !featured.length"
-                class="text-sm text-slate-600 dark:text-slate-300"
+                class="text-sm text-text dark:text-slate-300"
               >
                 {{ 'home.noFeatured' | translate }}
               </div>
@@ -270,7 +273,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
           <ng-container *ngSwitchCase="'sale_products'">
             <div class="grid gap-4">
               <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
+                <h2 class="text-xl font-semibold text-text-heading dark:text-slate-50">
                   {{ 'home.saleProducts' | translate }}
                 </h2>
                 <app-button
@@ -316,7 +319,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
 
               <div
                 *ngIf="!saleLoading() && !saleError() && !saleProducts.length"
-                class="text-sm text-slate-600 dark:text-slate-300"
+                class="text-sm text-text dark:text-slate-300"
               >
                 {{ 'home.saleEmpty' | translate }}
               </div>
@@ -326,7 +329,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
           <ng-container *ngSwitchCase="'new_arrivals'">
             <div class="grid gap-4">
               <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
+                <h2 class="text-xl font-semibold text-text-heading dark:text-slate-50">
                   {{ 'home.newArrivals' | translate }}
                 </h2>
                 <app-button
@@ -371,7 +374,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
 
               <div
                 *ngIf="!newArrivalsLoading() && !newArrivalsError() && !newArrivals.length"
-                class="text-sm text-slate-600 dark:text-slate-300"
+                class="text-sm text-text dark:text-slate-300"
               >
                 {{ 'home.newArrivalsEmpty' | translate }}
               </div>
@@ -380,7 +383,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
 
           <ng-container *ngSwitchCase="'featured_collections'">
             <div class="grid gap-4">
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
+              <h2 class="text-xl font-semibold text-text-heading dark:text-slate-50">
                 {{ 'home.collections' | translate }}
               </h2>
 
@@ -413,10 +416,10 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
               >
                 <div *ngFor="let col of featuredCollections" class="grid gap-3">
                   <div class="grid gap-1">
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                    <h3 class="text-lg font-semibold text-text-heading dark:text-slate-50">
                       {{ col.name }}
                     </h3>
-                    <p *ngIf="col.description" class="text-sm text-slate-600 dark:text-slate-300">
+                    <p *ngIf="col.description" class="text-sm text-text dark:text-slate-300">
                       {{ col.description }}
                     </p>
                   </div>
@@ -431,7 +434,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
 
               <div
                 *ngIf="!collectionsLoading() && !collectionsError() && !featuredCollections.length"
-                class="text-sm text-slate-600 dark:text-slate-300"
+                class="text-sm text-text dark:text-slate-300"
               >
                 {{ 'home.collectionsEmpty' | translate }}
               </div>
@@ -440,12 +443,12 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
 
           <ng-container *ngSwitchCase="'story'">
             <div class="grid gap-4" *ngIf="!storyLoading() && storyBlock()">
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
+              <h2 class="text-xl font-semibold text-text-heading dark:text-slate-50">
                 {{ storyBlock()!.title }}
               </h2>
               <app-card>
                 <div
-                  class="markdown text-lg text-slate-700 leading-relaxed dark:text-slate-200"
+                  class="markdown text-lg text-text leading-relaxed dark:text-slate-200"
                   [innerHTML]="storyHtml()"
                 ></div>
                 <div class="mt-4">
@@ -464,13 +467,13 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
               <div class="grid gap-4">
                 <h2
                   *ngIf="tb.title"
-                  class="text-xl font-semibold text-slate-900 dark:text-slate-50"
+                  class="text-xl font-semibold text-text-heading dark:text-slate-50"
                 >
                   {{ tb.title }}
                 </h2>
                 <app-card>
                   <div
-                    class="markdown text-lg text-slate-700 leading-relaxed dark:text-slate-200"
+                    class="markdown text-lg text-text leading-relaxed dark:text-slate-200"
                     [innerHTML]="tb.body_html"
                   ></div>
                 </app-card>
@@ -483,7 +486,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
               <div class="grid gap-4">
                 <h2
                   *ngIf="img.title"
-                  class="text-xl font-semibold text-slate-900 dark:text-slate-50"
+                  class="text-xl font-semibold text-text-heading dark:text-slate-50"
                 >
                   {{ img.title }}
                 </h2>
@@ -512,7 +515,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
                       loading="lazy"
                     />
                   </ng-template>
-                  <p *ngIf="img.caption" class="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                  <p *ngIf="img.caption" class="mt-3 text-sm text-text dark:text-slate-300">
                     {{ img.caption }}
                   </p>
                 </app-card>
@@ -525,7 +528,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
               <div class="grid gap-4">
                 <h2
                   *ngIf="gal.title"
-                  class="text-xl font-semibold text-slate-900 dark:text-slate-50"
+                  class="text-xl font-semibold text-text-heading dark:text-slate-50"
                 >
                   {{ gal.title }}
                 </h2>
@@ -540,7 +543,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
                     />
                     <p
                       *ngIf="image.caption"
-                      class="mt-2 text-sm text-slate-600 dark:text-slate-300"
+                      class="mt-2 text-sm text-text dark:text-slate-300"
                     >
                       {{ image.caption }}
                     </p>
@@ -555,7 +558,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
               <div class="grid gap-4">
                 <h2
                   *ngIf="cols.title"
-                  class="text-xl font-semibold text-slate-900 dark:text-slate-50"
+                  class="text-xl font-semibold text-text-heading dark:text-slate-50"
                 >
                   {{ cols.title }}
                 </h2>
@@ -564,12 +567,12 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
                     <div *ngFor="let col of cols.columns" class="grid gap-2">
                       <h3
                         *ngIf="col.title"
-                        class="text-lg font-semibold text-slate-900 dark:text-slate-50"
+                        class="text-lg font-semibold text-text-heading dark:text-slate-50"
                       >
                         {{ col.title }}
                       </h3>
                       <div
-                        class="markdown text-lg text-slate-700 leading-relaxed dark:text-slate-200"
+                        class="markdown text-lg text-text leading-relaxed dark:text-slate-200"
                         [innerHTML]="col.body_html"
                       ></div>
                     </div>
@@ -584,13 +587,13 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
               <div class="grid gap-4">
                 <h2
                   *ngIf="cta.title"
-                  class="text-xl font-semibold text-slate-900 dark:text-slate-50"
+                  class="text-xl font-semibold text-text-heading dark:text-slate-50"
                 >
                   {{ cta.title }}
                 </h2>
                 <app-card>
                   <div
-                    class="markdown text-lg text-slate-700 leading-relaxed dark:text-slate-200"
+                    class="markdown text-lg text-text leading-relaxed dark:text-slate-200"
                     [innerHTML]="cta.body_html"
                   ></div>
                   <div class="mt-4 flex" *ngIf="cta.cta_label && cta.cta_url">
@@ -616,7 +619,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
               <div class="grid gap-4">
                 <h2
                   *ngIf="faq.title"
-                  class="text-xl font-semibold text-slate-900 dark:text-slate-50"
+                  class="text-xl font-semibold text-text-heading dark:text-slate-50"
                 >
                   {{ faq.title }}
                 </h2>
@@ -624,15 +627,15 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
                   <div class="grid gap-2">
                     <details
                       *ngFor="let item of faq.items"
-                      class="rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-slate-800 dark:bg-slate-900"
+                      class="rounded-xl border border-border bg-background p-3 text-sm dark:border-slate-800 dark:bg-slate-900"
                     >
                       <summary
-                        class="cursor-pointer select-none font-semibold text-slate-900 dark:text-slate-50"
+                        class="cursor-pointer select-none font-semibold text-text-heading dark:text-slate-50"
                       >
                         {{ item.question }}
                       </summary>
                       <div
-                        class="mt-2 markdown text-base text-slate-700 leading-relaxed dark:text-slate-200"
+                        class="mt-2 markdown text-base text-text leading-relaxed dark:text-slate-200"
                         [innerHTML]="item.answer_html"
                       ></div>
                     </details>
@@ -647,23 +650,23 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
               <div class="grid gap-4">
                 <h2
                   *ngIf="ts.title"
-                  class="text-xl font-semibold text-slate-900 dark:text-slate-50"
+                  class="text-xl font-semibold text-text-heading dark:text-slate-50"
                 >
                   {{ ts.title }}
                 </h2>
                 <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <app-card *ngFor="let t of ts.items">
                     <div
-                      class="markdown text-lg text-slate-700 leading-relaxed dark:text-slate-200"
+                      class="markdown text-lg text-text leading-relaxed dark:text-slate-200"
                       [innerHTML]="t.quote_html"
                     ></div>
                     <p
                       *ngIf="t.author || t.role"
-                      class="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-50"
+                      class="mt-3 text-sm font-semibold text-text-heading dark:text-slate-50"
                     >
                       <span *ngIf="t.author">{{ t.author }}</span>
                       <span *ngIf="t.author && t.role"> · </span>
-                      <span *ngIf="t.role" class="font-normal text-slate-500 dark:text-slate-400">{{
+                      <span *ngIf="t.role" class="font-normal text-text-muted dark:text-slate-400">{{
                         t.role
                       }}</span>
                     </p>
@@ -676,7 +679,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
           <ng-container *ngSwitchCase="'recently_viewed'">
             <div *ngIf="recentlyViewed.length" class="grid gap-4">
               <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
+                <h2 class="text-xl font-semibold text-text-heading dark:text-slate-50">
                   {{ 'product.recentlyViewed' | translate }}
                 </h2>
                 <app-button
@@ -696,7 +699,7 @@ const DEFAULT_BLOCKS: HomeBlock[] = [
 
           <ng-container *ngSwitchCase="'why'">
             <div class="grid gap-4">
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
+              <h2 class="text-xl font-semibold text-text-heading dark:text-slate-50">
                 {{ 'home.why' | translate }}
               </h2>
               <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">

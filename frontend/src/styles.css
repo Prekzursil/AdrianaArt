@@ -411,23 +411,56 @@
 }
 
 @layer utilities {
-  .font-cinzel {
-    font-family: Cinzel, ui-serif, Georgia, serif;
+  .font-cinzel,
+  .font-heading {
+    font-family: var(--font-heading, Cinzel, ui-serif, Georgia, serif);
   }
 }
 
+/*
+ * Storefront-scoped theme tokens (P1a WU5). These are the compiled light-palette
+ * defaults derived from today's styles.css, in the frozen `R G B` triplet / curated
+ * font-family enum / numeric+unit wire format (WU0 memo §4). The WU6 SSR head-inline
+ * block overrides these on `:root` per request; the storefront alias classes consume
+ * them via `rgb(var(--token) / <alpha-value>)`. The admin UI consumes baked slate/indigo
+ * primitives, never these tokens, so it is not repainted. The dark palette is baked (the
+ * pre-existing `dark:` variants + `:root.dark` rules below) — runtime dark theming is
+ * deferred; P1a themes the light surface (WU0 memo §5, light/dark independence).
+ */
 :root {
-  --aa-bg: #0f172a;
-  --aa-ink: #0f172a;
-  --aa-accent: #111827;
+  --background: 255 255 255;
+  --surface: 241 245 249;
+  --surface-inverse: 15 23 42;
+  --text: 51 65 85;
+  --text-inverse: 255 255 255;
+  --text-heading: 15 23 42;
+  --text-strong: 15 23 42;
+  --text-muted: 100 116 139;
+  --border: 226 232 240;
+  --accent: 79 70 229;
+  --overlay: 0 0 0;
+  --brand: 15 23 42;
+  --primary: 15 23 42;
+  --font-body: Inter, system-ui, -apple-system, sans-serif;
+  --font-heading: Cinzel, ui-serif, Georgia, serif;
+  --font-size-base: clamp(15px, 1.2vw + 12px, 18px);
+}
+
+/* Storefront root surface (index.html <body>). Class-rewrite path (WU0 N-F1): a real
+   rule that paints, NOT a :root-override of an already-resolved utility class. */
+.ms-storefront-root {
+  background-color: rgb(var(--background, 255 255 255));
+  color: rgb(var(--text, 51 65 85));
+}
+
+/* Baked dark body surface (dark palette deferred — allowlisted in the WU5 guard). */
+:root.dark .ms-storefront-root {
+  background-color: #020617;
+  color: #f8fafc;
 }
 
 body {
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: var(--font-body, Inter, system-ui, -apple-system, sans-serif);
 }
 
 html {
@@ -435,7 +468,7 @@ html {
 }
 
 :root {
-  font-size: clamp(15px, 1.2vw + 12px, 18px);
+  font-size: var(--font-size-base, clamp(15px, 1.2vw + 12px, 18px));
 }
 
 img,
@@ -445,7 +478,7 @@ video {
 }
 
 .shadow-soft {
-  box-shadow: 0 10px 40px rgb(15 23 42 / 8%);
+  box-shadow: 0 10px 40px rgb(var(--text, 15 23 42) / 8%);
 }
 
 :root {
@@ -457,8 +490,8 @@ video {
 }
 
 :root select option {
-  background-color: #fff;
-  color: #0f172a;
+  background-color: rgb(var(--background, 255 255 255));
+  color: rgb(var(--text-heading, 15 23 42));
 }
 
 :root.dark select option {
@@ -467,7 +500,7 @@ video {
 }
 
 *:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid rgb(var(--accent, 99 102 241));
   outline-offset: 2px;
 }
 
@@ -478,8 +511,8 @@ video {
   z-index: 50;
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  background: #111827;
-  color: #fff;
+  background: rgb(var(--surface-inverse, 17 24 39));
+  color: rgb(var(--text-inverse, 255 255 255));
   text-decoration: none;
   transition:
     transform 0.2s ease,

@@ -1,0 +1,31 @@
+{
+  "_comment": "Reviewed non-core / baked core-palette literals exempt from the P1a WU5 absolute-mode sweep (frontend/scripts/check-core-literals.mjs). Every entry is a documented exception; a NEW bare core literal that is not here turns the sweep RED. dark: utility variants are skipped by the guard itself (baked dark palette, P1a themes light) and are NOT listed here.",
+  "allow": [
+    "#000",
+    "#fff",
+    "#020617",
+    "#1e293b",
+    "#f8fafc",
+    "#0f172a",
+    "#94a3b8",
+    "#c084fc",
+    "#86efac",
+    "#fbbf24",
+    "#a5b4fc",
+    "#7dd3fc"
+  ],
+  "reasons": {
+    "#000": "styles.css @media print reset (print-only, out of core, WU0 memo §1A)",
+    "#fff": "styles.css @media print reset (print-only, out of core)",
+    "#020617": "styles.css :root.dark .ms-storefront-root baked dark body (dark palette deferred in P1a)",
+    "#1e293b": "styles.css :root.dark select option baked dark surface (dark palette deferred)",
+    "#f8fafc": "baked dark text (styles.css dark select/body) + index.html dark theme-color meta",
+    "#0f172a": "index.html light theme-color meta (browser chrome hint, not a storefront surface)",
+    "#94a3b8": "styles.css .hljs syntax-highlight theme (out of core, WU0 memo §1A)",
+    "#c084fc": "styles.css .hljs syntax-highlight theme (out of core)",
+    "#86efac": "styles.css .hljs syntax-highlight theme (out of core)",
+    "#fbbf24": "styles.css .hljs syntax-highlight theme (out of core)",
+    "#a5b4fc": "styles.css .hljs syntax-highlight theme (out of core)",
+    "#7dd3fc": "styles.css .hljs syntax-highlight theme (out of core)"
+  }
+}

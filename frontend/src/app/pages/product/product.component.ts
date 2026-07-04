@@ -48,6 +48,9 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
     ImgFallbackDirective,
     ProductImageManagerModalComponent,
   ],
+  styles: [
+    'h1, h2, h3 { font-family: var(--font-heading, Cinzel, ui-serif, Georgia, serif); }',
+  ],
   template: `
     <app-container classes="py-10">
       <h1 *ngIf="!product" class="sr-only">{{ 'product.handmade' | translate }}</h1>
@@ -66,12 +69,12 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
         <ng-container *ngIf="loadError; else maybeProduct">
           <app-breadcrumb [crumbs]="crumbs"></app-breadcrumb>
           <div
-            class="border border-dashed border-slate-200 rounded-2xl p-10 text-center dark:border-slate-800"
+            class="border border-dashed border-border rounded-2xl p-10 text-center dark:border-slate-800"
           >
-            <p class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+            <p class="text-lg font-semibold text-text-heading dark:text-slate-50">
               {{ 'product.loadErrorTitle' | translate }}
             </p>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            <p class="mt-2 text-sm text-text dark:text-slate-300">
               {{ 'product.loadErrorCopy' | translate }}
             </p>
             <div class="mt-6 flex items-center justify-center gap-3">
@@ -95,7 +98,7 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
             <div class="grid gap-10 lg:grid-cols-2">
               <div class="space-y-4">
                 <div
-                  class="overflow-hidden rounded-2xl border border-slate-200 bg-white cursor-zoom-in dark:border-slate-800 dark:bg-slate-900"
+                  class="overflow-hidden rounded-2xl border border-border bg-background cursor-zoom-in dark:border-slate-800 dark:bg-slate-900"
                   (click)="openPreview()"
                 >
                   <img
@@ -113,9 +116,9 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
                 <div class="flex gap-3">
                   <button
                     *ngFor="let image of product.images ?? []; let idx = index"
-                    class="h-20 w-20 rounded-xl border border-slate-200 dark:border-slate-700"
+                    class="h-20 w-20 rounded-xl border border-border dark:border-slate-700"
                     [ngClass]="
-                      idx === activeImageIndex ? 'border-slate-900 dark:border-slate-50' : ''
+                      idx === activeImageIndex ? 'border-border dark:border-slate-50' : ''
                     "
                     type="button"
                     (click)="setActiveImage(idx)"
@@ -144,23 +147,23 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
 
               <div class="space-y-5">
                 <div class="space-y-2">
-                  <p class="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                  <p class="text-xs uppercase tracking-[0.3em] text-text-muted dark:text-slate-400">
                     {{ 'product.handmade' | translate }}
                   </p>
                   <h1
-                    class="text-3xl font-semibold text-slate-900 dark:text-slate-50"
+                    class="text-3xl font-semibold text-text-heading dark:text-slate-50"
                     data-route-heading="true"
                     tabindex="-1"
                   >
                     {{ product.name }}
                   </h1>
                   <div class="flex items-baseline gap-3">
-                    <p class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                    <p class="text-lg font-semibold text-text-heading dark:text-slate-50">
                       {{ displayPrice(product) | localizedCurrency: product.currency }}
                     </p>
                     <p
                       *ngIf="isOnSale(product)"
-                      class="text-sm text-slate-500 line-through dark:text-slate-300"
+                      class="text-sm text-text-muted line-through dark:text-slate-300"
                     >
                       {{ product.base_price | localizedCurrency: product.currency }}
                     </p>
@@ -175,13 +178,13 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
                 </div>
 
                 <div
-                  class="markdown text-sm text-slate-700 dark:text-slate-200 leading-relaxed"
+                  class="markdown text-sm text-text dark:text-slate-200 leading-relaxed"
                   *ngIf="descriptionHtml"
                   [innerHTML]="descriptionHtml"
                 ></div>
                 <p
                   *ngIf="!descriptionHtml"
-                  class="text-sm text-slate-700 leading-relaxed dark:text-slate-200"
+                  class="text-sm text-text leading-relaxed dark:text-slate-200"
                 >
                   {{ seoFallbackDescription }}
                 </p>
@@ -195,11 +198,11 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
                 <div class="space-y-3">
                   <label
                     *ngIf="product.variants?.length"
-                    class="grid gap-1 text-sm font-medium text-slate-800 dark:text-slate-200"
+                    class="grid gap-1 text-sm font-medium text-text dark:text-slate-200"
                   >
                     {{ 'product.variant' | translate }}
                     <select
-                      class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      class="rounded-lg border border-border bg-background px-3 py-2 text-sm text-text-heading dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                       [(ngModel)]="selectedVariantId"
                     >
                       <option *ngFor="let variant of product.variants" [value]="variant.id">
@@ -211,12 +214,12 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
                     </select>
                   </label>
 
-                  <label class="grid gap-1 text-sm font-medium text-slate-800 dark:text-slate-200">
+                  <label class="grid gap-1 text-sm font-medium text-text dark:text-slate-200">
                     {{ 'product.quantity' | translate }}
                     <input
                       type="number"
                       min="1"
-                      class="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      class="w-24 rounded-lg border border-border bg-background px-3 py-2 text-text-heading dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                       [(ngModel)]="quantity"
                     />
                   </label>
@@ -285,7 +288,7 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
                 <div class="flex flex-wrap gap-2" *ngIf="product.tags?.length">
                   <span
                     *ngFor="let tag of product.tags"
-                    class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    class="rounded-full bg-surface px-3 py-1 text-xs font-medium text-text dark:bg-slate-800 dark:text-slate-200"
                   >
                     {{ tag.name ?? tag }}
                   </span>
@@ -294,12 +297,12 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
             </div>
             <div *ngIf="upsellProducts.length" class="mt-12 grid gap-4">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                <h3 class="text-lg font-semibold text-text-heading dark:text-slate-50">
                   {{ 'product.upsells' | translate }}
                 </h3>
                 <button
                   type="button"
-                  class="bg-transparent p-0 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+                  class="bg-transparent p-0 text-sm font-medium text-accent hover:underline dark:text-indigo-300"
                   (click)="backToShop()"
                 >
                   {{ 'product.backToShop' | translate }}
@@ -326,10 +329,10 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
                       [appImgFallback]="'assets/placeholder/product-placeholder.svg'"
                     />
                     <div class="grid gap-1">
-                      <p class="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                      <p class="text-sm font-semibold text-text-heading dark:text-slate-50">
                         {{ item.name }}
                       </p>
-                      <p class="text-sm text-slate-600 dark:text-slate-300">
+                      <p class="text-sm text-text dark:text-slate-300">
                         {{ displayPrice(item) | localizedCurrency: item.currency }}
                       </p>
                     </div>
@@ -340,12 +343,12 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
 
             <div *ngIf="relatedProducts.length" class="mt-12 grid gap-4">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                <h3 class="text-lg font-semibold text-text-heading dark:text-slate-50">
                   {{ 'product.relatedProducts' | translate }}
                 </h3>
                 <button
                   type="button"
-                  class="bg-transparent p-0 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+                  class="bg-transparent p-0 text-sm font-medium text-accent hover:underline dark:text-indigo-300"
                   (click)="backToShop()"
                 >
                   {{ 'product.backToShop' | translate }}
@@ -372,10 +375,10 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
                       [appImgFallback]="'assets/placeholder/product-placeholder.svg'"
                     />
                     <div class="grid gap-1">
-                      <p class="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                      <p class="text-sm font-semibold text-text-heading dark:text-slate-50">
                         {{ item.name }}
                       </p>
-                      <p class="text-sm text-slate-600 dark:text-slate-300">
+                      <p class="text-sm text-text dark:text-slate-300">
                         {{ displayPrice(item) | localizedCurrency: item.currency }}
                       </p>
                     </div>
@@ -386,12 +389,12 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
 
             <div *ngIf="recentlyViewed.length" class="mt-12 grid gap-4">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                <h3 class="text-lg font-semibold text-text-heading dark:text-slate-50">
                   {{ 'product.recentlyViewed' | translate }}
                 </h3>
                 <button
                   type="button"
-                  class="bg-transparent p-0 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+                  class="bg-transparent p-0 text-sm font-medium text-accent hover:underline dark:text-indigo-300"
                   (click)="backToShop()"
                 >
                   {{ 'product.backToShop' | translate }}
@@ -418,10 +421,10 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
                       [appImgFallback]="'assets/placeholder/product-placeholder.svg'"
                     />
                     <div class="grid gap-1">
-                      <p class="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                      <p class="text-sm font-semibold text-text-heading dark:text-slate-50">
                         {{ item.name }}
                       </p>
-                      <p class="text-sm text-slate-600 dark:text-slate-300">
+                      <p class="text-sm text-text dark:text-slate-300">
                         {{ displayPrice(item) | localizedCurrency: item.currency || 'RON' }}
                       </p>
                     </div>
@@ -432,29 +435,29 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
 
             <div
               *ngIf="showFallbackNavigationLinks()"
-              class="mt-10 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/40"
+              class="mt-10 rounded-2xl border border-border bg-background p-5 dark:border-slate-800 dark:bg-slate-900/40"
             >
-              <h3 class="text-base font-semibold text-slate-900 dark:text-slate-50">
+              <h3 class="text-base font-semibold text-text-heading dark:text-slate-50">
                 {{ 'product.exploreMore' | translate }}
               </h3>
-              <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              <p class="mt-2 text-sm text-text dark:text-slate-300">
                 {{ 'product.exploreMoreCopy' | translate }}
               </p>
               <div class="mt-4 flex flex-wrap gap-3 text-sm">
                 <a
-                  class="font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+                  class="font-medium text-accent hover:underline dark:text-indigo-300"
                   [routerLink]="['/shop']"
                 >
                   {{ 'nav.shop' | translate }}
                 </a>
                 <a
-                  class="font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+                  class="font-medium text-accent hover:underline dark:text-indigo-300"
                   [routerLink]="['/blog']"
                 >
                   {{ 'nav.blog' | translate }}
                 </a>
                 <a
-                  class="font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+                  class="font-medium text-accent hover:underline dark:text-indigo-300"
                   [routerLink]="['/contact']"
                 >
                   {{ 'nav.contact' | translate }}
@@ -464,12 +467,12 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
 
             <div
               *ngIf="previewOpen"
-              class="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6"
+              class="fixed inset-0 z-40 bg-overlay/70 backdrop-blur-sm flex items-center justify-center p-6"
               (click)="closePreview()"
             >
               <div class="relative max-w-5xl w-full" (click)="$event.stopPropagation()">
                 <button
-                  class="absolute -top-10 right-0 text-white text-sm font-semibold underline"
+                  class="absolute -top-10 right-0 text-text-inverse text-sm font-semibold underline"
                   type="button"
                   (click)="closePreview()"
                 >
@@ -502,14 +505,14 @@ import { SeoCopyFallbackService } from '../../core/seo-copy-fallback.service';
 
           <ng-template #missing>
             <div
-              class="border border-dashed border-slate-200 rounded-2xl p-10 text-center dark:border-slate-800"
+              class="border border-dashed border-border rounded-2xl p-10 text-center dark:border-slate-800"
             >
-              <p class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+              <p class="text-lg font-semibold text-text-heading dark:text-slate-50">
                 {{ 'product.notFound' | translate }}
               </p>
               <button
                 type="button"
-                class="bg-transparent p-0 font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+                class="bg-transparent p-0 font-medium text-accent hover:underline dark:text-indigo-300"
                 (click)="backToShop()"
               >
                 {{ 'product.backToShop' | translate }}
