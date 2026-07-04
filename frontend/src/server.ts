@@ -4,6 +4,8 @@ import express from 'express';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import bootstrap from './main.server';
+import { applyThemeSsr } from './server/theme-head';
+import { defaultFetchDeps, getThemeTokens, readThemeConfig } from './server/theme-source';
 
 // The Express app is exported so that it can be reused by tests/other runtimes.
 export function app(): express.Express {
