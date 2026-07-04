@@ -26,6 +26,12 @@
       "size": "body"
     },
     {
+      "id": "muted-on-background-subtle",
+      "foreground": "--text-muted",
+      "background": "--background-subtle",
+      "size": "body"
+    },
+    {
       "id": "secondary-on-background",
       "foreground": "--text-secondary",
       "background": "--background",
@@ -160,6 +166,15 @@
         "heading-on-field",
         "heading-on-surface",
         "heading-on-surface-muted"
+      ]
+    },
+    {
+      "name": "surface-darkens-background-subtle-canvas",
+      "primaries": {
+        "--surface": "222 222 222"
+      },
+      "failures": [
+        "muted-on-background-subtle"
       ]
     }
   ]

@@ -630,6 +630,48 @@ def test_publish_rejects_heading_below_body_aa(
     assert _theme_row(factory)["version"] == 1
 
 
+def test_publish_rejects_muted_on_background_subtle(
+    seeded_app: Dict[str, object],
+) -> None:
+    """Regression (contrast bypass #8): the app-shell canvas gradient's SUBTLE stop.
+
+    ``--surface = 222 222 222`` is a valid PRIMARY triplet and leaves every legacy
+    gated pairing green: ``muted-on-background`` (--text-muted on the solid white
+    --background) still clears 4.5. But the derived
+    ``--background-subtle = mix(--background, --surface, 0.5) = 239 239 239`` is the
+    UPPER stop of the app-shell canvas gradient (app.component.ts:40
+    ``from-background-subtle to-background``), and --text-muted renders BODY captions
+    directly on that bare canvas (shop:700/823/859, product:143/157, banner-block:18)
+    at contrast 4.14 — below body AA. --text-muted was gated only on --background,
+    so it USED to publish (200). The render-complete gate now covers the
+    ``muted-on-background-subtle`` pair and rejects the publish (422).
+    """
+    client: TestClient = seeded_app["client"]  # type: ignore[assignment]
+    factory = seeded_app["session_factory"]
+    token = _create_admin_token(factory)
+    headers = _auth_headers(token)
+
+    hostile = {**_primaries(), "--surface": "222 222 222"}
+    save = client.put("/api/v1/theme/draft", json={"tokens": hostile}, headers=headers)
+    assert save.status_code == 200, save.text
+    resp = client.post("/api/v1/theme/publish", json={}, headers=headers)
+    assert resp.status_code == 422, resp.text
+    detail = resp.json()["detail"]
+    assert detail["error"] == "contrast"
+    failed = {f["pairing"] for f in detail["failures"]}
+    assert "muted-on-background-subtle" in failed
+    # The BASE muted-on-background (solid white) pairing still passes.
+    assert "muted-on-background" not in failed
+    muted = next(
+        f for f in detail["failures"] if f["pairing"] == "muted-on-background-subtle"
+    )
+    assert muted["foreground"] == "--text-muted"
+    assert muted["background"] == "--background-subtle"
+    assert muted["ratio"] < muted["target"] == 4.5
+    # Atomic: the failing publish did not flip the live theme.
+    assert _theme_row(factory)["version"] == 1
+
+
 def test_publish_requires_admin(seeded_app: Dict[str, object]) -> None:
     client: TestClient = seeded_app["client"]  # type: ignore[assignment]
     factory = seeded_app["session_factory"]

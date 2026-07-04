@@ -230,6 +230,12 @@ export const RENDER_PAIRINGS: readonly RenderPairing[] = [
   { id: 'text-on-surface-muted', foreground: '--text', background: '--surface-muted', size: 'body' },
   { id: 'muted-on-background', foreground: '--text-muted', background: '--background', size: 'body' },
   {
+    id: 'muted-on-background-subtle',
+    foreground: '--text-muted',
+    background: '--background-subtle',
+    size: 'body',
+  },
+  {
     id: 'secondary-on-background',
     foreground: '--text-secondary',
     background: '--background',

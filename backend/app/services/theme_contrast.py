@@ -121,7 +121,10 @@ PRIMARY_PAIRINGS: tuple[Pairing, ...] = (
 #
 #   --text            on --background (header:157) / --surface (product:278, hover
 #                     header:180) / --surface-muted (product-card:138)              body
-#   --text-muted      on --background (product-card:111)                            body
+#   --text-muted      on --background (product-card:111) / --background-subtle — the
+#                     app-shell canvas gradient UPPER stop (app:40), bearing bare
+#                     BODY captions (shop:700/823/859, product:143/157,
+#                     banner-block:18)                                              body
 #   --text-secondary  on --background (footer:53) / --surface (shop:212) /
 #                     --surface-muted (shop:280)                                    body
 #   --text-strong     on --background (shop:93) / --surface (header:133) /
@@ -144,6 +147,7 @@ RENDER_PAIRINGS: tuple[Pairing, ...] = (
     Pairing("text-on-surface", "--text", "--surface", "body"),
     Pairing("text-on-surface-muted", "--text", "--surface-muted", "body"),
     Pairing("muted-on-background", "--text-muted", "--background", "body"),
+    Pairing("muted-on-background-subtle", "--text-muted", "--background-subtle", "body"),
     Pairing("secondary-on-background", "--text-secondary", "--background", "body"),
     Pairing("secondary-on-surface", "--text-secondary", "--surface", "body"),
     Pairing("secondary-on-surface-muted", "--text-secondary", "--surface-muted", "body"),

@@ -107,25 +107,78 @@ def test_gate_targets_heading_at_body_on_every_neutral_surface() -> None:
         assert f.ratio < AA_BODY
 
 
-def test_render_pairings_cover_every_rendered_derived_surface() -> None:
-    # Render-completeness backstop (prevents bypass #8): every DERIVED surface the
-    # storefront renders TEXT on MUST appear as a gated background, so a future
-    # ungated state shade cannot silently reappear. Provenance: the audited
-    # frontend/src render map (see RENDER_PAIRINGS docstring).
-    gated_bg = {p.background for p in RENDER_PAIRINGS}
-    rendered_text_surfaces = {
-        "--background",
-        "--surface",
-        "--surface-muted",
-        "--field",
-        "--background-subtle",
-        "--surface-inverse",
-        "--surface-inverse-hover",
-        "--accent",
-        "--accent-subtle",
+def test_gate_catches_muted_on_background_subtle_canvas() -> None:
+    # Contrast bypass #8: --surface=222 darkens the DERIVED --background-subtle
+    # (mix(--background,--surface,0.5)=239) — the upper stop of the app-shell canvas
+    # gradient that --text-muted body captions render on. muted-on-background (solid
+    # white) still passes; the render-complete gate catches muted-on-background-subtle.
+    tokens = derive_tokens({**default_theme_tokens(), "--surface": "222 222 222"})
+    failures = evaluate_contrast(tokens)
+    ids = {f.id for f in failures}
+    assert "muted-on-background-subtle" in ids
+    assert "muted-on-background" not in ids
+    subtle = next(f for f in failures if f.id == "muted-on-background-subtle")
+    assert subtle.foreground == "--text-muted"
+    assert subtle.background == "--background-subtle"
+    assert subtle.ratio < subtle.target == AA_BODY
+
+
+# The RENDER-COMPLETE (foreground, background) pairs the 7 storefront components
+# actually paint TEXT for — a REVIEWED constant derived from the WU0 §1A surface
+# map + a grep audit of every `text-<token>` co-occurring with a `bg-<token>` OR an
+# app-shell gradient stop (`from-/via-/to-<token>`) across the storefront core.
+# This is the render-completeness ground truth the gate must cover; every tuple is
+# annotated with a representative site so a reviewer can re-verify it.
+#
+# The app-shell canvas is `bg-gradient-to-b from-background-subtle to-background`
+# (app.component.ts:40): text with NO local `bg-*` inherits that gradient, so its
+# worst-case (lowest-contrast) stop is --background-subtle. The shell's default text
+# colour is --text-heading (already gated there); bare BODY captions are coloured
+# --text-muted (shop:700/823/859, product:143/157, banner-block:18) — the pair that
+# slipped as bypass #8. Every element WITH a local `bg-*` (the bg-background filter
+# sidebar shop:66, bg-surface cards) renders on that SOLID surface, gated separately.
+# --surface-raised is deliberately ABSENT: it backs only dividers (header:358) and
+# skeleton shimmers (footer:59..) — it bears no text, so it carries no AA obligation.
+_RENDERED_TEXT_PAIRS: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("--text", "--background"),  # header:157 body copy on the canvas
+        ("--text", "--surface"),  # product:278 body on a card
+        ("--text", "--surface-muted"),  # product-card:138
+        ("--text-muted", "--background"),  # product-card:111 caption on solid canvas
+        ("--text-muted", "--background-subtle"),  # bypass #8 — bare canvas gradient
+        ("--text-secondary", "--background"),  # footer:53
+        ("--text-secondary", "--surface"),  # shop:212
+        ("--text-secondary", "--surface-muted"),  # shop:280
+        ("--text-strong", "--background"),  # shop:93 (bg-background sidebar)
+        ("--text-strong", "--surface"),  # header:133
+        ("--text-strong", "--surface-muted"),  # shop:706 hover chip
+        ("--text-heading", "--background"),  # header:252
+        ("--text-heading", "--surface"),  # header:180 hover
+        ("--text-heading", "--field"),  # header:97 select
+        ("--text-heading", "--surface-muted"),  # shop:1026 hover
+        ("--text-heading", "--background-subtle"),  # app:40 shell default text
+        ("--accent", "--background"),  # shop:75 link
+        ("--accent", "--surface"),  # link on a card
+        ("--accent-strong", "--background"),  # shop:715 hover
+        ("--accent-strong", "--accent-subtle"),  # header:696 maintenance banner
+        ("--text-inverse", "--surface-inverse"),  # header:140 chip (safe by construction)
+        ("--text-inverse", "--surface-inverse-hover"),  # shop:1019 hover (bypass #6)
+        ("--text-onmedia", "--accent"),  # accent surface (safe by construction)
     }
-    missing = rendered_text_surfaces - gated_bg
-    assert not missing, f"ungated rendered surfaces (bypass #8 risk): {missing}"
+)
+
+
+def test_render_pairings_gate_every_rendered_fg_bg_pair() -> None:
+    # Render-completeness backstop (closes the bypass CLASS, not just #8): every
+    # (foreground, background) PAIR the storefront actually renders text for MUST be
+    # gated. The earlier form asserted only that each rendered BACKGROUND appeared as
+    # SOME gated background — too weak: --background-subtle "counted" via
+    # heading-on-background-subtle, so the ungated muted-on-background-subtle pair
+    # slipped through (bypass #8). Asserting the PAIR is gated fails if ANY rendered
+    # fg/bg pair is missing (remove a RENDER_PAIRINGS row and this test fails).
+    gated_pairs = {(p.foreground, p.background) for p in RENDER_PAIRINGS}
+    missing = _RENDERED_TEXT_PAIRS - gated_pairs
+    assert not missing, f"ungated rendered fg/bg pairs (bypass-class risk): {missing}"
 
 
 def test_render_pairings_reference_present_tokens_and_pass_defaults() -> None:
