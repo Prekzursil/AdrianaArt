@@ -100,9 +100,12 @@ def test_ensure_default_theme_stamps_schema_version_and_defaults() -> None:
             assert theme.schema_version == theme_service.DEFAULT_SCHEMA_VERSION
             assert theme.status is ThemeStatus.published
             assert theme.published_at is not None
-            # Compiled defaults use the frozen WU0 wire format.
+            # Compiled defaults use the frozen WU0 wire format. The font tokens
+            # carry the FULL curated-enum stack (the only form the WU2 validator
+            # accepts) — the bare "Inter"/"Cinzel" WU1 seed was a non-registry
+            # value reconciled canonical in WU4b (styles.css :root / token-registry).
             assert theme.tokens["--accent"] == "79 70 229"
-            assert theme.tokens["--font-body"] == "Inter"
+            assert theme.tokens["--font-body"] == "Inter, system-ui, -apple-system, sans-serif"
             snapshot = (await session.execute(select(ThemeVersion))).scalar_one()
             assert snapshot.schema_version == theme_service.DEFAULT_SCHEMA_VERSION
             assert snapshot.tokens == theme_service.default_theme_tokens()
