@@ -1,6 +1,8 @@
+import contrastFixture from '../../../../../test-fixtures/theme-contrast-fixture.json';
 import { AA_THRESHOLDS, contrastRatio } from './contrast';
 import {
   colorFor,
+  evaluateThemeContrast,
   ON_COLOR_MIN_RATIO,
   ON_COLOR_PAIRINGS,
   onColorPairingsAlwaysContrast,
@@ -8,6 +10,7 @@ import {
   pairingPassesAa,
   pairingRatio,
   parseTriplet,
+  RENDER_PAIRINGS,
   type Pairing,
 } from './pairing-matrix';
 import { deriveColorTokens, DERIVED_COLOR_NAMES, PRIMARY_DEFAULTS } from './theme-derive';
