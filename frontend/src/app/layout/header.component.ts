@@ -238,7 +238,7 @@ import { Subscription } from 'rxjs';
                 <span class="sr-only">{{ 'notifications.title' | translate }}</span>
                 <span
                   *ngIf="unreadCount() > 0"
-                  class="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-600 px-1 text-[10px] font-semibold text-onmedia grid place-items-center"
+                  class="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white grid place-items-center"
                 >
                   {{ unreadBadge() }}
                 </span>

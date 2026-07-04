@@ -3,7 +3,9 @@
   "_styles_css_hljs_syntax_theme": "styles.css @layer components .hljs-* code-syntax highlight palette (WU0 §1A: syntax theme, not core storefront palette).",
   "_styles_css_print_reset": "styles.css @media print forces #fff/#000 (WU0 §1A: print-only reset, not a runtime themeable surface).",
   "_index_html_theme_color_meta": "index.html <meta name=theme-color> browser-chrome hints (#f8fafc light / #0f172a dark). The browser reads these at parse time; they CANNOT be CSS-var driven, so they stay static. Out of the runtime themeable CSS surface.",
+  "_text_white_pinned_on_fixed_semantic_media": "A FIXED white foreground deliberately PINNED on a FIXED non-themeable semantic-status / media background (the header notification badge `bg-red-600` — a semantic status literal the guard already treats as out-of-core). The themed `--text-onmedia` token is DERIVED to contrast `--accent` (theme_derive.oncolor), so under a light-accent theme it flips DARK and would render black-on-red (~4.35, below AA); `text-white` on red-600 is 4.83 and theme-invariant. NOT a themeable-core token — it must never re-theme.",
   "allow": [
+    "text-white",
     "#94a3b8",
     "#c084fc",
     "#86efac",

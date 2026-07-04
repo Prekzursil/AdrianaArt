@@ -31,6 +31,7 @@ const TEMPLATE_FILES = [
   'app/pages/product/product.component.ts',
   'app/shared/product-card.component.ts',
   'app/shared/banner-block.component.ts',
+  'app/shared/card.component.ts',
   'index.html',
 ];
 const HEX_ONLY_FILES = ['styles.css'];
