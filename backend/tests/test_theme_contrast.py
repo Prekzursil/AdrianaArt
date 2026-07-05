@@ -23,7 +23,7 @@ from app.services.theme_contrast import (
     passes_aa,
     relative_luminance,
 )
-from app.services.theme_derive import derive_tokens
+from app.services.theme_derive import PRIMARY_COLOR_NAMES, derive_tokens, parse_triplet
 from app.services.theme_service import default_theme_tokens
 
 
@@ -161,3 +161,145 @@ def test_gate_matches_shared_parity_fixture_cases() -> None:
         effective = derive_tokens({**default_theme_tokens(), **case["primaries"]})
         got = sorted(f.id for f in evaluate_contrast(effective))
         assert got == case["failures"], case["name"]
+
+
+# --------------------------------------------------------------------------- #
+# PROPERTY-BASED BACKSTOP (replaces a hand-list that could share the gate's
+# blind spot): the gate MUST be a SUPERSET of the real render obligations.
+#
+# RENDER_OBLIGATIONS is the ground-truth render map, hardcoded HERE independently
+# of RENDER_PAIRINGS so a removed gate row is caught: the SIX bare-canvas
+# foregrounds on BOTH canvas gradient endpoints (--background AND
+# --background-subtle, per app.component.ts:40's `from-background-subtle
+# to-background`), PLUS every explicit-surface pair the storefront paints. The
+# property: for ANY admin-primary vector, if some obligation renders below body AA
+# then evaluate_contrast MUST reject (non-empty). This proves the gate covers the
+# real obligations WITHOUT a hand-list that can inherit the gate's omissions.
+# --------------------------------------------------------------------------- #
+
+# The six bare-canvas (no explicit bg-* ancestor) foregrounds and the two gradient
+# endpoints they can render on. The on-colours (--text-inverse / --text-onmedia /
+# --border-inverse) are EXCLUDED: they only render on --surface-inverse / --accent,
+# never the canvas.
+_CANVAS_FOREGROUNDS: tuple[str, ...] = (
+    "--text",
+    "--text-heading",
+    "--text-muted",
+    "--text-secondary",
+    "--text-strong",
+    "--accent",
+)
+_CANVAS_ENDPOINTS: tuple[str, ...] = ("--background", "--background-subtle")
+
+# Every explicit-surface (fg, bg) the storefront actually paints text on — the
+# non-canvas obligations, hardcoded from the audited render map.
+_EXPLICIT_SURFACE_PAIRS: tuple[tuple[str, str], ...] = (
+    ("--text", "--surface"),
+    ("--text", "--surface-muted"),
+    ("--text-secondary", "--surface"),
+    ("--text-secondary", "--surface-muted"),
+    ("--text-strong", "--surface"),
+    ("--text-strong", "--surface-muted"),
+    ("--text-heading", "--surface"),
+    ("--text-heading", "--field"),
+    ("--text-heading", "--surface-muted"),
+    ("--accent", "--surface"),
+    ("--accent-strong", "--background"),
+    ("--accent-strong", "--accent-subtle"),
+    ("--text-inverse", "--surface-inverse"),
+    ("--text-inverse", "--surface-inverse-hover"),
+    ("--text-onmedia", "--accent"),
+)
+
+# The full ground-truth obligation set (canvas endpoints + explicit surfaces).
+_RENDER_OBLIGATIONS: tuple[tuple[str, str], ...] = (
+    *((fg, ep) for fg in _CANVAS_FOREGROUNDS for ep in _CANVAS_ENDPOINTS),
+    *_EXPLICIT_SURFACE_PAIRS,
+)
+
+
+def _obligation_failures(effective: dict[str, str]) -> list[tuple[str, str]]:
+    """The obligations that render below body AA under an effective token set."""
+    return [
+        (fg, bg)
+        for fg, bg in _RENDER_OBLIGATIONS
+        if contrast_ratio(parse_triplet(effective[fg]), parse_triplet(effective[bg]))
+        < AA_BODY
+    ]
+
+
+def test_every_bare_canvas_foreground_gated_on_both_endpoints() -> None:
+    # STRUCTURAL: each of the six bare-canvas foregrounds is gated on BOTH the
+    # --background and --background-subtle gradient endpoints (monotonicity: the
+    # worst contrast on the gradient is at one endpoint, so both must be gated).
+    gated = {(p.foreground, p.background) for p in RENDER_PAIRINGS}
+    for fg in _CANVAS_FOREGROUNDS:
+        for endpoint in _CANVAS_ENDPOINTS:
+            assert (fg, endpoint) in gated, f"{fg} not gated on {endpoint}"
+
+
+def test_gate_is_superset_of_render_obligations_over_fuzzed_primaries() -> None:
+    # PROPERTY: for a deterministic pseudo-random sweep of admin-primary vectors,
+    # if ANY rendered obligation (bare-canvas fg on either endpoint, or an
+    # explicit-surface pair) falls below body AA, evaluate_contrast MUST reject.
+    # A seeded LCG (no Math.random / Date) gives a fixed, reproducible sequence.
+    seed = 0x1A2B3C4D
+    def _next() -> int:
+        nonlocal seed
+        seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
+        return seed % 256
+
+    def _triplet() -> str:
+        return f"{_next()} {_next()} {_next()}"
+
+    rejected_vectors = 0
+    for _ in range(2000):
+        # Only the nine editable colour primaries vary; fonts / spacing pass through.
+        primaries = {name: _triplet() for name in PRIMARY_COLOR_NAMES}
+        effective = derive_tokens({**default_theme_tokens(), **primaries})
+        obligation_fails = _obligation_failures(effective)
+        gate_fails = evaluate_contrast(effective)
+        if obligation_fails:
+            # The gate is a SUPERSET: any failing obligation forces a rejection.
+            assert gate_fails, (
+                "gate returned EMPTY while a render obligation failed: "
+                f"{obligation_fails[:3]}"
+            )
+            rejected_vectors += 1
+    # Guard against a vacuously-true property: the sweep must exercise the reject
+    # branch (many hostile vectors fail at least one obligation).
+    assert rejected_vectors > 100, rejected_vectors
+
+
+def test_ninth_bypass_exploit_vector_is_rejected() -> None:
+    # The review's exact 9th-bypass exploit: --accent = 165 3 182 "scrapes" AA on
+    # the lighter --background yet fails on the darker canvas endpoint
+    # --background-subtle. It MUST be rejected, with accent-on-background-subtle
+    # among the failures. (On this derivation it is also caught on --surface, since
+    # --background-subtle is byte-identical to --surface-muted and --surface is
+    # darker — the explicit canvas row is defence-in-depth.)
+    exploit = {
+        "--accent": "165 3 182",
+        "--background": "217 217 217",
+        "--surface": "200 200 200",
+    }
+    effective = derive_tokens({**default_theme_tokens(), **exploit})
+    failures = evaluate_contrast(effective)
+    ids = {f.id for f in failures}
+    assert failures, "9th-bypass exploit must be rejected"
+    assert "accent-on-background-subtle" in ids
+    subtle = next(f for f in failures if f.id == "accent-on-background-subtle")
+    assert subtle.ratio < subtle.target == AA_BODY
+    # The accent DOES clear AA on the lighter --background endpoint (the "scrape").
+    assert "accent-on-background" not in ids
+
+
+def test_eighth_bypass_exploit_vector_is_rejected_and_isolated() -> None:
+    # The 8th bypass: --text-muted on the darker canvas endpoint. --surface = 219
+    # publishes pre-fix (muted clears the WHITE --background at 4.76 and muted was
+    # gated ONLY on --background) but renders at 4.06 on --background-subtle. It is
+    # the one bare-canvas foreground with no --surface-muted pairing to shadow it,
+    # so the failure is ISOLATED to muted-on-background-subtle.
+    effective = derive_tokens({**default_theme_tokens(), "--surface": "219 219 219"})
+    ids = sorted(f.id for f in evaluate_contrast(effective))
+    assert ids == ["muted-on-background-subtle"]

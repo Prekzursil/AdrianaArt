@@ -630,6 +630,97 @@ def test_publish_rejects_heading_below_body_aa(
     assert _theme_row(factory)["version"] == 1
 
 
+def test_publish_rejects_muted_on_background_subtle_bypass(
+    seeded_app: Dict[str, object],
+) -> None:
+    """Regression (contrast bypass #8): --text-muted on the canvas gradient's
+    DARKER endpoint --background-subtle.
+
+    The page shell (``app.component.ts:40``) wraps the whole storefront in
+    ``bg-gradient-to-b from-background-subtle to-background``, so EVERY bare-canvas
+    foreground (text with no explicit ``bg-*`` ancestor) renders on a luminance
+    ANYWHERE between --background-subtle and --background. ``--surface = 219`` is a
+    valid primary; the derived ``--background-subtle = mix(--background, --surface,
+    0.5) = 237 237 237`` is the darker gradient endpoint. Default ``--text-muted``
+    (100 116 139) clears the WHITE --background at 4.76 — and pre-fix --text-muted
+    was gated ONLY on --background — so this theme USED to publish (200). But muted
+    renders at 4.06 on --background-subtle, below body AA. The monotonicity-complete
+    gate now checks every bare-canvas foreground on BOTH gradient endpoints and
+    rejects the publish (422). This is the genuinely-novel escape this closes:
+    --text-muted is the one bare-canvas foreground with no --surface-muted pairing
+    to shadow it (--background-subtle is byte-identical to --surface-muted).
+    """
+    client: TestClient = seeded_app["client"]  # type: ignore[assignment]
+    factory = seeded_app["session_factory"]
+    token = _create_admin_token(factory)
+    headers = _auth_headers(token)
+
+    hostile = {**_primaries(), "--surface": "219 219 219"}
+    save = client.put("/api/v1/theme/draft", json={"tokens": hostile}, headers=headers)
+    assert save.status_code == 200, save.text
+    resp = client.post("/api/v1/theme/publish", json={}, headers=headers)
+    assert resp.status_code == 422, resp.text
+    detail = resp.json()["detail"]
+    assert detail["error"] == "contrast"
+    failed = {f["pairing"] for f in detail["failures"]}
+    # The canvas-endpoint pairing fires...
+    assert "muted-on-background-subtle" in failed
+    subtle = next(
+        f for f in detail["failures"] if f["pairing"] == "muted-on-background-subtle"
+    )
+    assert subtle["ratio"] < subtle["target"] == 4.5
+    # ...while the SAME muted text on the lighter --background endpoint still passes,
+    # proving the bypass is specifically the darker gradient endpoint.
+    assert "muted-on-background" not in failed
+    # Atomic: the failing publish did not flip the live theme.
+    assert _theme_row(factory)["version"] == 1
+
+
+def test_publish_rejects_accent_on_background_subtle_bypass(
+    seeded_app: Dict[str, object],
+) -> None:
+    """Regression (contrast bypass #9): --accent on the canvas gradient's darker
+    endpoint --background-subtle — the review's ``--accent = 165 3 182`` exploit.
+
+    The exploit theme sets a mid-grey --background (217) so the accent link colour
+    "scrapes" AA on --background (~4.52, passes) while rendering at ~4.18 on the
+    derived --background-subtle (209) — the darker canvas endpoint the pre-fix gate
+    never checked for --accent. On THIS derivation --background-subtle is
+    byte-identical to --surface-muted and --accent is already gated on the darker
+    --surface, so this broadly-hostile theme is caught on several axes; the explicit
+    ``accent-on-background-subtle`` row makes the canvas render obligation DIRECT
+    (defence-in-depth) rather than relying on the --surface shadow, and survives any
+    future derivation change that decouples --background-subtle from --surface-muted.
+    """
+    client: TestClient = seeded_app["client"]  # type: ignore[assignment]
+    factory = seeded_app["session_factory"]
+    token = _create_admin_token(factory)
+    headers = _auth_headers(token)
+
+    hostile = {
+        **_primaries(),
+        "--accent": "165 3 182",
+        "--background": "217 217 217",
+        "--surface": "200 200 200",
+    }
+    save = client.put("/api/v1/theme/draft", json={"tokens": hostile}, headers=headers)
+    assert save.status_code == 200, save.text
+    resp = client.post("/api/v1/theme/publish", json={}, headers=headers)
+    assert resp.status_code == 422, resp.text
+    detail = resp.json()["detail"]
+    assert detail["error"] == "contrast"
+    failed = {f["pairing"] for f in detail["failures"]}
+    assert "accent-on-background-subtle" in failed
+    subtle = next(
+        f for f in detail["failures"] if f["pairing"] == "accent-on-background-subtle"
+    )
+    assert subtle["ratio"] < subtle["target"] == 4.5
+    # The accent DOES clear AA on the lighter --background endpoint (the "scrape"),
+    # which is exactly why the pre-fix single-endpoint canvas check let it through.
+    assert "accent-on-background" not in failed
+    assert _theme_row(factory)["version"] == 1
+
+
 def test_publish_requires_admin(seeded_app: Dict[str, object]) -> None:
     client: TestClient = seeded_app["client"]  # type: ignore[assignment]
     factory = seeded_app["session_factory"]

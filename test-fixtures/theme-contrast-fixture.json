@@ -20,9 +20,21 @@
       "size": "body"
     },
     {
+      "id": "text-on-background-subtle",
+      "foreground": "--text",
+      "background": "--background-subtle",
+      "size": "body"
+    },
+    {
       "id": "muted-on-background",
       "foreground": "--text-muted",
       "background": "--background",
+      "size": "body"
+    },
+    {
+      "id": "muted-on-background-subtle",
+      "foreground": "--text-muted",
+      "background": "--background-subtle",
       "size": "body"
     },
     {
@@ -44,6 +56,12 @@
       "size": "body"
     },
     {
+      "id": "secondary-on-background-subtle",
+      "foreground": "--text-secondary",
+      "background": "--background-subtle",
+      "size": "body"
+    },
+    {
       "id": "strong-on-background",
       "foreground": "--text-strong",
       "background": "--background",
@@ -59,6 +77,12 @@
       "id": "strong-on-surface-muted",
       "foreground": "--text-strong",
       "background": "--surface-muted",
+      "size": "body"
+    },
+    {
+      "id": "strong-on-background-subtle",
+      "foreground": "--text-strong",
+      "background": "--background-subtle",
       "size": "body"
     },
     {
@@ -101,6 +125,12 @@
       "id": "accent-on-surface",
       "foreground": "--accent",
       "background": "--surface",
+      "size": "body"
+    },
+    {
+      "id": "accent-on-background-subtle",
+      "foreground": "--accent",
+      "background": "--background-subtle",
       "size": "body"
     },
     {
@@ -160,6 +190,29 @@
         "heading-on-field",
         "heading-on-surface",
         "heading-on-surface-muted"
+      ]
+    },
+    {
+      "name": "muted-on-background-subtle-canvas-endpoint",
+      "primaries": {
+        "--surface": "219 219 219"
+      },
+      "failures": [
+        "muted-on-background-subtle"
+      ]
+    },
+    {
+      "name": "accent-on-background-subtle-canvas-endpoint",
+      "primaries": {
+        "--accent": "165 3 182",
+        "--background": "217 217 217",
+        "--surface": "200 200 200"
+      },
+      "failures": [
+        "accent-on-background-subtle",
+        "accent-on-surface",
+        "muted-on-background",
+        "muted-on-background-subtle"
       ]
     }
   ]

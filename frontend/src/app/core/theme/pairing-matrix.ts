@@ -223,12 +223,33 @@ export interface RenderPairing {
  * BODY, the strictest, which subsumes large. `--text-inverse` is gated on its BASE
  * `--surface-inverse` (safe by construction) AND on the derived
  * `--surface-inverse-hover` STATE shade (the closed bypass).
+ *
+ * The page shell (`app.component.ts:40`) paints the whole storefront on a
+ * `from-background-subtle to-background` gradient, so every BARE-CANVAS foreground
+ * (`--text`, `--text-heading`, `--text-muted`, `--text-secondary`, `--text-strong`,
+ * `--accent`) renders on a luminance between the two endpoints. `contrast(fg, bg)` is
+ * monotonic in the background luminance, so a foreground's worst contrast on the
+ * gradient is at ONE endpoint — hence every bare-canvas foreground is gated on BOTH
+ * `--background` and `--background-subtle` (closing bypasses #8 muted and #9 accent,
+ * which scraped AA on the lighter `--background` yet failed on `--background-subtle`).
  */
 export const RENDER_PAIRINGS: readonly RenderPairing[] = [
   { id: 'text-on-background', foreground: '--text', background: '--background', size: 'body' },
   { id: 'text-on-surface', foreground: '--text', background: '--surface', size: 'body' },
   { id: 'text-on-surface-muted', foreground: '--text', background: '--surface-muted', size: 'body' },
+  {
+    id: 'text-on-background-subtle',
+    foreground: '--text',
+    background: '--background-subtle',
+    size: 'body',
+  },
   { id: 'muted-on-background', foreground: '--text-muted', background: '--background', size: 'body' },
+  {
+    id: 'muted-on-background-subtle',
+    foreground: '--text-muted',
+    background: '--background-subtle',
+    size: 'body',
+  },
   {
     id: 'secondary-on-background',
     foreground: '--text-secondary',
@@ -242,12 +263,24 @@ export const RENDER_PAIRINGS: readonly RenderPairing[] = [
     background: '--surface-muted',
     size: 'body',
   },
+  {
+    id: 'secondary-on-background-subtle',
+    foreground: '--text-secondary',
+    background: '--background-subtle',
+    size: 'body',
+  },
   { id: 'strong-on-background', foreground: '--text-strong', background: '--background', size: 'body' },
   { id: 'strong-on-surface', foreground: '--text-strong', background: '--surface', size: 'body' },
   {
     id: 'strong-on-surface-muted',
     foreground: '--text-strong',
     background: '--surface-muted',
+    size: 'body',
+  },
+  {
+    id: 'strong-on-background-subtle',
+    foreground: '--text-strong',
+    background: '--background-subtle',
     size: 'body',
   },
   { id: 'heading-on-background', foreground: '--text-heading', background: '--background', size: 'body' },
@@ -267,6 +300,12 @@ export const RENDER_PAIRINGS: readonly RenderPairing[] = [
   },
   { id: 'accent-on-background', foreground: '--accent', background: '--background', size: 'body' },
   { id: 'accent-on-surface', foreground: '--accent', background: '--surface', size: 'body' },
+  {
+    id: 'accent-on-background-subtle',
+    foreground: '--accent',
+    background: '--background-subtle',
+    size: 'body',
+  },
   {
     id: 'accent-strong-on-background',
     foreground: '--accent-strong',

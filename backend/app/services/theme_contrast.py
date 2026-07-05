@@ -17,10 +17,25 @@ but the set that actually renders is WIDER than the set that was gated:
 
 * an on-colour is derived to contrast its BASE surface, yet also renders on that
   surface's derived STATE shade (``--text-inverse`` on the 7%-lighter
-  ``--surface-inverse-hover``), which a near-crossover grey pushes below AA; and
+  ``--surface-inverse-hover``), which a near-crossover grey pushes below AA;
 * ``--text-heading`` was gated at ``large`` (3.0) but also colours BODY-size
   ``text-sm`` / ``text-xs`` elements (and the derived ``--field`` / ``--surface-muted``
-  surfaces) that need 4.5.
+  surfaces) that need 4.5; and
+* the page shell (``app.component.ts:40``) wraps the WHOLE storefront in
+  ``bg-gradient-to-b from-background-subtle to-background``, so every BARE-CANVAS
+  foreground (text with no explicit ``bg-*`` ancestor) renders on a luminance
+  ANYWHERE between ``--background-subtle`` and ``--background``. Because
+  ``contrast(fg, bg)`` is MONOTONIC in the background luminance for a fixed
+  foreground, a foreground's worst contrast on that gradient is at ONE of the two
+  ENDPOINTS. So every bare-canvas foreground (``--text``, ``--text-heading``,
+  ``--text-muted``, ``--text-secondary``, ``--text-strong``, ``--accent``) is gated
+  on BOTH ``--background`` AND ``--background-subtle`` — the endpoints bound the
+  gradient. Gating only ``--background`` (the LIGHTER, best-case endpoint) let a
+  ``--text-muted`` scraping AA on white fail on the darker ``--background-subtle``
+  (bypass #8), and likewise a hostile ``--accent`` (bypass #9). The on-colours
+  (``--text-inverse`` / ``--text-onmedia`` / ``--border-inverse``) are EXCLUDED from
+  the canvas: they only render on ``--surface-inverse`` / ``--accent``, never the
+  canvas, so gating them there would falsely reject the default (white on near-white).
 
 The on-colours are STILL derived safe-by-construction (:func:`theme_derive.best_on_color`
 keeps a dark inverse surface bearing white text); the gate is the render-complete
@@ -117,21 +132,28 @@ PRIMARY_PAIRINGS: tuple[Pairing, ...] = (
 # DERIVED background such as ``--surface-inverse-hover`` is a first-class endpoint)
 # — tagged with the STRICTEST size it renders at. Mirrored byte-for-byte by
 # ``pairing-matrix.ts`` RENDER_PAIRINGS. The audited render map (frontend/src/**)
-# that grounds each row, with representative file:line:
+# that grounds each row, with representative file:line. The six BARE-CANVAS
+# foregrounds (--text, --text-heading, --text-muted, --text-secondary, --text-strong,
+# --accent) render on the ``app.component.ts:40`` page gradient and so are gated on
+# BOTH its endpoints --background AND --background-subtle (monotonicity: the worst
+# contrast on the gradient is at one endpoint):
 #
 #   --text            on --background (header:157) / --surface (product:278, hover
-#                     header:180) / --surface-muted (product-card:138)              body
-#   --text-muted      on --background (product-card:111)                            body
+#                     header:180) / --surface-muted (product-card:138) /
+#                     --background-subtle (app:40 canvas)                           body
+#   --text-muted      on --background (product-card:111) / --background-subtle
+#                     (app:40 canvas — bypass #8)                                   body
 #   --text-secondary  on --background (footer:53) / --surface (shop:212) /
-#                     --surface-muted (shop:280)                                    body
+#                     --surface-muted (shop:280) / --background-subtle (app:40)     body
 #   --text-strong     on --background (shop:93) / --surface (header:133) /
-#                     --surface-muted (shop:706 hover)                              body
+#                     --surface-muted (shop:706 hover) / --background-subtle (app:40) body
 #   --text-heading    on --background (header:252, shop:999 text-sm) / --surface
 #                     (header:180 hover) / --field (header:97, select styles.css:527)
 #                     / --surface-muted (shop:1026 hover) / --background-subtle
 #                     (app:40) — ALSO large (h1/h2 product:146); gated at BODY,
 #                     the strictest, which subsumes large                           body
-#   --accent          on --background (shop:75) / --surface                         body
+#   --accent          on --background (shop:75) / --surface / --background-subtle
+#                     (app:40 canvas — bypass #9)                                   body
 #   --accent-strong   on --background (shop:715 hover) / --accent-subtle
 #                     (header:696 maintenance banner)                               body
 #   --text-inverse    on --surface-inverse (header:140/445, shop:536..) — safe by
@@ -143,13 +165,22 @@ RENDER_PAIRINGS: tuple[Pairing, ...] = (
     Pairing("text-on-background", "--text", "--background", "body"),
     Pairing("text-on-surface", "--text", "--surface", "body"),
     Pairing("text-on-surface-muted", "--text", "--surface-muted", "body"),
+    Pairing("text-on-background-subtle", "--text", "--background-subtle", "body"),
     Pairing("muted-on-background", "--text-muted", "--background", "body"),
+    Pairing("muted-on-background-subtle", "--text-muted", "--background-subtle", "body"),
     Pairing("secondary-on-background", "--text-secondary", "--background", "body"),
     Pairing("secondary-on-surface", "--text-secondary", "--surface", "body"),
     Pairing("secondary-on-surface-muted", "--text-secondary", "--surface-muted", "body"),
+    Pairing(
+        "secondary-on-background-subtle",
+        "--text-secondary",
+        "--background-subtle",
+        "body",
+    ),
     Pairing("strong-on-background", "--text-strong", "--background", "body"),
     Pairing("strong-on-surface", "--text-strong", "--surface", "body"),
     Pairing("strong-on-surface-muted", "--text-strong", "--surface-muted", "body"),
+    Pairing("strong-on-background-subtle", "--text-strong", "--background-subtle", "body"),
     Pairing("heading-on-background", "--text-heading", "--background", "body"),
     Pairing("heading-on-surface", "--text-heading", "--surface", "body"),
     Pairing("heading-on-field", "--text-heading", "--field", "body"),
@@ -157,6 +188,7 @@ RENDER_PAIRINGS: tuple[Pairing, ...] = (
     Pairing("heading-on-background-subtle", "--text-heading", "--background-subtle", "body"),
     Pairing("accent-on-background", "--accent", "--background", "body"),
     Pairing("accent-on-surface", "--accent", "--surface", "body"),
+    Pairing("accent-on-background-subtle", "--accent", "--background-subtle", "body"),
     Pairing("accent-strong-on-background", "--accent-strong", "--background", "body"),
     Pairing("accent-strong-on-accent-subtle", "--accent-strong", "--accent-subtle", "body"),
     Pairing("text-inverse-on-surface-inverse", "--text-inverse", "--surface-inverse", "body"),
