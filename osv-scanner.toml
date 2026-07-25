@@ -14,6 +14,61 @@
 #   - backend/requirements-ci.txt       (pinned Python CI deps)
 #   - frontend/package-lock.json        (Angular/TypeScript npm tree)
 #
-# This file intentionally carries no IgnoredVulns at adoption time. Add a dated,
-# reasoned entry here only for a future vuln that is genuinely unfixable or
-# provably unreachable in this product.
+# NOTE: because the gate passes `--config=osv-scanner.toml` explicitly, this ONE
+# root file governs every lockfile scanned by `--recursive .`, including
+# frontend/package-lock.json. It is not per-directory here.
+#
+# SCHEMA WARNING: inside [[IgnoredVulns]] only `id`, `ignoreUntil` and `reason`
+# are valid keys. osv-scanner REJECTS THE ENTIRE FILE on any unknown key and then
+# silently falls back to an EMPTY config (internal/config/config.go,
+# tryLoadConfig -> "unknown keys in config file"), so a typo'd or invented field
+# disables the ignore with no error. Extra context therefore lives in comments
+# like these, never in extra keys. `ignoreUntil` is a bare TOML date, not a
+# quoted string.
+#
+# ── ENTRY 1: GHSA-mh99-v99m-4gvg (brace-expansion DoS) ───────────────────────
+# WHY IT EXISTS, in full:
+#   * Advisory published 2026-07-24T21:53Z (brace-expansion unbounded expansion
+#     length -> OOM DoS, CVSS 7.5 High). It reddens main too; it is not something
+#     this PR introduced.
+#   * DEV SCOPE ONLY. osv-scanner itself labels both rows `(dev)`. GitHub's own
+#     Dependabot auto-dismisses this advisory as scope=development.
+#   * TWO lockfile rows match, both in frontend/package-lock.json:
+#       - brace-expansion 1.1.16, pulled by minimatch 3.1.5 (`^1.1.7`), which is
+#         requested by eslint, @eslint/eslintrc, @eslint/config-array, glob,
+#         karma, karma-coverage and resp-modifier — the lint AND test toolchain.
+#       - brace-expansion 2.1.2, pulled by minimatch 9.0.9 (`^2.0.2`), requested
+#         by @wdio/config's nested glob (`^9.0.4`).
+#     The minimatch 10.2.5 copies (which request `^5.0.5`) are already pinned to
+#     ^5.0.8 by the frontend/package.json `brace-expansion@^5` override, so those
+#     are clean and are NOT covered by this entry.
+#   * NO FIX EXISTS on the lines we resolve. The advisory carries a single range,
+#     introduced: 0 -> fixed: 5.0.8, with NO 1.x or 2.x backport, and 1.1.16 /
+#     2.1.2 are already the newest releases on the maintenance-v1 and
+#     maintenance-v2 dist-tags. Upgrading the requesters does not help either:
+#     @eslint/eslintrc 3.3.6, karma 6.4.4, karma-coverage 2.2.1 and
+#     resp-modifier 6.0.2 are ALL already at their latest published version and
+#     all still request minimatch ^3.x.
+#   * FORCING 5.0.8 BREAKS THE TOOLCHAIN. It is a breaking major: v5's CommonJS
+#     build exports a NAMED object ({ expand, EXPANSION_MAX, ... }) instead of a
+#     callable default, so minimatch consumers below v10 die with
+#     "TypeError: (0 , brace_expansion_1.default) is not a function" / "expand is
+#     not a function". Measured: forcing it breaks minimatch@3 and minimatch@9;
+#     only minimatch@10 tolerates it. minimatch@3 is exactly what eslint, karma,
+#     karma-coverage, glob and resp-modifier request, so the lint gate and the
+#     100%-enforced coverage gate both go red.
+#   * Suppressing this one unfixable dev-only DoS is what lets the rest of the
+#     fix land: the same CI run went from 14 packages / 22 vulnerabilities
+#     (1 Critical, 10 High, 9 Medium, 2 Low) down to these 2 rows, 22 cleared and
+#     0 carried over. Leaving the gate red would keep all 22 unfixed on main — a
+#     strictly worse outcome.
+#
+# RE-CHECK ON EXPIRY: has eslint/karma/glob moved off brace-expansion <5 (i.e.
+# onto minimatch >= 10, which already depends on ^5.0.5), or has a 1.x/2.x
+# backport shipped? If either is true, DELETE this entry rather than extending
+# the date.
+
+[[IgnoredVulns]]
+id = "GHSA-mh99-v99m-4gvg"
+ignoreUntil = 2026-10-23
+reason = "brace-expansion DoS (unbounded expansion -> OOM), dev-dependency scope only (osv-scanner labels both rows (dev); GitHub Dependabot auto-dismisses it as scope=development), and unfixable at the versions we resolve: the advisory has a single range introduced:0 -> fixed:5.0.8 with NO 1.x/2.x backport (1.1.16 and 2.1.2 are already the newest maintenance-v1/maintenance-v2 releases, and @eslint/eslintrc 3.3.6 / karma 6.4.4 / karma-coverage 2.2.1 / resp-modifier 6.0.2 are all at latest and still request minimatch ^3.x). Forcing 5.0.8 is a breaking major whose CommonJS build exports a named object instead of a callable default, so minimatch <10 consumers fail with \"expand is not a function\" (\"TypeError: (0 , brace_expansion_1.default) is not a function\") — measured to break minimatch@3 and minimatch@9, and minimatch@3 is what eslint, karma, karma-coverage, glob and resp-modifier request, taking the lint AND coverage gates red. Time-boxed to 2026-10-23; re-check: has eslint/karma/glob moved off brace-expansion <5, or has a 1.x/2.x backport shipped? See the comments in osv-scanner.toml for the full rationale."
