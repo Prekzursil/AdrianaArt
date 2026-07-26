@@ -52,6 +52,10 @@ const BASE = (arg('base', 'http://localhost:4202') || '').replace(/\/$/, '');
 const OUT = arg('out', join(HERE, '..', '_artifacts'));
 const CONCURRENCY = Math.max(1, parseInt(arg('concurrency', '2'), 10) || 2);
 const ONLY = arg('only');
+// `--auth-only` re-captures just the gated routes (admin + account); `--anon-only`
+// its complement. Needed because a session defect invalidates ONLY the gated half.
+const AUTH_ONLY = flag('auth-only');
+const ANON_ONLY = flag('anon-only');
 const LIMIT = parseInt(arg('limit', '0'), 10) || 0;
 const RESUME = flag('resume');
 
@@ -185,6 +189,24 @@ async function captureCell(ctx, route, vp, theme, outDir) {
     rec.finalUrl = page.url().replace(BASE, '');
     rec.redirected = rec.finalUrl !== route.url;
 
+    // HARD auth assertion. A gated route that bounces to `/` or `/login` renders the
+    // PUBLIC page — axe/SEO/layout numbers collected from it describe the homepage,
+    // not the admin screen, and they are indistinguishable from a clean result once
+    // aggregated. The first sweep silently recorded 132 such cells as valid. Fail the
+    // cell loudly instead, so triage can never consume a logged-out capture as
+    // evidence about a gated screen.
+    if (route.auth !== 'anon') {
+      const f = rec.finalUrl;
+      const bounced =
+        f === '/' || f === '' || f.startsWith('/login') || f.startsWith('/auth/login') ||
+        (route.url.startsWith('/admin') && !f.startsWith('/admin'));
+      rec.authOk = !bounced;
+      if (bounced) {
+        rec.authFailed = true;
+        throw new Error(`auth-bounce: gated ${route.url} rendered ${f} (session not applied)`);
+      }
+    }
+
     if (AxeBuilder) {
       try {
         const results = await new AxeBuilder({ page })
@@ -227,6 +249,8 @@ async function main() {
   const routesFile = join(HERE, '..', 'routes.json');
   const { routes } = JSON.parse(readFileSync(routesFile, 'utf8'));
   let work = routes.filter((r) => (ONLY ? r.surface === ONLY : true));
+  if (AUTH_ONLY) work = work.filter((r) => r.auth !== 'anon');
+  if (ANON_ONLY) work = work.filter((r) => r.auth === 'anon');
   if (LIMIT) work = work.slice(0, LIMIT);
 
   mkdirSync(OUT, { recursive: true });
@@ -235,13 +259,22 @@ async function main() {
 
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 
-  // Authenticate once; reuse the storage state for every gated route. Logging in
-  // through the UI keeps this agnostic to token-vs-cookie storage.
-  let storageState;
+  // ONE login per worker, never a shared session.
+  //
+  // The backend ROTATES refresh tokens (auth.py `replaced_by_jti` / revoke-on-rotate).
+  // Sharing a single storageState across N parallel workers therefore self-destructs:
+  // the first worker to refresh revokes the token every other worker holds, they get
+  // 401 on /api/v1/auth/refresh, the app logs them out and bounces to `/`. Measured on
+  // the first sweep: the very first route captured fine and 132/216 later gated cells
+  // rendered the homepage. Each worker logging in independently gets its own token
+  // pair, so rotation is per-worker and uncontended; re-login on bounce additionally
+  // covers plain access-token expiry over a long sweep.
   const needsAuth = work.some((r) => r.auth !== 'anon');
-  if (needsAuth && OWNER_PASS) {
+
+  async function login(tag) {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const pg = await ctx.newPage();
+    let state;
     try {
       const res = await pg.request.post(`${BASE}/api/v1/auth/login`, {
         data: { identifier: OWNER_USER, password: OWNER_PASS },
@@ -266,69 +299,94 @@ async function main() {
           { t: token, r: refresh },
         );
       }
-      storageState = await ctx.storageState();
-      console.log(`[auth] login status=${res.status()} tokenCaptured=${!!token}`);
+      state = await ctx.storageState();
+      // One login per gated cell would flood the log; only anomalies are interesting.
+      if (res.status() !== 200 || !token) {
+        console.log(`[auth:${tag}] login status=${res.status()} tokenCaptured=${!!token}`);
+      }
     } catch (e) {
-      console.log(`[auth] FAILED: ${String(e.message).slice(0, 140)} — gated routes will capture logged-out`);
+      console.log(`[auth:${tag}] FAILED: ${String(e.message).slice(0, 140)}`);
     }
-    await ctx.close();
-  } else if (needsAuth) {
-    console.log('[auth] no P2_OWNER_PASS provided — gated routes will capture logged-out');
+    await ctx.close().catch(() => {});
+    return state;
+  }
+
+  if (needsAuth && !OWNER_PASS) {
+    console.log('[auth] no P2_OWNER_PASS provided — gated routes will FAIL the auth assertion');
   }
 
   const cells = [];
   for (const r of work) for (const vp of VIEWPORTS) for (const theme of THEMES) cells.push({ r, vp, theme });
   console.log(`[sweep] ${work.length} routes x ${VIEWPORTS.length} viewports x ${THEMES.length} themes = ${cells.length} cells (concurrency ${CONCURRENCY})`);
 
-  let done = 0, failed = 0, skipped = 0;
+  let done = 0, failed = 0, skipped = 0, authFailed = 0;
   const index = [];
   let cursor = 0;
 
   async function worker(id) {
-    const ctx = await browser.newContext({
-      viewport: { width: 1440, height: 900 },
-      colorScheme: 'light',
-      storageState,
-      ignoreHTTPSErrors: true,
-    });
+    let myState; // set per gated cell below (see the replay note there)
+
     while (cursor < cells.length) {
       const cell = cells[cursor++];
       const stem = `${slug(cell.r.url)}__${cell.vp.id}__${cell.theme}`;
       const outJson = join(cellsDir, `${stem}.json`);
       if (RESUME && existsSync(outJson)) { skipped++; index.push({ stem, resumed: true }); continue; }
 
-      const cellCtx = await browser.newContext({
-        viewport: { width: cell.vp.width, height: cell.vp.height },
-        colorScheme: cell.theme,
-        storageState: cell.r.auth === 'anon' ? undefined : storageState,
-        ignoreHTTPSErrors: true,
-      });
-      let rec;
-      try {
-        rec = await captureCell(cellCtx, cell.r, cell.vp, cell.theme, cellsDir);
-      } catch (e) {
-        rec = { route: cell.r.url, viewport: cell.vp.id, theme: cell.theme, ok: false, error: String(e.message).slice(0, 200) };
+      const gated = cell.r.auth !== 'anon';
+      // A PRISTINE session per gated cell. Probed: two logins for the same user yield
+      // independent, mutually-valid sessions, so parallelism is not the problem —
+      // REPLAY is. Every browser context built from one saved storageState re-sends
+      // the same refresh token, and the backend rotates-and-revokes on first use, so
+      // context #2 onward can 401 and get logged out. One login per cell is ~0.2s and
+      // removes that class entirely instead of relying on a rotation grace window.
+      if (gated && OWNER_PASS) myState = (await login(`w${id}:${slug(cell.r.url)}`)) || myState;
+      const attempt = async () => {
+        const cellCtx = await browser.newContext({
+          viewport: { width: cell.vp.width, height: cell.vp.height },
+          colorScheme: cell.theme,
+          storageState: gated ? myState : undefined,
+          ignoreHTTPSErrors: true,
+        });
+        try {
+          return await captureCell(cellCtx, cell.r, cell.vp, cell.theme, cellsDir);
+        } catch (e) {
+          return { route: cell.r.url, viewport: cell.vp.id, theme: cell.theme, ok: false,
+                   error: String(e.message).slice(0, 200) };
+        } finally {
+          await cellCtx.close().catch(() => {});
+        }
+      };
+
+      let rec = await attempt();
+      // A bounce means this worker's session expired or was rotated out from under it.
+      // Re-login and retry ONCE; if it bounces again the failure is real, not transient.
+      if (gated && rec.authFailed && OWNER_PASS) {
+        myState = (await login(`w${id}:relogin`)) || myState;
+        rec = await attempt();
+        rec.reloggedIn = true;
       }
-      await cellCtx.close().catch(() => {});
       writeFileSync(outJson, JSON.stringify(rec, null, 2), 'utf8');
       index.push({ stem, route: rec.route, viewport: rec.viewport, theme: rec.theme, ok: rec.ok,
                    axeViolations: rec.axe?.violationCount ?? null,
                    consoleErrors: (rec.consoleErrors || []).length,
                    overflowX: rec.metrics?.layout?.overflowX ?? null });
       rec.ok ? done++ : failed++;
-      if ((done + failed) % 20 === 0) console.log(`[sweep] ${done + failed}/${cells.length} (ok=${done} failed=${failed})`);
+      if (rec.authFailed) authFailed++;
+      if ((done + failed) % 20 === 0) console.log(`[sweep] ${done + failed}/${cells.length} (ok=${done} failed=${failed} authFailed=${authFailed})`);
     }
-    await ctx.close().catch(() => {});
   }
 
   await Promise.all(Array.from({ length: CONCURRENCY }, (_, i) => worker(i)));
   await browser.close();
 
   writeFileSync(join(OUT, 'index.json'),
-    JSON.stringify({ base: BASE, generatedFrom: 'capture_sweep.mjs', totals: { cells: cells.length, ok: done, failed, skipped }, cells: index }, null, 2), 'utf8');
+    JSON.stringify({ base: BASE, generatedFrom: 'capture_sweep.mjs', totals: { cells: cells.length, ok: done, failed, skipped, authFailed }, cells: index }, null, 2), 'utf8');
 
-  console.log(`[sweep] ok=${done} failed=${failed} skipped=${skipped} -> ${OUT}`);
-  console.log(failed > cells.length * 0.25 ? `FAILED:p2-capture-sweep too many cell failures (${failed}/${cells.length})`
+  console.log(`[sweep] ok=${done} failed=${failed} authFailed=${authFailed} skipped=${skipped} -> ${OUT}`);
+  // An auth bounce is never acceptable: it silently substitutes the public page for a
+  // gated one, so treat ANY occurrence as a run failure rather than a tolerated ratio.
+  console.log(authFailed > 0 ? `FAILED:p2-capture-sweep ${authFailed} gated cells rendered logged-out`
+            : failed > cells.length * 0.25 ? `FAILED:p2-capture-sweep too many cell failures (${failed}/${cells.length})`
                                            : `SUCCESS:p2-capture-sweep ok=${done} failed=${failed} skipped=${skipped}`);
 }
 
