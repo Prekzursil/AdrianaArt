@@ -78,7 +78,7 @@ AdrianaArt has specialized CI workflows for its tech stack:
 - `.github/workflows/backend.yml` (implied) - FastAPI backend CI
 - `.github/workflows/compose-smoke.yml` - Docker Compose smoke tests
 - `.github/workflows/dependency-review.yml` - Dependency scanning
-- `.github/workflows/codacy-coverage.yml` - Codacy coverage reporting
+- `.github/workflows/quality.yml` - Lean 6-gate quality (lint/types/coverage/SAST/secrets/deps)
 
 **Why excluded:**
 - Tech stack specific (Angular/FastAPI/PostgreSQL/Redis)
