@@ -85,3 +85,28 @@ only the non-obvious caveats discovered while setting this environment up.
 - Frontend: needs a Chrome binary. Use system Chrome + the no-sandbox launcher:
   `CHROME_BIN=$(which google-chrome) npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox`.
 - Lint: `cd backend && ruff check . && PYTHONPATH=$(pwd) mypy app`; `cd frontend && npm run lint`.
+
+### Production deployment — awareness + hard safety boundary
+This local dev environment maps directly onto a **live production deployment**. Be
+aware of it, but never mutate it without explicit human sanction.
+- **Live site:** `https://momentstudio.ro` (also `www.`). It is currently up and
+  healthy — `GET /api/v1/health` returns `{"status":"ok"}`. Public origin is served by
+  nginx behind Caddy, matching the `infra/prod/` stack.
+- **Where it runs:** a VPS (chroot.ro KVM) running the `infra/prod/` Docker Compose
+  stack — Caddy (TLS + reverse proxy → `frontend-ssr:4000`, and `/api/*` `/media/*` →
+  backend), backend (FastAPI), Postgres, Redis, and the media worker. Runbook:
+  `infra/prod/README.md` + `docs/PRODUCTION.md`.
+- **How it deploys:** the manual GitHub Actions workflow
+  `.github/workflows/deploy-production-manual.yml` (`workflow_dispatch`). It SSHes to
+  the VPS using repo secrets (`PROD_SSH_HOST/PORT/USER/KEY`, `PROD_DEPLOY_PATH`),
+  checks out the target SHA, optionally backs up, runs `infra/prod/deploy.sh`
+  (`docker compose up -d --build` + `alembic upgrade head`), then `verify-live.sh`.
+  **Rollback:** rerun the workflow with a previous known-good `target_sha`.
+- **Config boundary:** production `backend/.env` / `frontend/.env` are managed
+  on the VPS. Never copy local `*.development.local` profiles to prod, and never point
+  local dev's `DATABASE_URL` at the production DB/host — `app/core/config.py`
+  `_validate_dev_safety` refuses to boot `ENVIRONMENT=local` against a non-local DB host.
+- **Do NOT, without explicit sanction:** SSH to the VPS, trigger the deploy workflow,
+  run migrations against prod, or change payment/auth/DNS/secrets. Verification against
+  prod must stay read-only (public health endpoints / `infra/prod/verify-live.sh`).
+  Never commit VPS credentials, IPs, or panel logins to the repo.
