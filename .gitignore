@@ -61,3 +61,6 @@ frontend/coverage/
 
 # P2 audit evidence (hundreds of MB of screenshots/HTML) — never committed
 docs/reports/p2-total-quality/_artifacts/
+
+.claude/worktrees/
+
