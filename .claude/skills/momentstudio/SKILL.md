@@ -86,7 +86,7 @@ describe('UserProfileComponent', () => {
 1. Write or update the service's `.spec.ts` file to cover all public methods and code branches.
 2. Assert correct HTTP verb, URL, params, and observable emissions for each method.
 3. Annotate any unreachable SSR or defensive code with `/* istanbul ignore next */` if needed.
-4. Run coverage tools to verify 100% coverage.
+4. Run coverage tools for the service lane (**rewrite deferred** — do not treat scaffold 100% language as the component INNER gate; component WUs use diff-coverage + Karma).
 5. Commit the `.spec.ts` file (and `.ts` if annotations are added).
 
 **Example:**
@@ -113,7 +113,7 @@ it('should call GET /api/data', () => {
 
 1. Write or update the `.spec.ts` file for the utility/guard/handler, covering all logic and error branches.
 2. Annotate any unreachable code (e.g., SSR-only logic) with `/* istanbul ignore next */`.
-3. Run coverage tools to verify 100% coverage.
+3. Run coverage tools (**utility lane scaffold**; component INNER gate is diff-coverage + Karma — see component workflow).
 4. Commit the `.spec.ts` file (and `.ts` if annotations are added).
 
 **Example:**
