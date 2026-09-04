@@ -13,3 +13,4 @@
 {"event":"draft_pr","status":"blocked","blocker_id":"github_integration_forbidden"}
 {"event":"draft_pr","status":"pass","url":"https://github.com/Prekzursil/momentstudio/pull/712","number":712}
 {"event":"council","status":"agreed","note":"draft_pr_unlocked"}
+{"event":"council","status":"agreed","agents":["bc-ea338f18"],"draft_pr":712}

@@ -43,3 +43,7 @@ Done predicate: INNER and LANE_OUTER(outer:blocked) and REPO_VERIFY and Review, 
 - Overclaim `bc-6efecc4f`: PASS (no Done/AGREED overclaim)
 - DeSlop `bc-b83712b0`: PASS (N=3 real branches)
 - Council: AGREED after DraftPR #712 (ManagePullRequest restored)
+
+COUNCIL: AGREED
+ADVERSARIES: Scaffold/Overclaim/DeSlop PASS (bc-ea338f18); DraftPR #712 unlocked
+
