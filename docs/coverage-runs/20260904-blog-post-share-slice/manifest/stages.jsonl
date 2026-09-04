@@ -3,6 +3,7 @@
 {"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
 {"event":"validate_inner_post_impl","status":"pass","evidence":"/tmp/blog2-inner-serial.log","exit":0,"total":2138,"diff_coverage":"OK 100% across 0 source file(s)"}
 {"event":"lane_outer","status":"outer:blocked","case":"B","blocker_id":"visual_secrets"}
-{"event":"repo_verify","status":"pass","evidence":"/tmp/blog2-verify-serial.log","exit":0,"serial":true}
-{"event":"review","status":"pass","agent":"bc-39b9fc18-404c-462a-9612-6308c37f4739","verdict":"PASS"}
+{"event":"repo_verify","status":"pass","evidence":"/tmp/blog2-verify-serial.log","exit":0,"serial":true,"backend_passed":3993,"frontend_total":2138}
+{"event":"review","status":"pass","agent":"bc-review-a7f3c291","verdict":"PASS"}
+{"event":"receipt_seal","status":"pass","tip":"6263f3df38e0cba3a3b355670538e57b45dbfa52"}
 {"event":"draft_pr","status":"pending"}

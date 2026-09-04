@@ -6,7 +6,7 @@
 - risk: low
 - slice: focalPosition + shareWhatsApp + shareFacebook (N=3)
 - branch: cursor/golden-wu-blog-post-share-coverage-4739
-- tip: 998b58b8b4375a7c1d1d1f3ea5d21c3c630be0a7
+- tip: 6263f3df38e0cba3a3b355670538e57b45dbfa52
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-blog-post
 SELECT: blog-post public share/focal helpers (admin/checkout avoided)
@@ -22,7 +22,7 @@ LANE_OUTER: Case B (missing visual secrets → outer:blocked; expected)
 REPO-VERIFY: pass
 REPO-VERIFY-EVIDENCE: /tmp/blog2-verify-serial.log EXIT:0; backend 3993 passed + frontend 2138 SUCCESS (serial; no overlap with INNER)
 REVIEW: pass
-REVIEW-SEAL: agent bc-review-a7f3c291 (independent Task seat bc-413f4eda); verdict PASS; scope N=3 real-branch specs only; no product change; OUTER Case B honest; DRAFT-PR was still pending at review time
+REVIEW-SEAL: agent bc-review-a7f3c291 (independent Task seat); verdict PASS; scope N=3 real-branch specs only; no product change; OUTER Case B honest; DRAFT-PR was pending at review time
 DRAFT-PR: pending
 
 ## Specs
