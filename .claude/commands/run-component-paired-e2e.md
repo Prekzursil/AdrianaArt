@@ -26,7 +26,7 @@ Longest matching prefix under `frontend/src/app/pages/` (then `shared/`, `core/`
 | `pages/home/`, `pages/shop/`, `pages/product/` | shop | `smoke.spec.ts`, `product-navigation.spec.ts`, `wishlist.spec.ts`, `coupons.spec.ts` |
 | `pages/cart/`, `pages/tickets/`, `pages/newsletter/`, `pages/offline/`, `pages/receipt/`, `pages/not-found/`, `pages/error/` | utility | `smoke.spec.ts`, `seo-public-routes.spec.ts` |
 | `pages/account/`, `pages/auth/` | account | `accessibility-keyboard.spec.ts`, `smoke.spec.ts` (+ fixture auth; no invented creds) |
-| `pages/checkout/` | checkout | checkout/payment specs — **never golden**; owner exception required to enqueue |
+| `pages/checkout/` | checkout | `checkout-stripe.spec.ts`, `checkout-cod.spec.ts`, `checkout-paypal.spec.ts`, `payment-returns.spec.ts`, `legal-consent.spec.ts`, `paypal.spec.ts` — **never golden**; owner exception required to enqueue |
 | `pages/admin/` | admin | `admin-cms.spec.ts`, `admin-dashboard-freeze.spec.ts` |
 | `shared/`, `core/` | shared | `smoke.spec.ts` only + note |
 | `frontend/src/app/layout/` (and other non-pages/shared/core) | smoke-default | `smoke.spec.ts` only + `outer:smoke-default` |
