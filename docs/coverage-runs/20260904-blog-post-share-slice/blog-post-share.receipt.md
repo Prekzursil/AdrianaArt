@@ -23,7 +23,9 @@ REPO-VERIFY: pass
 REPO-VERIFY-EVIDENCE: /tmp/blog2-verify-serial.log EXIT:0; backend 3993 passed + frontend 2138 SUCCESS (serial; no overlap with INNER)
 REVIEW: pass
 REVIEW-SEAL: agent bc-review-a7f3c291 (independent Task seat); verdict PASS against tip_impl; scope N=3 real-branch specs only; no product change; OUTER Case B honest; DRAFT-PR was pending at review time
-DRAFT-PR: pending
+DRAFT-PR: blocked
+blocker_id: github_integration_forbidden
+note: REST+GraphQL createPullRequest FORBIDDEN; ManagePullRequest tool absent this session; branch pushed (tip HEAD f14ceee8)
 
 ## Specs
 
@@ -35,3 +37,10 @@ DRAFT-PR: pending
 
 Contact twin INNER-saturated. Continues blog miss-density after #710 (author/cover/lightbox). Distinct share/focal slice.
 Done predicate: INNER and LANE_OUTER(outer:blocked) and REPO_VERIFY and Review, then draft PR.
+
+## Adversary council
+
+- Scaffold `bc-34f2904a`: PASS (open blocker DRAFT_PR_FORBIDDEN)
+- Overclaim `bc-6efecc4f`: PASS (no Done/AGREED overclaim)
+- DeSlop `bc-b83712b0`: PASS (N=3 real branches)
+- Council: CONDITIONAL — cannot AGREE Done until draft PR exists
