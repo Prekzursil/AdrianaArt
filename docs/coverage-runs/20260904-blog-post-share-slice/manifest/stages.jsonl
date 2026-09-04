@@ -1,0 +1,4 @@
+{"event":"ground_select","status":"pass","note":"blog-post share/focal after shop-filters AGREED"}
+{"event":"impl","status":"pass","note":"+3 specs; focused 6 SUCCESS"}
+{"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
+{"event":"validate_inner_post_impl","status":"pending"}
