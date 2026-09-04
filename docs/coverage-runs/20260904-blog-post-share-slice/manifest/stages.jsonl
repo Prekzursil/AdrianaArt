@@ -1,9 +1,8 @@
 {"event":"ground_select","status":"pass","note":"blog-post share/focal after shop-filters AGREED"}
-{"event":"impl","status":"pass","note":"+3 specs; focused 6 SUCCESS; tip 998b58b8"}
+{"event":"impl","status":"pass","note":"+3 specs; focused 6 SUCCESS; tip_impl 998b58b8b4375a7c"}
 {"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
 {"event":"validate_inner_post_impl","status":"pass","evidence":"/tmp/blog2-inner-serial.log","exit":0,"total":2138,"diff_coverage":"OK 100% across 0 source file(s)"}
 {"event":"lane_outer","status":"outer:blocked","case":"B","blocker_id":"visual_secrets"}
 {"event":"repo_verify","status":"pass","evidence":"/tmp/blog2-verify-serial.log","exit":0,"serial":true,"backend_passed":3993,"frontend_total":2138}
-{"event":"review","status":"pass","agent":"bc-review-a7f3c291","verdict":"PASS"}
-{"event":"receipt_seal","status":"pass","tip":"6263f3df38e0cba3a3b355670538e57b45dbfa52"}
+{"event":"review","status":"pass","agent":"bc-review-a7f3c291","verdict":"PASS","against":"tip_impl"}
 {"event":"draft_pr","status":"pending"}

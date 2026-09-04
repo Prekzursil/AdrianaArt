@@ -4,10 +4,10 @@ Sequential. No concurrent INNER+verify karma.
 
 ## Current
 
-- last_completed: RepoVerify (serial EXIT:0) + independent Review PASS (`bc-review-a7f3c291`)
+- last_completed: RepoVerify (serial EXIT:0) + independent Review PASS (bc-review-a7f3c291)
 - next: DraftPR → adversary council
 - branch: cursor/golden-wu-blog-post-share-coverage-4739
-- tip: 6263f3df38e0cba3a3b355670538e57b45dbfa52
+- tip_impl: 998b58b8b4375a7c1d1d1f3ea5d21c3c630be0a7
 
 ## Evidence
 
