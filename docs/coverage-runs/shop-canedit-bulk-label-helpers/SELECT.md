@@ -1,0 +1,4 @@
+# SELECT
+- canEditCategories
+- canEditProducts
+- bulkHasPendingEdits
