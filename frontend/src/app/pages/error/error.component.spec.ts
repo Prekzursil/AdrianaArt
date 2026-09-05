@@ -1,8 +1,4 @@
-import {
-  errorNavLinks,
-  errorPageMessage,
-  shouldReloadOnRetry,
-} from './error.helpers';
+import { errorNavLinks, errorPageMessage, shouldReloadOnRetry } from './error.helpers';
 
 /**
  * Golden WU err50 — first error page specs.

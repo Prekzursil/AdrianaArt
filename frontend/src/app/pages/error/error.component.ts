@@ -4,11 +4,7 @@ import { Subscription } from 'rxjs';
 
 import { SiteSocialService } from '../../core/site-social.service';
 import { ButtonComponent } from '../../shared/button.component';
-import {
-  errorNavLinks,
-  errorPageMessage,
-  shouldReloadOnRetry,
-} from './error.helpers';
+import { errorNavLinks, errorPageMessage, shouldReloadOnRetry } from './error.helpers';
 
 @Component({
   selector: 'app-error',
