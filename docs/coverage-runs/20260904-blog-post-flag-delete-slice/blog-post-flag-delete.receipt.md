@@ -19,6 +19,9 @@ GITHUB_BASE_REF: main
 OUTER-STATUS: outer:blocked
 blocker_id: visual_secrets
 LANE_OUTER: Case B (expected)
-REPO-VERIFY: pending
-REVIEW: pending
-DRAFT-PR: pending
+REPO-VERIFY: pass
+REPO-VERIFY-EVIDENCE: /tmp/blog7-verify-serial.log EXIT:0; backend 3993 passed + frontend 2138 SUCCESS
+REVIEW: pass
+REVIEW-SEAL: agent bc-review-99696576; verdict PASS; N=3; OUTER Case B honest
+DRAFT-PR: FORBIDDEN
+DRAFT-PR-BLOCKER: createPullRequest 403; ManagePullRequest unavailable
