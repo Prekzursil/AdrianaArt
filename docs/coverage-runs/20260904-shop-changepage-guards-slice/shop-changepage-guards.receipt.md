@@ -6,11 +6,11 @@
 - risk: low
 - slice: closeQuickView + changePage non-pages/oob (N=3)
 - branch: cursor/golden-wu-shop-changepage-guards-coverage-4739
-- tip_impl: pending
+- tip_impl: 43092e6f5e49cd7911222a5b008f1b676eb9aa9f
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-shop
 SELECT: shop changePage guards after shop8 CONDITIONAL
-IMPL: pending
+IMPL: pass
 DESLOP: pass
 INNER-STATUS: pending
 OUTER-STATUS: pending
