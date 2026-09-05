@@ -6,11 +6,11 @@
 - risk: low
 - slice: loadMore early when loadingMore / !pageMeta / last page (N=3)
 - branch: cursor/golden-wu-shop-loadmore-guards-coverage-4739
-- tip_impl: pending
+- tip_impl: 67dd84cb9a4ab2bf27514400bd1ecee431b4fee8
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-shop
 SELECT: shop loadMore guards after blog14 CONDITIONAL
-IMPL: pending
+IMPL: pass
 DESLOP: pass
 INNER-STATUS: pending
 OUTER-STATUS: pending

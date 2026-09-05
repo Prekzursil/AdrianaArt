@@ -1,3 +1,3 @@
 {"event":"ground_select","status":"pass","note":"shop loadMore guards after blog14 CONDITIONAL"}
-{"event":"impl","status":"pending"}
+{"event":"impl","status":"pass","tip_impl":"67dd84cb9a4ab2bf27514400bd1ecee431b4fee8","note":"+3 specs; focused 5 SUCCESS"}
 {"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
