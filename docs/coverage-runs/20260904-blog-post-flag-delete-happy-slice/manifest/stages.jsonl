@@ -3,4 +3,7 @@
 {"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
 {"event":"validate_inner_post_impl","status":"pass","evidence":"/tmp/blog8-inner-serial.log","exit":0,"total":2138,"tip_impl":"dd28bb3b3c95e2d4f420f45cabece3aebad3afb8","ts":"2026-09-05T01:50:57Z"}
 {"event":"lane_outer","status":"outer:blocked","case":"B","blocker_id":"visual_secrets","ts":"2026-09-05T01:50:57Z"}
-{"event":"repo_verify","status":"pending","ts":"2026-09-05T01:50:57Z"}
+{"event":"repo_verify","status":"pass","evidence":"/tmp/blog8-verify-serial.log","exit":0,"backend_passed":3993,"frontend_total":2138,"tip_impl":"dd28bb3b3c95e2d4f420f45cabece3aebad3afb8","ts":"2026-09-05T02:05:30Z"}
+{"event":"review","status":"pass","seal":"bc-4e8fe0c2","verdict":"PASS","tip_impl":"dd28bb3b3c95e2d4f420f45cabece3aebad3afb8","ts":"2026-09-05T02:06:00Z"}
+{"event":"draft_pr","status":"forbidden","reason":"createPullRequest_403","ts":"2026-09-05T02:06:10Z"}
+{"event":"adversary_council","status":"conditional","scaffold":"PASS","overclaim":"PASS","deslop":"PASS","blocker":"draft_pr_forbidden","scaffold_id":"bc-8fb92a4d","overclaim_id":"bc-1b79277e","deslop_id":"bc-ef4fd615","ts":"2026-09-05T02:07:00Z"}

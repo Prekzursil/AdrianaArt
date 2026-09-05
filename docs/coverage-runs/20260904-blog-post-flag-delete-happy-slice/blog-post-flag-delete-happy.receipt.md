@@ -19,6 +19,22 @@ GITHUB_BASE_REF: main
 OUTER-STATUS: outer:blocked
 blocker_id: visual_secrets
 LANE_OUTER: Case B (expected)
-REPO-VERIFY: pending
-REVIEW: pending
-DRAFT-PR: pending
+REPO-VERIFY: pass
+REPO-VERIFY-EVIDENCE: /tmp/blog8-verify-serial.log EXIT:0; backend 3993 passed + frontend 2138 SUCCESS
+REVIEW: pass
+REVIEW-SEAL: agent bc-4e8fe0c2; verdict PASS; N=3 happy-path; OUTER Case B honest
+DRAFT-PR: FORBIDDEN
+DRAFT-PR-BLOCKER: createPullRequest 403; ManagePullRequest unavailable
+
+## Adversary council
+- Scaffold `bc-8fb92a4d`: PASS
+- Overclaim `bc-1b79277e`: PASS
+- DeSlop `bc-ef4fd615`: PASS
+- Council: CONDITIONAL — Done blocked on DraftPR (createPullRequest 403; ManagePullRequest unavailable)
+
+COUNCIL: CONDITIONAL
+ADVERSARIES: Scaffold/Overclaim/DeSlop PASS; Done waits on DraftPR URL
+
+## Notes
+NEXT_FRONTLINE (parallel while DraftPR locked): submitComment early-return / captcha / happy gates (N≈3).
+PARALLEL: reply/delete + flag/delete early-return WUs also CONDITIONAL on same DraftPR lock.
