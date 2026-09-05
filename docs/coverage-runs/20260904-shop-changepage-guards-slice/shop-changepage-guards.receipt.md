@@ -9,11 +9,20 @@
 - tip_impl: 43092e6f5e49cd7911222a5b008f1b676eb9aa9f
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-shop
-SELECT: shop changePage guards after shop8 CONDITIONAL
+SELECT: after shop8 CONDITIONAL
 IMPL: pass
 DESLOP: pass
-INNER-STATUS: pending
-OUTER-STATUS: pending
-REPO-VERIFY: pending
-REVIEW: pending
-DRAFT-PR: pending
+INNER-STATUS: pass
+INNER-EVIDENCE: /tmp/shop9-inner-serial.log EXIT:0 TOTAL 2138
+DIFF-COVERAGE: enforced
+GITHUB_BASE_REF: main
+OUTER-STATUS: outer:blocked
+blocker_id: visual_secrets
+LANE_OUTER: Case B (expected)
+REPO-VERIFY: pass
+REPO-VERIFY-EVIDENCE: /tmp/shop9-verify-serial.log EXIT:0 backend 3993 + frontend 2138
+REVIEW: pass
+REVIEW-SEAL: bc-43135752-ce9c-50dd-9fdc-a29461f9e329
+DRAFT-PR: FORBIDDEN
+DRAFT-PR-BLOCKER: createPullRequest 403
+COUNCIL: CONDITIONAL
