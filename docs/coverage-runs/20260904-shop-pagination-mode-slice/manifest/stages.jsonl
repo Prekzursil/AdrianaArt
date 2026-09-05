@@ -1,3 +1,9 @@
 {"event":"ground_select","status":"pass","note":"shop pagination mode after scroll/quickSelect CONDITIONAL"}
 {"event":"impl","status":"pass","tip_impl":"5f2bf642bd8e0a10f1e8a2abf4c60d911e8ac96f","note":"+3 specs; focused 5 SUCCESS"}
 {"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
+{"event":"validate_inner_post_impl","status":"pass","evidence":"/tmp/shop5-inner-serial.log","exit":0,"total":2138,"tip_impl":"5f2bf642bd8e0a10f1e8a2abf4c60d911e8ac96f","ts":"2026-09-05T05:10:50Z"}
+{"event":"lane_outer","status":"outer:blocked","case":"B","blocker_id":"visual_secrets","ts":"2026-09-05T05:10:50Z"}
+{"event":"repo_verify","status":"pass","evidence":"/tmp/shop5-verify-serial.log","exit":0,"backend_passed":3993,"frontend_total":2138,"tip_impl":"5f2bf642bd8e0a10f1e8a2abf4c60d911e8ac96f","ts":"2026-09-05T05:10:50Z"}
+{"event":"draft_pr","status":"forbidden","reason":"createPullRequest_403","evidence":"/tmp/shop5-draftpr.log","ts":"2026-09-05T05:10:50Z"}
+{"event":"review","status":"pass","seal":"bc-709c17e5-38d0-5b6d-bf94-e5473b68bbee","verdict":"PASS","tip_impl":"5f2bf642bd8e0a10f1e8a2abf4c60d911e8ac96f","ts":"2026-09-05T05:13:41Z"}
+{"event":"adversary_council","status":"conditional","scaffold":"PASS","overclaim":"PASS","deslop":"PASS","blocker":"draft_pr_forbidden","scaffold_id":"bc-a5cc100d-a4bb-52c6-b713-14deb6f148b5","overclaim_id":"bc-616cfb32-df9c-54cc-9298-9edd1d1edff4","deslop_id":"bc-0e7c0291-1dea-5e22-83c3-d715583f8c7b","ts":"2026-09-05T05:13:41Z"}
