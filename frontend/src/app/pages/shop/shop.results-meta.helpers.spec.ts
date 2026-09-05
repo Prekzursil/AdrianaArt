@@ -8,7 +8,7 @@ describe('ShopComponent resultsMetaParams (golden WU)', () => {
       pageMeta: { total_items: 25, page: 2, limit: 10 },
       filters: { limit: 10 },
       paginationMode: 'pages',
-      products: new Array(10).fill(0).map((_, i) => ({ id: String(i) })),
+      products: Array.from({ length: 10 }, (_, i) => ({ id: String(i) })),
       ...overrides,
     });
     return cmp;
