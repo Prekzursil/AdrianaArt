@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 
 import { BlogPostComponent } from './blog-post.component';
 import { AdminService } from '../../core/admin.service';
@@ -52,6 +52,7 @@ describe('BlogPostComponent', () => {
       'listPosts',
       'listCommentThreads',
       'getCommentSubscription',
+      'setCommentSubscription',
     ]);
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success']);
     markdown = jasmine.createSpyObj<MarkdownService>('MarkdownService', ['render']);
@@ -72,6 +73,7 @@ describe('BlogPostComponent', () => {
       }),
     );
     blog.getCommentSubscription.and.returnValue(of({ enabled: false }));
+    blog.setCommentSubscription.and.returnValue(of({ enabled: true }));
     markdown.render.and.returnValue('<p>Body</p>');
     auth.isAuthenticated.and.returnValue(false);
     auth.user.and.returnValue(null);
@@ -181,5 +183,55 @@ describe('BlogPostComponent', () => {
 
     expect(blog.getPreviewPost).toHaveBeenCalledWith('snapshot-post', 'preview-token', 'en');
     expect(blog.getPost).not.toHaveBeenCalled();
+  });
+
+  it('loadCommentSubscription clears state when the subscription request fails', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.slug = 'first-post';
+    cmp.commentSubscribed.set(true);
+    auth.isAuthenticated.and.returnValue(true);
+    blog.getCommentSubscription.and.returnValue(throwError(() => new Error('network')));
+    cmp.loadCommentSubscription();
+    expect(blog.getCommentSubscription).toHaveBeenCalledWith('first-post');
+    expect(cmp.commentSubscribed()).toBeFalse();
+    expect(cmp.commentSubscriptionLoading()).toBeFalse();
+    fixture.destroy();
+  });
+
+  it('toggleCommentSubscription returns early when slug is missing', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.slug = '';
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ email_verified: true } as any);
+    const target = { checked: true } as HTMLInputElement;
+    cmp.toggleCommentSubscription({ target } as any);
+    expect(blog.setCommentSubscription).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('toggleCommentSubscription reverts and toasts when the subscription update fails', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.slug = 'first-post';
+    cmp.commentSubscribed.set(false);
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ email_verified: true } as any);
+    blog.setCommentSubscription.and.returnValue(throwError(() => new Error('save failed')));
+    const target = { checked: true } as HTMLInputElement;
+    cmp.toggleCommentSubscription({ target } as any);
+    expect(blog.setCommentSubscription).toHaveBeenCalledWith('first-post', true);
+    expect(cmp.commentSubscribed()).toBeFalse();
+    expect(cmp.commentSubscriptionLoading()).toBeFalse();
+    expect(target.checked).toBeFalse();
+    expect(toast.error).toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    fixture.destroy();
   });
 });
