@@ -9,4 +9,4 @@
   3. `courier estimate: courierEstimateKey and courierEstimateParams for home vs locker`
 - `make verify`: **skipped** (per WU; INNER only)
 - Draft PR: pending after push
-- tip: see branch HEAD after this seal commit
+- tip: `501cf2b9`
