@@ -25,3 +25,16 @@ REVIEW: pass
 REVIEW-SEAL: agent bc-review-99696576; verdict PASS; N=3; OUTER Case B honest
 DRAFT-PR: FORBIDDEN
 DRAFT-PR-BLOCKER: createPullRequest 403; ManagePullRequest unavailable
+
+## Adversary council
+- Scaffold `bc-c0439bba`: PASS
+- Overclaim `bc-250fb5ce`: PASS
+- DeSlop `bc-e9d37dd0`: PASS
+- Council: CONDITIONAL — Done blocked on DraftPR (createPullRequest 403; ManagePullRequest unavailable)
+
+COUNCIL: CONDITIONAL
+ADVERSARIES: Scaffold/Overclaim/DeSlop PASS; Done waits on DraftPR URL
+
+## Notes
+NEXT_FRONTLINE (after DraftPR+AGREED): flagComment happy-path and/or deleteComment confirm-accept subscribe branches.
+PARALLEL: reply/delete WU also CONDITIONAL on same DraftPR lock.

@@ -6,3 +6,4 @@
 {"event":"repo_verify","status":"pass","evidence":"/tmp/blog7-verify-serial.log","exit":0,"backend_passed":3993,"frontend_total":2138,"tip_impl":"fab0a38c96a457379756b217d2d1897a955d05be","ts":"2026-09-05T01:45:43Z"}
 {"event":"review","status":"pass","seal":"bc-review-99696576","verdict":"PASS","tip_impl":"fab0a38c96a457379756b217d2d1897a955d05be","ts":"2026-09-05T01:45:43Z"}
 {"event":"draft_pr","status":"forbidden","reason":"createPullRequest_403","ts":"2026-09-05T01:45:43Z"}
+{"event":"adversary_council","status":"conditional","scaffold":"PASS","overclaim":"PASS","deslop":"PASS","blocker":"draft_pr_forbidden","ts":"2026-09-05T01:48:41Z"}
