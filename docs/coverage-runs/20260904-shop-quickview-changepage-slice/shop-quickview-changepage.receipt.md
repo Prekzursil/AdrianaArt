@@ -6,11 +6,11 @@
 - risk: low
 - slice: openQuickView success/blank + changePage (N=3)
 - branch: cursor/golden-wu-shop-quickview-coverage-4739
-- tip_impl: pending
+- tip_impl: 39387a238429b664efe8350f9d27ef0a10086dc1
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-shop
 SELECT: shop quickView/changePage after shop7 CONDITIONAL
-IMPL: pending
+IMPL: pass
 DESLOP: pass
 INNER-STATUS: pending
 OUTER-STATUS: pending
