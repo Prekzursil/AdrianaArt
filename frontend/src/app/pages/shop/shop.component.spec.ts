@@ -164,4 +164,59 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('resetFilters clears filter state and reloads products', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.filters.search = 'bowl';
+    cmp.activeCategorySlug = 'home';
+    cmp.activeSubcategorySlug = 'decor';
+    cmp.categorySelection = 'home/decor';
+    cmp.filters.min_price = 10;
+    cmp.filters.max_price = 50;
+    cmp.filters.tags = new Set(['ceramic']);
+    cmp.filters.sort = 'price_asc';
+    cmp.filters.page = 4;
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'loadProducts');
+    const minBound = cmp.priceMinBound;
+    const maxBound = cmp.priceMaxBound;
+    cmp.resetFilters();
+    expect(cmp.cancelFilterDebounce).toHaveBeenCalled();
+    expect(cmp.filters.search).toBe('');
+    expect(cmp.activeCategorySlug).toBe('');
+    expect(cmp.activeSubcategorySlug).toBe('');
+    expect(cmp.categorySelection).toBe('');
+    expect(cmp.filters.min_price).toBe(minBound);
+    expect(cmp.filters.max_price).toBe(maxBound);
+    expect(cmp.filters.tags.size).toBe(0);
+    expect(cmp.filters.sort).toBe('newest');
+    expect(cmp.filters.page).toBe(1);
+    expect(cmp.loadProducts).toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('applyFilters resets page to 1 and loads products', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.filters.page = 5;
+    spyOn(cmp, 'loadProducts');
+    cmp.applyFilters();
+    expect(cmp.filters.page).toBe(1);
+    expect(cmp.loadProducts).toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('applyFilters cancels pending debounce before reloading', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.filters.page = 3;
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'loadProducts');
+    cmp.applyFilters();
+    expect(cmp.cancelFilterDebounce).toHaveBeenCalled();
+    expect(cmp.filters.page).toBe(1);
+    expect(cmp.loadProducts).toHaveBeenCalled();
+    fixture.destroy();
+  });
 });
