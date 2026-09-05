@@ -1,3 +1,8 @@
 {"event":"ground_select","status":"pass","note":"shop quickView/changePage after shop7 CONDITIONAL"}
 {"event":"impl","status":"pass","tip_impl":"39387a238429b664efe8350f9d27ef0a10086dc1","note":"+3 specs; focused 5 SUCCESS"}
 {"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
+{"event":"validate_inner_post_impl","status":"pass","evidence":"/tmp/shop8-inner-serial.log","exit":0,"total":2138,"tip_impl":"39387a238429b664efe8350f9d27ef0a10086dc1","ts":"2026-09-05T06:11:39Z"}
+{"event":"lane_outer","status":"outer:blocked","case":"B","blocker_id":"visual_secrets","ts":"2026-09-05T06:11:39Z"}
+{"event":"draft_pr","status":"forbidden","reason":"createPullRequest_403","evidence":"/tmp/shop8-draftpr.log","ts":"2026-09-05T06:11:39Z"}
+{"event":"repo_verify","status":"pass","evidence":"/tmp/shop8-verify-serial.log","exit":0,"backend_passed":3993,"frontend_total":2138,"tip_impl":"39387a238429b664efe8350f9d27ef0a10086dc1","ts":"2026-09-05T06:27:20Z"}
+{"event":"review_and_adversaries","status":"conditional","seal":"bc-b2cb476d-59be-5dd2-973e-4a08a06155c3","review":"PASS","scaffold":"PASS","overclaim":"PASS","deslop":"PASS","blocker":"draft_pr_forbidden","ts":"2026-09-05T06:27:20Z"}
