@@ -88,9 +88,7 @@ describe('TicketsComponent status / empty-error helpers', () => {
     expect(cmp.tickets()).toEqual([]);
 
     // error with backend detail
-    ticketsApi.listMine.and.returnValue(
-      throwError(() => ({ error: { detail: 'list-down' } })),
-    );
+    ticketsApi.listMine.and.returnValue(throwError(() => ({ error: { detail: 'list-down' } })));
     cmp.refresh();
     expect(cmp.loading()).toBeFalse();
     expect(toast.error).toHaveBeenCalledWith('list-down');
@@ -114,9 +112,7 @@ describe('TicketsComponent status / empty-error helpers', () => {
     expect(cmp.selected()).toEqual(detail);
     expect(cmp.replyMessage).toBe('');
 
-    ticketsApi.getOne.and.returnValue(
-      throwError(() => ({ error: { detail: 'missing-ticket' } })),
-    );
+    ticketsApi.getOne.and.returnValue(throwError(() => ({ error: { detail: 'missing-ticket' } })));
     cmp.openTicket('missing');
     expect(toast.error).toHaveBeenCalledWith('missing-ticket');
 
