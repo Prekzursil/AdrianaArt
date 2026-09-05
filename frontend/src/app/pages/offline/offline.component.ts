@@ -2,11 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonComponent } from '../../shared/button.component';
-import {
-  detectBrowserOnline,
-  offlineNavLinks,
-  shouldReloadOnRetry,
-} from './offline.helpers';
+import { detectBrowserOnline, offlineNavLinks, shouldReloadOnRetry } from './offline.helpers';
 
 @Component({
   selector: 'app-offline',

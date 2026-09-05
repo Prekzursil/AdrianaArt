@@ -22,8 +22,9 @@ export function offlineNavLinks(): readonly OfflineNavLink[] {
  * Navigator API is missing — mirrors PwaService constructor fallback.
  */
 export function detectBrowserOnline(
-  nav: { readonly onLine?: boolean } | null | undefined =
-    typeof navigator !== 'undefined' ? navigator : undefined,
+  nav: { readonly onLine?: boolean } | null | undefined = typeof navigator !== 'undefined'
+    ? navigator
+    : undefined,
 ): boolean {
   if (!nav || typeof nav.onLine !== 'boolean') {
     return true;

@@ -1,8 +1,4 @@
-import {
-  detectBrowserOnline,
-  offlineNavLinks,
-  shouldReloadOnRetry,
-} from './offline.helpers';
+import { detectBrowserOnline, offlineNavLinks, shouldReloadOnRetry } from './offline.helpers';
 
 /**
  * Golden WU offline48 — first offline page specs.
