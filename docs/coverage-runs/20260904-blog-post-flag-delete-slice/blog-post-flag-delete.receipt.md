@@ -12,7 +12,8 @@ GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-blog-post
 SELECT: blog-post flag/delete helpers (admin CMS avoided); parallel while reply/delete DraftPR FORBIDDEN
 IMPL: pass
 DESLOP: pass
-INNER-STATUS: pending
+INNER-STATUS: pass
+INNER-EVIDENCE: /tmp/blog7-inner-serial.log EXIT:0; TOTAL 2138 SUCCESS; diff-coverage OK 100% / 0 source files
 DIFF-COVERAGE: enforced
 GITHUB_BASE_REF: main
 OUTER-STATUS: outer:blocked
