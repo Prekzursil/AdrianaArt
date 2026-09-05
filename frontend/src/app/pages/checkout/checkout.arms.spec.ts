@@ -36,7 +36,11 @@ describe('Checkout arms (golden WU chk55)', () => {
   const subtotalSignal = signal(20);
 
   let auth: jasmine.SpyObj<AuthService>;
-  let checkoutPrefs: { tryLoadDeliveryPrefs: jasmine.Spy; saveDeliveryPrefs: jasmine.Spy };
+  let checkoutPrefs: {
+    tryLoadDeliveryPrefs: jasmine.Spy;
+    saveDeliveryPrefs: jasmine.Spy;
+    tryLoadPaymentMethod: jasmine.Spy;
+  };
 
   beforeEach(() => {
     auth = jasmine.createSpyObj<AuthService>('AuthService', ['isAuthenticated', 'user']);
@@ -48,6 +52,7 @@ describe('Checkout arms (golden WU chk55)', () => {
         .createSpy('tryLoadDeliveryPrefs')
         .and.returnValue({ courier: 'sameday', deliveryType: 'home' }),
       saveDeliveryPrefs: jasmine.createSpy('saveDeliveryPrefs'),
+      tryLoadPaymentMethod: jasmine.createSpy('tryLoadPaymentMethod').and.returnValue(null),
     };
 
     const emptyQueryParamMap = convertToParamMap({});
