@@ -31,9 +31,7 @@ describe('ReceiptComponent status / load helpers', () => {
     receipts.pdfUrl.and.callFake((tok: string, opts?: { reveal?: boolean }) =>
       opts?.reveal ? `/pdf/${tok}?reveal=true` : `/pdf/${tok}`,
     );
-    paramMap$ = new BehaviorSubject<ParamMap>(
-      convertToParamMap(token ? { token } : {}),
-    );
+    paramMap$ = new BehaviorSubject<ParamMap>(convertToParamMap(token ? { token } : {}));
 
     TestBed.configureTestingModule({
       imports: [ReceiptComponent, RouterTestingModule],
