@@ -12,8 +12,29 @@ GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-shop
 SELECT: shop loadMore guards after blog14 CONDITIONAL
 IMPL: pass
 DESLOP: pass
-INNER-STATUS: pending
-OUTER-STATUS: pending
-REPO-VERIFY: pending
-REVIEW: pending
-DRAFT-PR: pending
+INNER-STATUS: pass
+INNER-EVIDENCE: /tmp/shop6-inner-serial.log EXIT:0; TOTAL 2138; diff-coverage OK 100%/0 source files
+DIFF-COVERAGE: enforced
+GITHUB_BASE_REF: main
+OUTER-STATUS: outer:blocked
+blocker_id: visual_secrets
+LANE_OUTER: Case B (expected)
+REPO-VERIFY: pass
+REPO-VERIFY-EVIDENCE: /tmp/shop6-verify-serial.log EXIT:0; backend 3993 passed + frontend 2138 SUCCESS
+REVIEW: pass
+REVIEW-SEAL: agent bc-cda2f27f-7792-5646-a2b9-fbcfd7de377d; verdict PASS after verify EXIT:0; N=3 loadMore guards; OUTER Case B honest
+DRAFT-PR: FORBIDDEN
+DRAFT-PR-BLOCKER: createPullRequest 403; ManagePullRequest unavailable
+
+## Adversary council
+- Scaffold `bc-f18ce98a-6c62-540b-b85a-cbd203e5e2a1`: PASS
+- Overclaim `bc-e99c23e2-bd13-5f71-a5ef-3d2acb786e60`: PASS
+- DeSlop `bc-05025d53-f98f-5776-8d5c-b4587429874f`: PASS
+- Council: CONDITIONAL — Done blocked on DraftPR
+
+COUNCIL: CONDITIONAL
+ADVERSARIES: Scaffold/Overclaim/DeSlop PASS; Done waits on DraftPR URL
+
+## Notes
+NEXT_FRONTLINE: shop loadMore happy path (append fetch), or other non-admin helper edges not on main.
+PARALLEL: blog6–14 + shop4–5 also CONDITIONAL on same DraftPR lock.
