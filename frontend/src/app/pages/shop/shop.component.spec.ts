@@ -164,4 +164,71 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('syncStateFromUrl promotes legacy cat query into category and requests canonicalize', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const shouldCanonicalize = cmp.syncStateFromUrl(null, { cat: 'ceramics' });
+    expect(shouldCanonicalize).toBeTrue();
+    expect(cmp.activeCategorySlug).toBe('ceramics');
+    expect(cmp.activeSubcategorySlug).toBe('');
+    fixture.destroy();
+  });
+
+  it('syncStateFromUrl lifts a child category route slug to parent+sub', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const parent = { id: 'p1', slug: 'ceramics', name: 'Ceramics', parent_id: null };
+    const child = { id: 'c1', slug: 'mugs', name: 'Mugs', parent_id: 'p1' };
+    cmp.categoriesBySlug.set('ceramics', parent);
+    cmp.categoriesBySlug.set('mugs', child);
+    cmp.categoriesById.set('p1', parent);
+    cmp.categoriesById.set('c1', child);
+    const shouldCanonicalize = cmp.syncStateFromUrl('mugs', {});
+    expect(shouldCanonicalize).toBeTrue();
+    expect(cmp.activeCategorySlug).toBe('ceramics');
+    expect(cmp.activeSubcategorySlug).toBe('mugs');
+    fixture.destroy();
+  });
+
+  it('buildQueryParams omits defaults and emits active filters', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.activeCategorySlug = 'ceramics';
+    cmp.activeSubcategorySlug = 'mugs';
+    cmp.filters.search = 'bowl';
+    cmp.filters.sort = 'price_asc';
+    cmp.filters.page = 3;
+    cmp.filters.tags = new Set(['blue']);
+    cmp.filters.min_price = 10;
+    cmp.filters.max_price = 100;
+    cmp.priceMaxBound = 500;
+    expect(cmp.buildQueryParams()).toEqual({
+      q: 'bowl',
+      sub: 'mugs',
+      min: 10,
+      max: 100,
+      sort: 'price_asc',
+      page: 3,
+      tags: 'blue',
+    });
+
+    cmp.filters.search = '';
+    cmp.filters.sort = 'recommended';
+    cmp.filters.page = 1;
+    cmp.filters.tags = new Set();
+    cmp.filters.min_price = cmp.priceMinBound;
+    cmp.filters.max_price = cmp.priceMaxBound;
+    cmp.activeSubcategorySlug = '';
+    expect(cmp.buildQueryParams()).toEqual({
+      q: undefined,
+      sub: undefined,
+      min: undefined,
+      max: undefined,
+      sort: undefined,
+      page: undefined,
+      tags: undefined,
+    });
+    fixture.destroy();
+  });
 });
