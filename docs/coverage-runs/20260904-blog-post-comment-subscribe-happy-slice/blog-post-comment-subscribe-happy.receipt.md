@@ -6,11 +6,11 @@
 - risk: low
 - slice: loadCommentSubscription + toggleCommentSubscription success (N=3)
 - branch: cursor/golden-wu-blog-post-comment-subscribe-happy-coverage-4739
-- tip_impl: PENDING
+- tip_impl: 04f02f396a9468ef21e22b1e87a17db665fcf16f
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-blog-post
 SELECT: subscribe happy-path after blocked-gate CONDITIONAL
-IMPL: pending
+IMPL: pass
 DESLOP: pass
 INNER-STATUS: pending
 OUTER-STATUS: pending
