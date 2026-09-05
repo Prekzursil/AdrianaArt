@@ -164,4 +164,43 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('parseBoolean accepts true/1/yes forms and rejects null/false/other', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    expect(cmp.parseBoolean(true)).toBe(true);
+    expect(cmp.parseBoolean(1)).toBe(true);
+    expect(cmp.parseBoolean(' YES ')).toBe(true);
+    expect(cmp.parseBoolean('true')).toBe(true);
+    expect(cmp.parseBoolean('1')).toBe(true);
+    expect(cmp.parseBoolean(false)).toBe(false);
+    expect(cmp.parseBoolean(null)).toBe(false);
+    expect(cmp.parseBoolean(0)).toBe(false);
+    expect(cmp.parseBoolean('no')).toBe(false);
+    expect(cmp.parseBoolean({})).toBe(false);
+    fixture.destroy();
+  });
+
+  it('parseBoolean unwraps nested array values', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    expect(cmp.parseBoolean(['true'])).toBe(true);
+    expect(cmp.parseBoolean([['1']])).toBe(true);
+    expect(cmp.parseBoolean(['no'])).toBe(false);
+    fixture.destroy();
+  });
+
+  it('parsePrice returns finite numbers and undefined for invalid input', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    expect(cmp.parsePrice(12.5)).toBe(12.5);
+    expect(cmp.parsePrice(' 42 ')).toBe(42);
+    expect(cmp.parsePrice('')).toBeUndefined();
+    expect(cmp.parsePrice('abc')).toBeUndefined();
+    expect(cmp.parsePrice(Number.NaN)).toBeUndefined();
+    expect(cmp.parsePrice(Number.POSITIVE_INFINITY)).toBeUndefined();
+    expect(cmp.parsePrice(null)).toBeUndefined();
+    expect(cmp.parsePrice(true)).toBeUndefined();
+    fixture.destroy();
+  });
 });
