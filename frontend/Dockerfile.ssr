@@ -2,7 +2,7 @@ FROM node:24-alpine AS build
 
 WORKDIR /app
 
-COPY frontend/package.json frontend/package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
 COPY frontend/scripts ./scripts
 RUN npm i -g npm@11.7.0
 RUN npm ci --loglevel=error
