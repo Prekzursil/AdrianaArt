@@ -207,4 +207,56 @@ describe('ShopComponent i18n meta', () => {
     expect(sub?.label).toBe('Kids');
     fixture.destroy();
   });
+
+  it('clampPrice snaps to step and clamps to [priceMinBound, priceMaxBound]', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.priceMinBound = 0;
+    cmp.priceMaxBound = 1000;
+    cmp.priceStep = 10;
+    expect(cmp.clampPrice(Number.NaN)).toBe(0);
+    expect(cmp.clampPrice(-50)).toBe(0);
+    expect(cmp.clampPrice(1500)).toBe(1000);
+    expect(cmp.clampPrice(25)).toBe(30);
+    expect(cmp.clampPrice(24)).toBe(20);
+    fixture.destroy();
+  });
+
+  it('normalizePriceRange enforces min<=max using the changed side', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.priceMinBound = 0;
+    cmp.priceMaxBound = 1000;
+    cmp.priceStep = 1;
+    cmp.filters.min_price = 80;
+    cmp.filters.max_price = 40;
+    cmp.normalizePriceRange('min');
+    expect(cmp.filters.max_price).toBe(80);
+    cmp.filters.min_price = 90;
+    cmp.filters.max_price = 20;
+    cmp.normalizePriceRange('max');
+    expect(cmp.filters.min_price).toBe(20);
+    cmp.filters.min_price = 70;
+    cmp.filters.max_price = 10;
+    cmp.normalizePriceRange();
+    expect(cmp.filters.max_price).toBe(70);
+    fixture.destroy();
+  });
+
+  it('mergeReasonKey maps known reasons and falls back', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    expect(cmp.mergeReasonKey('same_category')).toBe(
+      'adminUi.storefront.categories.mergeReasonSame',
+    );
+    expect(cmp.mergeReasonKey('different_parent')).toBe(
+      'adminUi.storefront.categories.mergeReasonParent',
+    );
+    expect(cmp.mergeReasonKey('source_has_children')).toBe(
+      'adminUi.storefront.categories.mergeReasonChildren',
+    );
+    expect(cmp.mergeReasonKey('nope')).toBe('adminUi.storefront.categories.mergeNotAllowed');
+    expect(cmp.mergeReasonKey(null)).toBe('adminUi.storefront.categories.mergeNotAllowed');
+    fixture.destroy();
+  });
 });
