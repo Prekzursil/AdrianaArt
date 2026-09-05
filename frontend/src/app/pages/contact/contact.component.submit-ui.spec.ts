@@ -89,22 +89,20 @@ describe('ContactComponent submit UI arms', () => {
   });
 
   it('disables the submit CTA until required fields are filled (validation)', async () => {
-    const fixture = TestBed.createComponent(ContactComponent);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    const emptyFixture = TestBed.createComponent(ContactComponent);
+    emptyFixture.detectChanges();
+    await emptyFixture.whenStable();
+    emptyFixture.detectChanges();
+    expect(submitButton(emptyFixture.nativeElement as HTMLElement).disabled).toBeTrue();
 
-    const root = fixture.nativeElement as HTMLElement;
-    const btn = submitButton(root);
-    expect(btn.disabled).toBeTrue();
+    // Fresh fixture: set required fields before the first CD to avoid NG0100.
+    const filledFixture = TestBed.createComponent(ContactComponent);
+    fillValidForm(filledFixture.componentInstance);
+    filledFixture.detectChanges();
+    await filledFixture.whenStable();
+    filledFixture.detectChanges();
 
-    const cmp = fixture.componentInstance;
-    fillValidForm(cmp);
-    await fixture.whenStable();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
+    const btn = submitButton(filledFixture.nativeElement as HTMLElement);
     expect(btn.disabled).toBeFalse();
     expect((btn.textContent || '').replace(/\s+/g, ' ').trim()).toContain('Send message');
   });
