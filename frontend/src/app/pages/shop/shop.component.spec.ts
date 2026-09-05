@@ -38,7 +38,7 @@ describe('ShopComponent i18n meta', () => {
             queryParams: of({}),
           },
         },
-        { provide: Router, useValue: { navigate: () => {} } },
+        { provide: Router, useValue: { navigate: () => {}, url: '/shop' } },
         { provide: ToastService, useValue: { error: () => {} } },
         { provide: DOCUMENT, useValue: doc },
       ],
@@ -163,5 +163,51 @@ describe('ShopComponent i18n meta', () => {
 
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
+  });
+
+  it('clearShopReturnContext removes pending shop return session keys', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    sessionStorage.setItem('shop_return_pending', '1');
+    sessionStorage.setItem('shop_return_url', '/shop');
+    sessionStorage.setItem('shop_return_scroll_y', '10');
+    sessionStorage.setItem('shop_return_at', '1');
+    cmp.clearShopReturnContext();
+    expect(sessionStorage.getItem('shop_return_pending')).toBeNull();
+    expect(sessionStorage.getItem('shop_return_url')).toBeNull();
+    expect(sessionStorage.getItem('shop_return_scroll_y')).toBeNull();
+    expect(sessionStorage.getItem('shop_return_at')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('initScrollRestoreFromSession keeps y when pending context matches router url', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const router = TestBed.inject(Router) as { url: string };
+    router.url = '/shop?q=1';
+    sessionStorage.clear();
+    sessionStorage.setItem('shop_return_pending', '1');
+    sessionStorage.setItem('shop_return_url', '/shop?q=1');
+    sessionStorage.setItem('shop_return_scroll_y', '80');
+    sessionStorage.setItem('shop_return_at', String(Date.now()));
+    cmp.initScrollRestoreFromSession();
+    expect(cmp.restoreScrollY).toBe(80);
+    fixture.destroy();
+  });
+
+  it('initScrollRestoreFromSession clears stale pending context', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const router = TestBed.inject(Router) as { url: string };
+    router.url = '/shop';
+    sessionStorage.clear();
+    sessionStorage.setItem('shop_return_pending', '1');
+    sessionStorage.setItem('shop_return_url', '/shop');
+    sessionStorage.setItem('shop_return_scroll_y', '40');
+    sessionStorage.setItem('shop_return_at', String(Date.now() - 11 * 60 * 1000));
+    cmp.initScrollRestoreFromSession();
+    expect(cmp.restoreScrollY).toBeNull();
+    expect(sessionStorage.getItem('shop_return_pending')).toBeNull();
+    fixture.destroy();
   });
 });
