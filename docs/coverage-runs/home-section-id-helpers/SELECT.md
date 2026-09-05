@@ -1,0 +1,3 @@
+# SELECT
+- isHomeSectionId
+- normalizeHomeSectionId aliases
