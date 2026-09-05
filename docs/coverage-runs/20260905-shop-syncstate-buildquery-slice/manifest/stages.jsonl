@@ -1,1 +1,10 @@
+{"event":"ground_select","status":"pass","slice":"syncStateFromUrl+buildQueryParams","n":3}
 {"event":"impl","status":"pass","tip_impl":"2604998bc21b04cd758bc825b6d141bd129ade1e"}
+{"event":"deslop_artifact","status":"pass"}
+{"event":"validate_inner","status":"pass","exit":0,"total":2138,"log":"/tmp/shop13-inner-serial.log"}
+{"event":"lane_outer","status":"outer:blocked","case":"B"}
+{"event":"repo_verify","status":"pass","exit":0,"backend":3993,"frontend":2138,"log":"/tmp/shop13-verify-serial.log"}
+{"event":"review","status":"pass","agent":"bc-9de8f5aa-7ded-58e7-a8fb-cc6745380141"}
+{"event":"adversary_ab","status":"pass","agent":"bc-7b05fada-723c-5a0a-b99c-2ff715945e43"}
+{"event":"draft_pr","status":"forbidden","log":"/tmp/shop13-draftpr.log"}
+{"event":"council","status":"conditional","seal":"bc-shop13-2604998b"}
