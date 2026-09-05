@@ -1,4 +1,6 @@
+import { OfflineComponent } from './offline.component';
 import { detectBrowserOnline, offlineNavLinks, shouldReloadOnRetry } from './offline.helpers';
+import * as offlineHelpers from './offline.helpers';
 
 /**
  * Golden WU offline48 — first offline page specs.
@@ -25,5 +27,23 @@ describe('OfflineComponent retry / nav / online helpers', () => {
   it('shouldReloadOnRetry only arms when the browser reports online', () => {
     expect(shouldReloadOnRetry(true)).toBeTrue();
     expect(shouldReloadOnRetry(false)).toBeFalse();
+  });
+});
+
+describe('OfflineComponent field wiring (golden WU)', () => {
+  it('exposes navLinks from offlineNavLinks helper', () => {
+    const cmp = new OfflineComponent();
+    expect(cmp.navLinks).toEqual(offlineNavLinks());
+  });
+
+  it('onRetry reloads only when online detection is true', () => {
+    const cmp = new OfflineComponent();
+    const reload = spyOn(location, 'reload');
+    spyOn(offlineHelpers, 'detectBrowserOnline').and.returnValue(false);
+    cmp.onRetry();
+    expect(reload).not.toHaveBeenCalled();
+    (offlineHelpers.detectBrowserOnline as jasmine.Spy).and.returnValue(true);
+    cmp.onRetry();
+    expect(reload).toHaveBeenCalled();
   });
 });
