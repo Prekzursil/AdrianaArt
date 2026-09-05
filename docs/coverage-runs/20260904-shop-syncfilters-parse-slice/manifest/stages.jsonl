@@ -1,1 +1,14 @@
+{"event":"ground_select","status":"pass","slice":"syncFiltersFromQuery+parseBoolean+parsePrice","n":3}
 {"event":"impl","status":"pass","tip_impl":"c04296d9447f031c1d1d4f6e04ce3925fb951b24"}
+{"event":"deslop_artifact","status":"pass"}
+{"event":"validate_inner","status":"fail","exit":1,"total_failed":10,"note":"theme-surface dark pollution","log":"/tmp/shop12-inner-serial.log","ts":"2026-09-05T07:17:00Z"}
+{"event":"support_fix","status":"pass","commit":"98cc1cfcd00d7bacde87e15abb480367d3d534d4","note":"isolate theme dark-class pollution"}
+{"event":"validate_inner","status":"pass","exit":0,"total":2138,"tip_impl":"c04296d9447f031c1d1d4f6e04ce3925fb951b24","log":"/tmp/shop12-inner-serial2.log","ts":"2026-09-05T07:22:00Z"}
+{"event":"lane_outer","status":"outer:blocked","case":"B","ts":"2026-09-05T07:35:00Z"}
+{"event":"repo_verify","status":"pass","exit":0,"backend":3993,"frontend":2138,"log":"/tmp/shop12-verify-serial2.log","ts":"2026-09-05T07:35:00Z"}
+{"event":"review","status":"pass","agent":"bc-89c240f0-2e2d-5c5c-9aff-e4afcdc1ffed"}
+{"event":"adversary_a","status":"pass","agent":"bc-a502ea51-74ef-5f4c-92ca-ab1290c2026a"}
+{"event":"adversary_b","status":"pass","agent":"bc-6f87920a-3103-5ec2-960f-078ec5959805"}
+{"event":"adversary_c","status":"pass","agent":"bc-5ee57bcf-5bce-56e1-86e1-ccffa5b6a13e"}
+{"event":"draft_pr","status":"forbidden","log":"/tmp/shop12-draftpr2.log","ts":"2026-09-05T07:36:00Z"}
+{"event":"council","status":"conditional","seal":"bc-shop12-c042-98cc","ts":"2026-09-05T07:40:00Z"}
