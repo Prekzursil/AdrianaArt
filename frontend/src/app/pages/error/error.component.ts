@@ -4,7 +4,12 @@ import { Subscription } from 'rxjs';
 
 import { SiteSocialService } from '../../core/site-social.service';
 import { ButtonComponent } from '../../shared/button.component';
-import { errorNavLinks, errorPageMessage, shouldReloadOnRetry } from './error.helpers';
+import {
+  errorNavLinks,
+  errorPageMessage,
+  resolveLocationReload,
+  shouldReloadOnRetry,
+} from './error.helpers';
 
 @Component({
   selector: 'app-error',
@@ -55,11 +60,7 @@ export class ErrorComponent implements OnInit, OnDestroy {
     this.socialSub?.unsubscribe();
   }
 
-  onRetry(): void {
-    const reloadFn =
-      typeof location !== 'undefined' && typeof location.reload === 'function'
-        ? () => location.reload()
-        : null;
+  onRetry(reloadFn: (() => void) | null = resolveLocationReload()): void {
     if (!shouldReloadOnRetry(reloadFn, this.reloading) || !reloadFn) {
       return;
     }

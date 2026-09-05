@@ -50,3 +50,18 @@ export function shouldReloadOnRetry(
   }
   return typeof reloadFn === 'function';
 }
+
+type ReloadHost = { reload?: () => void } | null | undefined;
+
+/**
+ * Resolve a reload callback from a location-like host.
+ * Defaults to the browser `location` global when no host is passed.
+ */
+export function resolveLocationReload(
+  host: ReloadHost = typeof location === 'undefined' ? null : location,
+): (() => void) | null {
+  if (!host || typeof host.reload !== 'function') {
+    return null;
+  }
+  return () => host.reload!();
+}

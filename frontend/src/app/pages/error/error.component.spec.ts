@@ -1,4 +1,12 @@
-import { errorNavLinks, errorPageMessage, shouldReloadOnRetry } from './error.helpers';
+import { of } from 'rxjs';
+
+import { ErrorComponent } from './error.component';
+import {
+  errorNavLinks,
+  errorPageMessage,
+  resolveLocationReload,
+  shouldReloadOnRetry,
+} from './error.helpers';
 
 /**
  * Golden WU err50 — first error page specs.
@@ -19,7 +27,6 @@ describe('ErrorComponent message / nav / retry helpers', () => {
     const links = errorNavLinks();
     expect(links.map((l) => l.path)).toEqual(['/', '/shop', '/blog']);
     expect(links.map((l) => l.kind)).toEqual(['home', 'shop', 'blog']);
-    // Fresh call must not share mutable state with a prior snapshot.
     expect(errorNavLinks()).not.toBe(links);
     expect(errorNavLinks()).toEqual(links);
   });
@@ -30,5 +37,45 @@ describe('ErrorComponent message / nav / retry helpers', () => {
     expect(shouldReloadOnRetry(reload, true)).toBeFalse();
     expect(shouldReloadOnRetry(null, false)).toBeFalse();
     expect(shouldReloadOnRetry(undefined, false)).toBeFalse();
+  });
+
+  it('resolveLocationReload wraps host.reload and nulls missing hosts', () => {
+    const reload = jasmine.createSpy('reload');
+    const fn = resolveLocationReload({ reload });
+    expect(typeof fn).toBe('function');
+    fn!();
+    expect(reload).toHaveBeenCalled();
+    expect(resolveLocationReload(null)).toBeNull();
+    expect(resolveLocationReload({})).toBeNull();
+    expect(typeof resolveLocationReload()).toBe('function');
+  });
+});
+
+describe('ErrorComponent field wiring (golden WU)', () => {
+  function createCmp(): ErrorComponent {
+    const social = {
+      get: () => of({ contact: { email: 'support@example.com' } }),
+    } as any;
+    return new ErrorComponent(social);
+  }
+
+  it('exposes navLinks and bodyMessage from helpers at construction', () => {
+    const cmp = createCmp();
+    expect(cmp.navLinks).toEqual(errorNavLinks());
+    expect(cmp.bodyMessage).toBe(errorPageMessage('generic'));
+  });
+
+  it('onRetry reloads once then no-ops while already reloading', () => {
+    const cmp = createCmp();
+    const reload = jasmine.createSpy('reload');
+    cmp.onRetry(reload);
+    expect(reload).toHaveBeenCalledTimes(1);
+    cmp.onRetry(reload);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('onRetry no-ops when reload resolver is null', () => {
+    const cmp = createCmp();
+    expect(() => cmp.onRetry(null)).not.toThrow();
   });
 });
