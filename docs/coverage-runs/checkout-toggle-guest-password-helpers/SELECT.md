@@ -1,0 +1,3 @@
+# SELECT
+- toggleGuestPassword
+- toggleGuestPasswordConfirm
