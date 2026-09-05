@@ -1,0 +1,3 @@
+# receipt
+- tip_impl: 2604998bc21b04cd758bc825b6d141bd129ade1e
+IMPL: pass

@@ -1,3 +1,1 @@
-slice: syncStateFromUrl + buildQueryParams
-n: 3
-branch: cursor/golden-wu-shop-syncstate-buildquery-coverage-4739
+tip_impl: 2604998bc21b04cd758bc825b6d141bd129ade1e
