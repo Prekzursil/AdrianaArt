@@ -1,0 +1,4 @@
+# SELECT
+- canSaveCreateCategory
+- canSaveRename
+- cancelCreateCategory
