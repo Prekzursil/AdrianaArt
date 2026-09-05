@@ -1,0 +1,4 @@
+# SELECT
+- bulkCategoryOptions
+- bulkCategoryLabel
+- cancelRenameCategory
