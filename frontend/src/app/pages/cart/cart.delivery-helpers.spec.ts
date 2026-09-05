@@ -108,4 +108,79 @@ describe('CartComponent delivery / price helpers (golden WU)', () => {
     expect(cmp.displayProductPrice({ base_price: 100, sale_price: 120 } as Product)).toBe(100);
     expect(cmp.displayProductPrice({ base_price: 50, sale_price: Number.NaN } as Product)).toBe(50);
   });
+
+  it('quote* helpers mirror quote fields and fall back when totals are non-positive', () => {
+    const cmp = createCmp();
+    quoteSig.set({
+      subtotal: 120,
+      fee: 5,
+      tax: 10,
+      shipping: 15,
+      total: 140,
+      currency: 'RON',
+      freeShippingThresholdRon: 200,
+    });
+    subtotalSig.set(99);
+    expect(cmp.quoteSubtotal()).toBe(120);
+    expect(cmp.quoteFee()).toBe(5);
+    expect(cmp.quoteTax()).toBe(10);
+    expect(cmp.quoteShipping()).toBe(15);
+    expect(cmp.quoteTotal()).toBe(140);
+    expect(cmp.quoteDiscount()).toBe(10);
+
+    quoteSig.set({
+      subtotal: 0,
+      fee: 0,
+      tax: 0,
+      shipping: 0,
+      total: 0,
+      currency: 'RON',
+      freeShippingThresholdRon: null,
+    });
+    subtotalSig.set(42);
+    expect(cmp.quoteSubtotal()).toBe(42);
+    expect(cmp.quoteTotal()).toBe(42);
+  });
+
+  it('freeShipping helpers handle null threshold and remaining/progress math', () => {
+    const cmp = createCmp();
+    quoteSig.set({
+      subtotal: 80,
+      fee: 0,
+      tax: 0,
+      shipping: 0,
+      total: 70,
+      currency: 'RON',
+      freeShippingThresholdRon: null,
+    });
+    expect(cmp.freeShippingThreshold()).toBeNull();
+    expect(cmp.freeShippingRemaining()).toBeNull();
+    expect(cmp.freeShippingProgressPct()).toBe(0);
+
+    quoteSig.set({
+      subtotal: 80,
+      fee: 0,
+      tax: 0,
+      shipping: 0,
+      total: 70,
+      currency: 'RON',
+      freeShippingThresholdRon: 100,
+    });
+    // taxable = max(0, 80 - 10) = 70; remaining = 30; progress = 70%
+    expect(cmp.freeShippingThreshold()).toBe(100);
+    expect(cmp.quoteDiscount()).toBe(10);
+    expect(cmp.freeShippingRemaining()).toBe(30);
+    expect(cmp.freeShippingProgressPct()).toBe(70);
+
+    quoteSig.set({
+      subtotal: 80,
+      fee: 0,
+      tax: 0,
+      shipping: 0,
+      total: 70,
+      currency: 'RON',
+      freeShippingThresholdRon: 0,
+    });
+    expect(cmp.freeShippingProgressPct()).toBe(100);
+  });
 });
