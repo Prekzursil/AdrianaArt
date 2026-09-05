@@ -2,11 +2,9 @@ import { AccountState } from './account.state';
 import type { Order } from '../../core/account.service';
 
 describe('AccountState order label helpers (golden WU)', () => {
-  function createState() {
-    const state = Object.create(AccountState.prototype) as AccountState & {
-      translate: { instant: (key: string, params?: Record<string, unknown>) => string };
-    };
-    state.translate = {
+  function createState(): AccountState {
+    const state = Object.create(AccountState.prototype) as AccountState;
+    (state as any).translate = {
       instant: (key: string, params?: Record<string, unknown>) =>
         params ? `tr:${key}:${JSON.stringify(params)}` : `tr:${key}`,
     };
