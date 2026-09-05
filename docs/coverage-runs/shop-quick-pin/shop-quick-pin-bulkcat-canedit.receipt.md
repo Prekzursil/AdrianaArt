@@ -1,6 +1,6 @@
 # Coverage receipt — shop bulk category + canEdit helpers
 
-- tip_impl: pending
+- tip_impl: `39154f37`
 - branch: `cursor/golden-wu-shop-quickview-pin-bulkcat-coverage-4739`
 - N: 3 (`bulkCategoryOptions`, `bulkCategoryLabel`, `canEditCategories`/`canEditProducts`)
 - skipped: `openQuickView` (#718 / `golden-wu-shop-quickview-coverage-4739`), `pinProductToTop` (#720 / `golden-wu-shop-pinproduct-coverage-4739`) — claimed by open golden-wu PRs
