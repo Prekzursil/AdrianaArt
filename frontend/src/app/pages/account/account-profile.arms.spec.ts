@@ -42,7 +42,7 @@ describe('Account profile arms (golden WU acct54)', () => {
     let tickets: jasmine.SpyObj<TicketsService>;
     let theme: {
       mode: () => 'light' | 'dark';
-      preference: () => () => 'system';
+      preference: () => () => 'light' | 'dark' | 'system';
       setPreference: jasmine.Spy;
     };
     let lang: { language: () => string; setLanguage: jasmine.Spy };
@@ -127,15 +127,15 @@ describe('Account profile arms (golden WU acct54)', () => {
       auth.isAuthenticated.and.returnValue(true);
       auth.role.and.returnValue('customer');
       auth.isAdmin.and.returnValue(false);
-      auth.updateProfile.and.returnValue(of(profile as never));
-      auth.getAliases.and.returnValue(of({ usernames: [], display_names: [] } as never));
-      auth.getCooldowns.and.returnValue(of({} as never));
+      auth.updateProfile.and.returnValue(of(profile as any));
+      auth.getAliases.and.returnValue(of({ usernames: [], display_names: [] } as any));
+      auth.getCooldowns.and.returnValue(of({} as any));
       auth.listEmails.and.returnValue(
         of({
           primary_email: profile.email,
           primary_verified: true,
           secondary_emails: [],
-        } as never),
+        } as any),
       );
       auth.logout.and.returnValue(of(void 0));
 
@@ -146,7 +146,7 @@ describe('Account profile arms (golden WU acct54)', () => {
         'getOrdersPage',
         'getDeletionStatus',
       ]);
-      account.getProfile.and.returnValue(of(profile as never));
+      account.getProfile.and.returnValue(of(profile as any));
       account.getAddresses.and.returnValue(of(addresses));
       account.getOrders.and.returnValue(of(orders));
       account.getOrdersPage.and.returnValue(
@@ -159,7 +159,7 @@ describe('Account profile arms (golden WU acct54)', () => {
             size: 5,
             pending_count: 0,
           },
-        } as never),
+        } as any),
       );
       account.getDeletionStatus.and.returnValue(
         of({
@@ -172,7 +172,10 @@ describe('Account profile arms (golden WU acct54)', () => {
 
       blog = jasmine.createSpyObj<BlogService>('BlogService', ['listMyComments']);
       blog.listMyComments.and.returnValue(
-        of({ items: [], meta: { total_items: 0, total_pages: 1, page: 1, size: 10 } }),
+        of({
+          items: [],
+          meta: { total_items: 0, total_pages: 1, page: 1, limit: 10 },
+        } as any),
       );
 
       api = jasmine.createSpyObj<ApiService>('ApiService', ['get', 'post', 'delete']);
@@ -185,7 +188,7 @@ describe('Account profile arms (golden WU acct54)', () => {
       };
 
       coupons = jasmine.createSpyObj<CouponsService>('CouponsService', ['myCoupons']);
-      coupons.myCoupons.and.returnValue(of([] as never));
+      coupons.myCoupons.and.returnValue(of([] as any));
 
       notifications = {
         unreadCount: () => 0,
