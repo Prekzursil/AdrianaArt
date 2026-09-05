@@ -289,7 +289,7 @@ describe('AboutComponent', () => {
 
   it('uses the public about path when preview token is whitespace-only', () => {
     queryParams$.next({ preview: '   \t  ' });
-    api.get.and.callFake((path: string, params?: Record<string, unknown>) => {
+    api.get.and.callFake((path: string, _params?: Record<string, unknown>) => {
       if (path === '/content/pages/about/preview') {
         throw new Error('whitespace preview must not hit preview endpoint');
       }
