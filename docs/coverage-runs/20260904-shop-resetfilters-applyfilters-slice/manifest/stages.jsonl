@@ -1,3 +1,7 @@
 {"event":"ground_select","status":"pass"}
 {"event":"impl","status":"pass","tip_impl":"9c651da60bd786a6e7a453b3c6976504576bcc3e"}
 {"event":"deslop_artifact","status":"pass"}
+{"event":"validate_inner","status":"pass","exit":0,"total":2138,"tip_impl":"9c651da60bd786a6e7a453b3c6976504576bcc3e","ts":"2026-09-05T07:01:33Z"}
+{"event":"lane_outer","status":"outer:blocked","case":"B","ts":"2026-09-05T07:01:33Z"}
+{"event":"draft_pr","status":"forbidden","ts":"2026-09-05T07:01:33Z"}
+{"event":"council","status":"conditional","seal":"bc-07d2b6b7-e1f3-5b64-92a2-68ad5610ee4a","ts":"2026-09-05T07:16:06Z"}
