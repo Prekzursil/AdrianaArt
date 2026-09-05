@@ -19,7 +19,6 @@ import { ContactComponent } from './contact.component';
  */
 describe('ContactComponent submit UI arms', () => {
   let support: jasmine.SpyObj<SupportService>;
-  let translate: TranslateService;
 
   function submitButton(root: HTMLElement): HTMLButtonElement {
     const btn = root.querySelector('button[type="submit"]') as HTMLButtonElement | null;
@@ -69,7 +68,7 @@ describe('ContactComponent submit UI arms', () => {
       ],
     });
 
-    translate = TestBed.inject(TranslateService);
+    const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
       {
@@ -89,15 +88,21 @@ describe('ContactComponent submit UI arms', () => {
     translate.use('en');
   });
 
-  it('disables the submit CTA while the form is invalid (required validation)', () => {
+  it('disables the submit CTA until required fields are filled (validation)', async () => {
     const fixture = TestBed.createComponent(ContactComponent);
     fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
     const root = fixture.nativeElement as HTMLElement;
     const btn = submitButton(root);
-
     expect(btn.disabled).toBeTrue();
 
-    fillValidForm(fixture.componentInstance);
+    const cmp = fixture.componentInstance;
+    fillValidForm(cmp);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(btn.disabled).toBeFalse();
@@ -106,17 +111,15 @@ describe('ContactComponent submit UI arms', () => {
 
   it('paints the success banner and clears a prior error after a successful submit', () => {
     const fixture = TestBed.createComponent(ContactComponent);
-    fixture.detectChanges();
     const cmp = fixture.componentInstance;
-    const root = fixture.nativeElement as HTMLElement;
-
-    cmp.submitError.set('stale error');
     fillValidForm(cmp);
+    cmp.submitError.set('stale error');
     fixture.detectChanges();
 
     cmp.submit();
     fixture.detectChanges();
 
+    const root = fixture.nativeElement as HTMLElement;
     expect(cmp.submitSuccess()).toBeTrue();
     expect(cmp.submitError()).toBe('');
     const text = (root.textContent || '').replace(/\s+/g, ' ');
@@ -127,15 +130,14 @@ describe('ContactComponent submit UI arms', () => {
 
   it('keeps submit disabled without captcha token and paints the error banner on failure', () => {
     const fixture = TestBed.createComponent(ContactComponent);
-    fixture.detectChanges();
     const cmp = fixture.componentInstance;
-    const root = fixture.nativeElement as HTMLElement;
-    const btn = submitButton(root);
-
     fillValidForm(cmp);
     cmp.captchaEnabled = true;
     cmp.captchaToken = null;
     fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const btn = submitButton(root);
 
     // Captcha-missing gate (bot/honeypot-adjacent): CTA stays disabled.
     expect(btn.disabled).toBeTrue();
