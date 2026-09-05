@@ -4,11 +4,7 @@ import { Subscription } from 'rxjs';
 
 import { SiteSocialService } from '../../core/site-social.service';
 import { ButtonComponent } from '../../shared/button.component';
-import {
-  notFoundHomeLinks,
-  notFoundMessage,
-  notFoundSuggestedPaths,
-} from './not-found.helpers';
+import { notFoundHomeLinks, notFoundMessage, notFoundSuggestedPaths } from './not-found.helpers';
 
 @Component({
   selector: 'app-not-found',

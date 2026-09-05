@@ -1,8 +1,4 @@
-import {
-  notFoundHomeLinks,
-  notFoundMessage,
-  notFoundSuggestedPaths,
-} from './not-found.helpers';
+import { notFoundHomeLinks, notFoundMessage, notFoundSuggestedPaths } from './not-found.helpers';
 
 /**
  * Golden WU nf51 — first not-found page specs.
