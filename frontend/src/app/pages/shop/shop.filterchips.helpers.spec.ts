@@ -25,9 +25,11 @@ describe('ShopComponent filterChips (golden WU)', () => {
   }
 
   it('emits sale category chip and named category chip', () => {
-    expect(createCmp({ activeCategorySlug: 'sale' }).filterChips().map((c) => c.id)).toEqual([
-      'category:sale',
-    ]);
+    expect(
+      createCmp({ activeCategorySlug: 'sale' })
+        .filterChips()
+        .map((c) => c.id),
+    ).toEqual(['category:sale']);
     expect(createCmp({ activeCategorySlug: 'cameras' }).filterChips()[0].label).toBe('Cameras');
   });
 
