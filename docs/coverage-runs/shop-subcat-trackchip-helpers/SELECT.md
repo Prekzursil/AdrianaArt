@@ -1,0 +1,1 @@
+getSubcategories, trackChip on ShopComponent
