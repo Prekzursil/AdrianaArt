@@ -1,1 +1,3 @@
 {"event":"ground_select","status":"pass","note":"comment subscribe after sort/page CONDITIONAL"}
+{"event":"impl","status":"pass","tip_impl":"175ba44f655edda1decea150f9d68988b2ad8fb5","note":"+3 specs; focused 6 SUCCESS"}
+{"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}

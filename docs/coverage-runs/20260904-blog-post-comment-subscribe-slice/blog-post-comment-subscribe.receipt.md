@@ -6,7 +6,7 @@
 - risk: low
 - slice: canSubscribeToComments + toggleCommentSubscription blocked (N=3)
 - branch: cursor/golden-wu-blog-post-comment-subscribe-coverage-4739
-- tip_impl: PENDING
+- tip_impl: 175ba44f655edda1decea150f9d68988b2ad8fb5
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-blog-post
 SELECT: comment subscribe gates; DraftPR FORBIDDEN on prior WUs
