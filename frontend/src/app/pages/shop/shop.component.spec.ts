@@ -164,4 +164,45 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('clampPrice returns min bound for non-finite and clamps to bounds', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.priceMaxBound = 500;
+    expect(cmp.clampPrice(Number.NaN)).toBe(cmp.priceMinBound);
+    expect(cmp.clampPrice(-10)).toBe(cmp.priceMinBound);
+    expect(cmp.clampPrice(9999)).toBe(500);
+    expect(cmp.clampPrice(42)).toBe(42);
+    fixture.destroy();
+  });
+
+  it('normalizePriceRange resolves inverted min/max based on which side changed', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.priceMaxBound = 500;
+    cmp.filters.min_price = 200;
+    cmp.filters.max_price = 50;
+    cmp.normalizePriceRange('min');
+    expect(cmp.filters.min_price).toBe(200);
+    expect(cmp.filters.max_price).toBe(200);
+
+    cmp.filters.min_price = 300;
+    cmp.filters.max_price = 100;
+    cmp.normalizePriceRange('max');
+    expect(cmp.filters.min_price).toBe(100);
+    expect(cmp.filters.max_price).toBe(100);
+    fixture.destroy();
+  });
+
+  it('normalizePriceRange without changed side collapses inverted range onto min', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.priceMaxBound = 500;
+    cmp.filters.min_price = 250;
+    cmp.filters.max_price = 40;
+    cmp.normalizePriceRange();
+    expect(cmp.filters.min_price).toBe(250);
+    expect(cmp.filters.max_price).toBe(250);
+    fixture.destroy();
+  });
 });
