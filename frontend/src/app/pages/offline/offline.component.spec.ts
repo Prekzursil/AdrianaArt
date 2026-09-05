@@ -50,6 +50,4 @@ describe('OfflineComponent field wiring (golden WU)', () => {
     cmp.onRetry();
     expect(reload).toHaveBeenCalled();
   });
-
-
 });
