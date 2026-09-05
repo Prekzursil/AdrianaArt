@@ -31,3 +31,18 @@ describe('NotFoundComponent home / suggested / message helpers', () => {
     expect(notFoundMessage('unknown-key')).toBe(notFoundMessage('body'));
   });
 });
+
+describe('NotFoundComponent field wiring (golden WU)', () => {
+  it('exposes homeLinks, suggestedPaths, and message fields from helpers', () => {
+    const social = {
+      get: () => of({ contact: { email: 'help@example.com' } }),
+    } as SiteSocialService;
+    const cmp = new NotFoundComponent(social);
+    expect(cmp.homeLinks).toEqual(notFoundHomeLinks());
+    expect(cmp.suggestedPaths).toEqual(notFoundSuggestedPaths());
+    expect(cmp.eyebrow).toBe(notFoundMessage('eyebrow'));
+    expect(cmp.title).toBe(notFoundMessage('title'));
+    expect(cmp.body).toBe(notFoundMessage('body'));
+    expect(cmp.contactHref()).toBe('mailto:');
+  });
+});
