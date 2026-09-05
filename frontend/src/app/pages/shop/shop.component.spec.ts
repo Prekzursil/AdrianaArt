@@ -164,4 +164,52 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('activeLeafCategorySlug returns subcategory, leaf slug, or null for sale/parent-with-children', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+
+    cmp.activeCategorySlug = '';
+    expect(cmp.activeLeafCategorySlug()).toBeNull();
+
+    cmp.activeCategorySlug = 'sale';
+    expect(cmp.activeLeafCategorySlug()).toBeNull();
+
+    cmp.activeCategorySlug = 'prints';
+    cmp.activeSubcategorySlug = 'kids';
+    expect(cmp.activeLeafCategorySlug()).toBe('kids');
+
+    cmp.activeSubcategorySlug = '';
+    cmp.categoriesBySlug.set('prints', { id: 'p', slug: 'prints', name: 'Prints' });
+    cmp.childrenByParentId.set('p', [{ id: 'c', slug: 'kids', name: 'Kids', parent_id: 'p' }]);
+    expect(cmp.activeLeafCategorySlug()).toBeNull();
+
+    cmp.childrenByParentId.set('p', []);
+    expect(cmp.activeLeafCategorySlug()).toBe('prints');
+    fixture.destroy();
+  });
+
+  it('getDescendants recursively flattens the category subtree', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const root = { id: 'r', slug: 'root', name: 'Root' };
+    const child = { id: 'c', slug: 'child', name: 'Child', parent_id: 'r' };
+    const grand = { id: 'g', slug: 'grand', name: 'Grand', parent_id: 'c' };
+    cmp.childrenByParentId.set('r', [child]);
+    cmp.childrenByParentId.set('c', [grand]);
+    expect(cmp.getDescendants(root).map((c: any) => c.slug)).toEqual(['child', 'grand']);
+    expect(cmp.getDescendants({ id: '', slug: 'x', name: 'x' })).toEqual([]);
+    fixture.destroy();
+  });
+
+  it('mergeReasonKey maps known reasons and falls back to mergeNotAllowed', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    expect(cmp.mergeReasonKey('same_category')).toBe('adminUi.storefront.categories.mergeReasonSame');
+    expect(cmp.mergeReasonKey('different_parent')).toBe('adminUi.storefront.categories.mergeReasonParent');
+    expect(cmp.mergeReasonKey('source_has_children')).toBe('adminUi.storefront.categories.mergeReasonChildren');
+    expect(cmp.mergeReasonKey('unknown')).toBe('adminUi.storefront.categories.mergeNotAllowed');
+    expect(cmp.mergeReasonKey(null)).toBe('adminUi.storefront.categories.mergeNotAllowed');
+    fixture.destroy();
+  });
 });
