@@ -164,4 +164,46 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('scrollToFilters no-ops when shop-filters element is missing', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const scrollSpy = spyOn(HTMLElement.prototype, 'scrollIntoView');
+    document.getElementById('shop-filters')?.remove();
+    expect(() => cmp.scrollToFilters()).not.toThrow();
+    expect(scrollSpy).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('scrollToFilters scrolls shop-filters into view when present', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const el = document.createElement('div');
+    el.id = 'shop-filters';
+    document.body.appendChild(el);
+    const scrollSpy = spyOn(el, 'scrollIntoView');
+    try {
+      cmp.scrollToFilters();
+      expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    } finally {
+      el.remove();
+      fixture.destroy();
+    }
+  });
+
+  it('scrollToSort scrolls shop-actions into view when present', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const el = document.createElement('div');
+    el.id = 'shop-actions';
+    document.body.appendChild(el);
+    const scrollSpy = spyOn(el, 'scrollIntoView');
+    try {
+      cmp.scrollToSort();
+      expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    } finally {
+      el.remove();
+      fixture.destroy();
+    }
+  });
 });
