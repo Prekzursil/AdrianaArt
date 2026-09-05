@@ -113,12 +113,12 @@ describe('ContactComponent (extra branches)', () => {
   });
 
   it('uses the public contact path when preview token is whitespace-only', () => {
-    api.get.and.callFake((path: string) => {
+    api.get.and.callFake(((path: string) => {
       if (path === '/content/pages/contact/preview') {
         throw new Error('preview endpoint must not be called for whitespace token');
       }
-      return of({ title: 'Contact', body_markdown: 'Hello', images: [] } as never);
-    });
+      return of({ title: 'Contact', body_markdown: 'Hello', images: [] });
+    }) as ApiService['get']);
     queryParams.next({ preview: '   \t  ' });
     build();
     expect(api.get).toHaveBeenCalledWith('/content/pages/contact', { lang: 'en' });
