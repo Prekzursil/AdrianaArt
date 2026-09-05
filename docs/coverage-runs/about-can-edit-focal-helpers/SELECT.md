@@ -1,0 +1,4 @@
+# SELECT
+- focalPosition
+- canEditPage
+- editPage
