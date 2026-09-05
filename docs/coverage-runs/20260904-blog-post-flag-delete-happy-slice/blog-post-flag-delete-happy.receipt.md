@@ -6,12 +6,12 @@
 - risk: low
 - slice: flagComment prompt→API (+blank reason) + deleteComment confirm-accept→API (N=3)
 - branch: cursor/golden-wu-blog-post-flag-delete-happy-coverage-4739
-- tip_impl: TBD
+- tip_impl: dd28bb3b3c95e2d4f420f45cabece3aebad3afb8
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-blog-post
 SELECT: flag/delete happy paths after early-return slice CONDITIONAL on DraftPR
-IMPL: pending
-DESLOP: pending
+IMPL: pass
+DESLOP: pass
 INNER-STATUS: pending
 DIFF-COVERAGE: enforced
 GITHUB_BASE_REF: main

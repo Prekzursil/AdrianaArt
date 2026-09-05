@@ -1,1 +1,4 @@
 {"event":"ground_select","status":"pass","note":"happy-path after early-return CONDITIONAL"}
+{"event":"impl","status":"pass","tip_impl":"dd28bb3b3c95e2d4f420f45cabece3aebad3afb8","note":"+3 specs; focused 6 SUCCESS"}
+{"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
+{"event":"validate_inner_post_impl","status":"pending"}
