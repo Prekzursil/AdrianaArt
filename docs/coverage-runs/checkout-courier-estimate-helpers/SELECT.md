@@ -1,0 +1,1 @@
+courierAllowed, courierEstimate, courierEstimateKey on CheckoutComponent
