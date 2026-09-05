@@ -1,3 +1,9 @@
 {"event":"ground_select","status":"pass","note":"blog comment-subscribe error after shop5 CONDITIONAL"}
 {"event":"impl","status":"pass","tip_impl":"8b5271a9bb2dcb2483193fe135613e9b9c7e346f","note":"+3 specs; focused 6 SUCCESS"}
 {"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
+{"event":"validate_inner_post_impl","status":"pass","evidence":"/tmp/blog14-inner-serial.log","exit":0,"total":2138,"tip_impl":"8b5271a9bb2dcb2483193fe135613e9b9c7e346f","ts":"2026-09-05T05:17:38Z"}
+{"event":"lane_outer","status":"outer:blocked","case":"B","blocker_id":"visual_secrets","ts":"2026-09-05T05:17:38Z"}
+{"event":"draft_pr","status":"forbidden","reason":"createPullRequest_403","evidence":"/tmp/blog14-draftpr.log","ts":"2026-09-05T05:17:38Z"}
+{"event":"repo_verify","status":"pass","evidence":"/tmp/blog14-verify-serial.log","exit":0,"backend_passed":3993,"frontend_total":2138,"tip_impl":"8b5271a9bb2dcb2483193fe135613e9b9c7e346f","ts":"2026-09-05T05:33:34Z"}
+{"event":"review","status":"pass","seal":"bc-5b7896b7-3a3d-5085-9727-4fb925d3b9a3","verdict":"PASS","tip_impl":"8b5271a9bb2dcb2483193fe135613e9b9c7e346f","ts":"2026-09-05T05:33:34Z"}
+{"event":"adversary_council","status":"conditional","scaffold":"PASS","overclaim":"PASS","deslop":"PASS","blocker":"draft_pr_forbidden","scaffold_id":"bc-ade14755-dcd8-5173-8a5b-6769818bc176","overclaim_id":"bc-11a73e61-8088-5b11-9440-c9d311835c72","deslop_id":"bc-8e5c3719-a9a6-5167-a3e5-26821739a739","ts":"2026-09-05T05:33:34Z"}
