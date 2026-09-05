@@ -9,7 +9,7 @@ import { AuthService } from '../../core/auth.service';
 import { MarkdownService } from '../../core/markdown.service';
 import { SeoHeadLinksService } from '../../core/seo-head-links.service';
 import { SiteSocialService } from '../../core/site-social.service';
-import { SupportService } from '../../core/support.service';
+import { ContactSubmissionRead, SupportService } from '../../core/support.service';
 import { ContactComponent } from './contact.component';
 
 /**
@@ -40,7 +40,7 @@ describe('ContactComponent submit UI arms', () => {
     const auth = jasmine.createSpyObj<AuthService>('AuthService', ['user']);
     auth.user.and.returnValue(null);
     support = jasmine.createSpyObj<SupportService>('SupportService', ['submitContact']);
-    support.submitContact.and.returnValue(of({} as never));
+    support.submitContact.and.returnValue(of({} as ContactSubmissionRead));
     const seo = jasmine.createSpyObj<SeoHeadLinksService>('SeoHeadLinksService', [
       'setLocalizedCanonical',
     ]);
