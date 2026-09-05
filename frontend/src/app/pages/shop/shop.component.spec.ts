@@ -164,4 +164,48 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('loadMore returns early when loadingMore is already true', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'load_more';
+    cmp.pageMeta = { page: 1, total_pages: 3, total_items: 30, limit: 10 };
+    cmp.loadingMore.set(true);
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'fetchProducts');
+    cmp.loadMore();
+    expect(cmp.cancelFilterDebounce).not.toHaveBeenCalled();
+    expect(cmp.fetchProducts).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('loadMore returns early when pageMeta is null', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'load_more';
+    cmp.pageMeta = null;
+    cmp.loadingMore.set(false);
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'fetchProducts');
+    cmp.loadMore();
+    expect(cmp.cancelFilterDebounce).not.toHaveBeenCalled();
+    expect(cmp.fetchProducts).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('loadMore returns early when already on the last page', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'load_more';
+    cmp.pageMeta = { page: 3, total_pages: 3, total_items: 30, limit: 10 };
+    cmp.filters.page = 3;
+    cmp.loadingMore.set(false);
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'fetchProducts');
+    cmp.loadMore();
+    expect(cmp.cancelFilterDebounce).not.toHaveBeenCalled();
+    expect(cmp.fetchProducts).not.toHaveBeenCalled();
+    expect(cmp.loadingMore()).toBeFalse();
+    fixture.destroy();
+  });
 });
