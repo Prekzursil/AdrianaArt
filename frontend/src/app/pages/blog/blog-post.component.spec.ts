@@ -52,10 +52,12 @@ describe('BlogPostComponent', () => {
       'listPosts',
       'listCommentThreads',
       'getCommentSubscription',
+      'deleteComment',
+      'flagComment',
     ]);
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success']);
     markdown = jasmine.createSpyObj<MarkdownService>('MarkdownService', ['render']);
-    auth = jasmine.createSpyObj<AuthService>('AuthService', ['isAuthenticated', 'user']);
+    auth = jasmine.createSpyObj<AuthService>('AuthService', ['isAuthenticated', 'user', 'isAdmin']);
     doc = document.implementation.createHTMLDocument('blog-post-test');
 
     blog.getPost.and.returnValue(of(post));
@@ -182,4 +184,73 @@ describe('BlogPostComponent', () => {
     expect(blog.getPreviewPost).toHaveBeenCalledWith('snapshot-post', 'preview-token', 'en');
     expect(blog.getPost).not.toHaveBeenCalled();
   });
+
+  it('canFlag requires auth, live non-own comment, and rejects null user', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    const theirs = { id: 'c1', parent_id: null, is_deleted: false, is_hidden: false, author: { id: 'u-other' }, body: 'x' };
+    const mine = { id: 'c2', parent_id: null, is_deleted: false, is_hidden: false, author: { id: 'u-me' }, body: 'y' };
+    const dead = { id: 'c3', parent_id: null, is_deleted: true, is_hidden: false, author: { id: 'u-other' }, body: 'z' };
+    const hidden = { id: 'c4', parent_id: null, is_deleted: false, is_hidden: true, author: { id: 'u-other' }, body: 'h' };
+
+    auth.isAuthenticated.and.returnValue(false);
+    expect(cmp.canFlag(theirs)).toBeFalse();
+
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue(null);
+    expect(cmp.canFlag(theirs)).toBeFalse();
+
+    auth.user.and.returnValue({ id: 'u-me' } as any);
+    expect(cmp.canFlag(theirs)).toBeTrue();
+    expect(cmp.canFlag(mine)).toBeFalse();
+    expect(cmp.canFlag(dead)).toBeFalse();
+    expect(cmp.canFlag(hidden)).toBeFalse();
+    fixture.destroy();
+  });
+
+  it('flagComment no-ops when canFlag is false', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    const mine = { id: 'c2', parent_id: null, is_deleted: false, is_hidden: false, author: { id: 'u-me' }, body: 'y' };
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ id: 'u-me' } as any);
+    const promptSpy = spyOn(window, 'prompt').and.returnValue('spam');
+    blog.flagComment.and.returnValue(of({ ok: true } as any));
+    cmp.flagComment(mine);
+    expect(promptSpy).not.toHaveBeenCalled();
+    expect(blog.flagComment).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('deleteComment returns early when canDelete is false or confirm is denied', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    const theirs = { id: 'c1', parent_id: null, is_deleted: false, author: { id: 'u-other' }, body: 'x' };
+    auth.isAuthenticated.and.returnValue(false);
+    const confirmSpy = spyOn(window, 'confirm').and.returnValue(true);
+    blog.deleteComment.and.returnValue(of({ ok: true } as any));
+    cmp.deleteComment(theirs);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(blog.deleteComment).not.toHaveBeenCalled();
+
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ id: 'u-me' } as any);
+    auth.isAdmin.and.returnValue(false);
+    // not author and not admin => canDelete false
+    cmp.deleteComment(theirs);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(blog.deleteComment).not.toHaveBeenCalled();
+
+    // author but user cancels confirm
+    const mine = { id: 'c2', parent_id: null, is_deleted: false, author: { id: 'u-me' }, body: 'y' };
+    confirmSpy.and.returnValue(false);
+    cmp.deleteComment(mine);
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(blog.deleteComment).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
 });
