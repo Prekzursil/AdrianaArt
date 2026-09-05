@@ -164,4 +164,42 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('openQuickView opens when slug is non-empty', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.quickViewOpen = false;
+    cmp.quickViewSlug = '';
+    cmp.openQuickView('  vase-01  ');
+    expect(cmp.quickViewSlug).toBe('vase-01');
+    expect(cmp.quickViewOpen).toBeTrue();
+    fixture.destroy();
+  });
+
+  it('openQuickView returns early when slug is blank', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.quickViewOpen = false;
+    cmp.quickViewSlug = 'keep';
+    cmp.openQuickView('   ');
+    expect(cmp.quickViewSlug).toBe('keep');
+    expect(cmp.quickViewOpen).toBeFalse();
+    fixture.destroy();
+  });
+
+  it('changePage loads the adjacent page when paginationMode is pages', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'pages';
+    cmp.pageMeta = { page: 2, total_pages: 4, total_items: 40, limit: 10 };
+    cmp.filters.page = 2;
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'loadProducts');
+    cmp.changePage(1);
+    expect(cmp.cancelFilterDebounce).toHaveBeenCalled();
+    expect(cmp.filters.page).toBe(3);
+    expect(cmp.loadProducts).toHaveBeenCalled();
+    fixture.destroy();
+  });
 });
+
