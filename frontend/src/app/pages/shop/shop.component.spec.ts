@@ -168,20 +168,30 @@ describe('ShopComponent i18n meta', () => {
   it('cancelFilterDebounce is a no-op when no timer is pending', () => {
     const fixture = TestBed.createComponent(ShopComponent);
     const cmp = fixture.componentInstance as any;
+    const clearSpy = spyOn(window, 'clearTimeout').and.callThrough();
     cmp.filterDebounce = undefined;
     expect(() => cmp.cancelFilterDebounce()).not.toThrow();
     expect(cmp.filterDebounce).toBeUndefined();
+    expect(clearSpy).not.toHaveBeenCalled();
     fixture.destroy();
   });
 
   it('cancelFilterDebounce clears a pending filterDebounce handle', () => {
     const fixture = TestBed.createComponent(ShopComponent);
     const cmp = fixture.componentInstance as any;
-    cmp.filterDebounce = setTimeout(() => undefined, 60_000);
-    expect(cmp.filterDebounce).toBeDefined();
-    cmp.cancelFilterDebounce();
-    expect(cmp.filterDebounce).toBeUndefined();
-    fixture.destroy();
+    const clearSpy = spyOn(window, 'clearTimeout').and.callThrough();
+    const handle = setTimeout(() => undefined, 60_000);
+    cmp.filterDebounce = handle;
+    try {
+      expect(cmp.filterDebounce).toBeDefined();
+      cmp.cancelFilterDebounce();
+      expect(cmp.filterDebounce).toBeUndefined();
+      expect(clearSpy).toHaveBeenCalledWith(handle);
+    } finally {
+      clearTimeout(handle);
+      cmp.filterDebounce = undefined;
+      fixture.destroy();
+    }
   });
 
   it('scheduleFilterApply resets page to 1 and arms debounce without loading yet', () => {
@@ -189,11 +199,14 @@ describe('ShopComponent i18n meta', () => {
     const cmp = fixture.componentInstance as any;
     const loadSpy = spyOn(cmp, 'loadProducts');
     cmp.filters.page = 3;
-    cmp.scheduleFilterApply();
-    expect(cmp.filters.page).toBe(1);
-    expect(cmp.filterDebounce).toBeDefined();
-    expect(loadSpy).not.toHaveBeenCalled();
-    cmp.cancelFilterDebounce();
-    fixture.destroy();
+    try {
+      cmp.scheduleFilterApply();
+      expect(cmp.filters.page).toBe(1);
+      expect(cmp.filterDebounce).toBeDefined();
+      expect(loadSpy).not.toHaveBeenCalled();
+    } finally {
+      cmp.cancelFilterDebounce();
+      fixture.destroy();
+    }
   });
 });
