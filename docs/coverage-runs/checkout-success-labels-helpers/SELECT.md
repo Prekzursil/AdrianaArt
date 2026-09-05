@@ -1,0 +1,4 @@
+# SELECT
+- courierLabel
+- deliveryTypeKey
+- lockerLabel
