@@ -164,4 +164,45 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('changePage returns early when pageMeta is null', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'pages';
+    cmp.pageMeta = null;
+    cmp.filters.page = 1;
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'loadProducts');
+    cmp.changePage(1);
+    expect(cmp.cancelFilterDebounce).toHaveBeenCalled();
+    expect(cmp.loadProducts).not.toHaveBeenCalled();
+    expect(cmp.filters.page).toBe(1);
+    fixture.destroy();
+  });
+
+  it('toggleTag adds a missing tag and applies filters', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.filters.tags = new Set<string>();
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'applyFilters');
+    cmp.toggleTag('ceramic');
+    expect(cmp.cancelFilterDebounce).toHaveBeenCalled();
+    expect(cmp.filters.tags.has('ceramic')).toBeTrue();
+    expect(cmp.applyFilters).toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('toggleTag removes an existing tag and applies filters', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.filters.tags = new Set<string>(['ceramic']);
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'applyFilters');
+    cmp.toggleTag('ceramic');
+    expect(cmp.cancelFilterDebounce).toHaveBeenCalled();
+    expect(cmp.filters.tags.has('ceramic')).toBeFalse();
+    expect(cmp.applyFilters).toHaveBeenCalled();
+    fixture.destroy();
+  });
 });
