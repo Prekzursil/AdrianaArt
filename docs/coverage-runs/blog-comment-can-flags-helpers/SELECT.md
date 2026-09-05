@@ -1,0 +1,4 @@
+# SELECT
+- canSubscribeToComments
+- canDelete
+- canReply
