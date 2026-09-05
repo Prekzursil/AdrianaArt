@@ -165,16 +165,6 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products[0].id).toBe('new');
   });
 
-  it('scrollToFilters no-ops when shop-filters element is missing', () => {
-    const fixture = TestBed.createComponent(ShopComponent);
-    const cmp = fixture.componentInstance as any;
-    const scrollSpy = spyOn(HTMLElement.prototype, 'scrollIntoView');
-    document.getElementById('shop-filters')?.remove();
-    expect(() => cmp.scrollToFilters()).not.toThrow();
-    expect(scrollSpy).not.toHaveBeenCalled();
-    fixture.destroy();
-  });
-
   it('scrollToFilters scrolls shop-filters into view when present', () => {
     const fixture = TestBed.createComponent(ShopComponent);
     const cmp = fixture.componentInstance as any;
@@ -191,18 +181,38 @@ describe('ShopComponent i18n meta', () => {
     }
   });
 
-  it('scrollToSort scrolls shop-actions into view when present', () => {
+  it('scrollToSort no-ops when shop-actions element is missing', () => {
     const fixture = TestBed.createComponent(ShopComponent);
     const cmp = fixture.componentInstance as any;
-    const el = document.createElement('div');
-    el.id = 'shop-actions';
-    document.body.appendChild(el);
-    const scrollSpy = spyOn(el, 'scrollIntoView');
+    const scrollSpy = spyOn(HTMLElement.prototype, 'scrollIntoView');
+    document.getElementById('shop-actions')?.remove();
+    expect(() => cmp.scrollToSort()).not.toThrow();
+    expect(scrollSpy).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('scrollToSort scrolls shop-actions and focuses sort select after delay', () => {
+    jasmine.clock().install();
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const actions = document.createElement('div');
+    actions.id = 'shop-actions';
+    const select = document.createElement('select');
+    select.id = 'shop-sort-select';
+    document.body.appendChild(actions);
+    document.body.appendChild(select);
+    const scrollSpy = spyOn(actions, 'scrollIntoView');
+    const focusSpy = spyOn(select, 'focus');
     try {
       cmp.scrollToSort();
       expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+      expect(focusSpy).not.toHaveBeenCalled();
+      jasmine.clock().tick(350);
+      expect(focusSpy).toHaveBeenCalled();
     } finally {
-      el.remove();
+      jasmine.clock().uninstall();
+      actions.remove();
+      select.remove();
       fixture.destroy();
     }
   });
