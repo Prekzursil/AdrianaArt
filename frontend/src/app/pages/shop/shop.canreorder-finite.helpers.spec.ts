@@ -34,7 +34,9 @@ describe('ShopComponent canReorderProducts (golden WU)', () => {
 
   it('returns false for non-finite meta or not fully loaded', () => {
     expect(
-      createCmp({ pageMeta: { total_pages: Number.NaN, page: 1, total_items: 2 } }).canReorderProducts(),
+      createCmp({
+        pageMeta: { total_pages: Number.NaN, page: 1, total_items: 2 },
+      }).canReorderProducts(),
     ).toBe(false);
     expect(
       createCmp({
