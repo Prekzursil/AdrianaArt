@@ -246,4 +246,58 @@ describe('BlogPostComponent', () => {
     );
     fixture.destroy();
   });
+
+  it('toDateTimeLocal returns empty for missing/invalid and formats local YYYY-MM-DDTHH:mm', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+
+    expect(cmp.toDateTimeLocal(null)).toBe('');
+    expect(cmp.toDateTimeLocal(undefined)).toBe('');
+    expect(cmp.toDateTimeLocal('')).toBe('');
+    expect(cmp.toDateTimeLocal('not-a-date')).toBe('');
+
+    const source = new Date(2020, 2, 4, 5, 6, 0);
+    const isoIn = source.toISOString();
+    const parsed = new Date(isoIn);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const expected = `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+    const out = cmp.toDateTimeLocal(isoIn);
+    expect(out).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+    expect(out).toBe(expected);
+    fixture.destroy();
+  });
+
+  it('toIsoFromDateTimeLocal returns null for blank/invalid and ISO for valid local input', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+
+    expect(cmp.toIsoFromDateTimeLocal('')).toBeNull();
+    expect(cmp.toIsoFromDateTimeLocal('   ')).toBeNull();
+    expect(cmp.toIsoFromDateTimeLocal('garbage')).toBeNull();
+
+    const iso = cmp.toIsoFromDateTimeLocal('2020-03-04T05:06');
+    expect(iso).not.toBeNull();
+    expect(iso).toContain('T');
+    expect(Number.isFinite(Date.parse(iso as string))).toBeTrue();
+    expect(iso).toBe(new Date('2020-03-04T05:06').toISOString());
+    fixture.destroy();
+  });
+
+  it('isFutureIso is false for missing/invalid/past and true beyond the 1s skew', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+
+    expect(cmp.isFutureIso(null)).toBeFalse();
+    expect(cmp.isFutureIso(undefined)).toBeFalse();
+    expect(cmp.isFutureIso('')).toBeFalse();
+    expect(cmp.isFutureIso('garbage')).toBeFalse();
+    expect(cmp.isFutureIso('2000-01-01T00:00:00Z')).toBeFalse();
+
+    const nearFuture = new Date(Date.now() + 60_000).toISOString();
+    expect(cmp.isFutureIso(nearFuture)).toBeTrue();
+    fixture.destroy();
+  });
 });
