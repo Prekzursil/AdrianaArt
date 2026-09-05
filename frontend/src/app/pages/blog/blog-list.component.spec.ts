@@ -373,6 +373,7 @@ describe('BlogListComponent interactions', () => {
 
   it('renders filter chips for active search/tag/series queries', () => {
     const { fixture, cmp } = makeComponent();
+    fixture.detectChanges(); // ngOnInit clears queries from empty route
     cmp.searchQuery = 'brosa';
     cmp.tagQuery = 'macro';
     cmp.seriesQuery = 'spring';
