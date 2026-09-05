@@ -180,6 +180,47 @@ describe('ContactComponent (extra branches)', () => {
     expect(cmp.facebookPages().length).toBe(1);
   });
 
+  it('renders an Instagram thumbnail image when thumbnail_url is present', () => {
+    socialData = {
+      contact: { phone: '', email: '' },
+      instagramPages: [
+        { label: 'Studio IG', url: 'https://ig/x', thumbnail_url: 'https://img/ig.png' },
+      ],
+      facebookPages: [{ label: 'Studio FB', url: 'https://fb/x', thumbnail_url: '' }],
+    };
+    const fixture = TestBed.createComponent(ContactComponent);
+    fixture.detectChanges();
+    const igLink = Array.from(
+      fixture.nativeElement.querySelectorAll('a') as NodeListOf<HTMLAnchorElement>,
+    ).find((a) => a.href.includes('ig/x'));
+    expect(igLink).toBeTruthy();
+    const img = igLink!.querySelector('img') as HTMLImageElement | null;
+    expect(img).toBeTruthy();
+    expect(img!.getAttribute('src')).toBe('https://img/ig.png');
+    expect(img!.getAttribute('alt')).toBe('Studio IG');
+    // Thumbnail path must not fall through to #instagramAvatar initials.
+    expect(igLink!.textContent || '').not.toContain('SI');
+  });
+
+  it('exposes tel and mailto hrefs from the social phone and email signals', () => {
+    socialData = {
+      contact: { phone: '+40111222333', email: 'hello@moment.test' },
+      instagramPages: [],
+      facebookPages: [],
+    };
+    const fixture = TestBed.createComponent(ContactComponent);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const tel = root.querySelector('a[href="tel:+40111222333"]') as HTMLAnchorElement | null;
+    const mail = root.querySelector(
+      'a[href="mailto:hello@moment.test"]',
+    ) as HTMLAnchorElement | null;
+    expect(tel).toBeTruthy();
+    expect(mail).toBeTruthy();
+    expect((tel!.textContent || '').replace(/\s+/g, ' ')).toContain('+40111222333');
+    expect((mail!.textContent || '').replace(/\s+/g, ' ')).toContain('hello@moment.test');
+  });
+
   describe('initialsForLabel', () => {
     it('defaults to MS for an empty or nullish label', () => {
       expect(build().initialsForLabel('   ')).toBe('MS');
@@ -232,6 +273,22 @@ describe('ContactComponent (extra branches)', () => {
     it('reflects the storefront admin mode', () => {
       adminMode.enabled.and.returnValue(true);
       expect(build().canEditPage()).toBe(true);
+    });
+
+    it('shows the edit button in the DOM when storefront admin mode is enabled', () => {
+      adminMode.enabled.and.returnValue(true);
+      const translate = TestBed.inject(TranslateService);
+      translate.setTranslation('en', { page: { admin: { edit: 'Edit page sentinel' } } }, true);
+      translate.use('en');
+      const fixture = TestBed.createComponent(ContactComponent);
+      fixture.detectChanges();
+      const root = fixture.nativeElement as HTMLElement;
+      const text = (root.textContent || '').replace(/\s+/g, ' ');
+      expect(text).toContain('Edit page sentinel');
+      const editBtn = Array.from(root.querySelectorAll('button')).find((b) =>
+        (b.textContent || '').includes('Edit page sentinel'),
+      );
+      expect(editBtn).toBeTruthy();
     });
 
     it('navigates to the admin content page on edit', () => {
