@@ -52,6 +52,7 @@ describe('BlogPostComponent', () => {
       'listPosts',
       'listCommentThreads',
       'getCommentSubscription',
+      'setCommentSubscription',
     ]);
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success']);
     markdown = jasmine.createSpyObj<MarkdownService>('MarkdownService', ['render']);
@@ -72,6 +73,7 @@ describe('BlogPostComponent', () => {
       }),
     );
     blog.getCommentSubscription.and.returnValue(of({ enabled: false }));
+    blog.setCommentSubscription.and.returnValue(of({ enabled: true }));
     markdown.render.and.returnValue('<p>Body</p>');
     auth.isAuthenticated.and.returnValue(false);
     auth.user.and.returnValue(null);
@@ -182,4 +184,49 @@ describe('BlogPostComponent', () => {
     expect(blog.getPreviewPost).toHaveBeenCalledWith('snapshot-post', 'preview-token', 'en');
     expect(blog.getPost).not.toHaveBeenCalled();
   });
+
+  it('loadCommentSubscription clears state when unauthenticated', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.slug = 'first-post';
+    cmp.commentSubscribed.set(true);
+    auth.isAuthenticated.and.returnValue(false);
+    cmp.loadCommentSubscription();
+    expect(cmp.commentSubscribed()).toBeFalse();
+    expect(blog.getCommentSubscription).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('loadCommentSubscription loads enabled state for authenticated users', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.slug = 'first-post';
+    auth.isAuthenticated.and.returnValue(true);
+    blog.getCommentSubscription.and.returnValue(of({ enabled: true }));
+    cmp.loadCommentSubscription();
+    expect(blog.getCommentSubscription).toHaveBeenCalledWith('first-post');
+    expect(cmp.commentSubscribed()).toBeTrue();
+    expect(cmp.commentSubscriptionLoading()).toBeFalse();
+    fixture.destroy();
+  });
+
+  it('toggleCommentSubscription persists and toasts on success', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.slug = 'first-post';
+    cmp.commentSubscribed.set(false);
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ email_verified: true } as any);
+    blog.setCommentSubscription.and.returnValue(of({ enabled: true }));
+    const target = { checked: true } as HTMLInputElement;
+    cmp.toggleCommentSubscription({ target } as any);
+    expect(blog.setCommentSubscription).toHaveBeenCalledWith('first-post', true);
+    expect(cmp.commentSubscribed()).toBeTrue();
+    expect(toast.success).toHaveBeenCalled();
+    fixture.destroy();
+  });
+
 });
