@@ -52,6 +52,7 @@ describe('BlogPostComponent', () => {
       'listPosts',
       'listCommentThreads',
       'getCommentSubscription',
+      'setCommentSubscription',
     ]);
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success']);
     markdown = jasmine.createSpyObj<MarkdownService>('MarkdownService', ['render']);
@@ -181,5 +182,42 @@ describe('BlogPostComponent', () => {
 
     expect(blog.getPreviewPost).toHaveBeenCalledWith('snapshot-post', 'preview-token', 'en');
     expect(blog.getPost).not.toHaveBeenCalled();
+  });
+
+  it('canSubscribeToComments is false when unauthenticated', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    auth.isAuthenticated.and.returnValue(false);
+    expect(cmp.canSubscribeToComments()).toBeFalse();
+    fixture.destroy();
+  });
+
+  it('canSubscribeToComments requires an authenticated verified email', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ email_verified: true } as any);
+    expect(cmp.canSubscribeToComments()).toBeTrue();
+    auth.user.and.returnValue({ email_verified: false } as any);
+    expect(cmp.canSubscribeToComments()).toBeFalse();
+    fixture.destroy();
+  });
+
+  it('toggleCommentSubscription toasts and reverts when the user cannot subscribe', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.slug = 'first-post';
+    cmp.commentSubscribed.set(false);
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ email_verified: false } as any);
+    const target = { checked: true } as HTMLInputElement;
+    cmp.toggleCommentSubscription({ target } as any);
+    expect(toast.error).toHaveBeenCalled();
+    expect(target.checked).toBeFalse();
+    expect(blog.setCommentSubscription).not.toHaveBeenCalled();
+    fixture.destroy();
   });
 });
