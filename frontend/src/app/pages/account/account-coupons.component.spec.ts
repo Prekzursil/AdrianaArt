@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { AccountCouponsComponent } from './account-coupons.component';
@@ -15,7 +16,7 @@ describe('AccountCouponsComponent helpers (golden WU)', () => {
     );
 
     TestBed.configureTestingModule({
-      imports: [AccountCouponsComponent],
+      imports: [RouterTestingModule, AccountCouponsComponent],
       providers: [
         { provide: TranslateService, useValue: translate },
         { provide: CouponsService, useValue: { myCoupons: () => of([]) } },
