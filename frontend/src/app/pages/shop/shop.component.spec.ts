@@ -164,4 +164,45 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('closeQuickView clears open state and slug', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.quickViewOpen = true;
+    cmp.quickViewSlug = 'vase-01';
+    cmp.closeQuickView();
+    expect(cmp.quickViewOpen).toBeFalse();
+    expect(cmp.quickViewSlug).toBe('');
+    fixture.destroy();
+  });
+
+  it('changePage returns early when paginationMode is not pages', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'load_more';
+    cmp.pageMeta = { page: 1, total_pages: 3, total_items: 30, limit: 10 };
+    cmp.filters.page = 1;
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'loadProducts');
+    cmp.changePage(1);
+    expect(cmp.cancelFilterDebounce).toHaveBeenCalled();
+    expect(cmp.filters.page).toBe(1);
+    expect(cmp.loadProducts).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('changePage returns early when next page is out of bounds', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'pages';
+    cmp.pageMeta = { page: 3, total_pages: 3, total_items: 30, limit: 10 };
+    cmp.filters.page = 3;
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'loadProducts');
+    cmp.changePage(1);
+    expect(cmp.cancelFilterDebounce).toHaveBeenCalled();
+    expect(cmp.filters.page).toBe(3);
+    expect(cmp.loadProducts).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
 });
