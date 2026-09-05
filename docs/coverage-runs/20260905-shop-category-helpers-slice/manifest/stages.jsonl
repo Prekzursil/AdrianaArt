@@ -1,0 +1,7 @@
+{"event":"impl","status":"pass","tip_impl":"eff119e87d93b58698d082f6f80be717bc623792"}
+{"event":"validate_inner","status":"pass","exit":0,"total":2138}
+{"event":"lane_outer","status":"outer:blocked","case":"B"}
+{"event":"repo_verify","status":"pass","exit":0,"backend":3993,"frontend":2138}
+{"event":"review_adv","status":"pass","agents":["bc-22b85092-1956-5977-8aa4-dbd21e8a1b9e","bc-334adc22-4469-5507-990c-20c9aa32d2da"]}
+{"event":"draft_pr","status":"forbidden"}
+{"event":"council","status":"conditional","seal":"bc-shop19-eff119e8"}
