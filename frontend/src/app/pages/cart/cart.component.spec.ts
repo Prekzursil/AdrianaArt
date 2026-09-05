@@ -69,6 +69,7 @@ describe('CartComponent quote / stock helpers', () => {
           provide: CheckoutPrefsService,
           useValue: {
             loadDeliveryPrefs: () => ({ courier: 'sameday', deliveryType: 'home' }),
+            saveDeliveryPrefs: jasmine.createSpy('saveDeliveryPrefs'),
           },
         },
         {
@@ -175,5 +176,138 @@ describe('CartComponent quote / stock helpers', () => {
     itemsSig.set([low]);
     cmp.stepQuantity(low, 5);
     expect(cartStub.updateQuantity).toHaveBeenCalledWith('i1', 3);
+  });
+
+  it('quoteFee/Tax/Shipping/Discount/PromoSavings and freeShippingThreshold read quote arms', () => {
+    const cmp = createCmp();
+    quoteSig.set({
+      subtotal: 100,
+      fee: 5,
+      tax: 19,
+      shipping: 15,
+      total: 120,
+      currency: 'RON',
+      freeShippingThresholdRon: 200,
+    });
+    expect(cmp.quoteFee()).toBe(5);
+    expect(cmp.quoteTax()).toBe(19);
+    expect(cmp.quoteShipping()).toBe(15);
+    // discount = subtotal+fee+tax+shipping - total = 100+5+19+15-120 = 19
+    expect(cmp.quoteDiscount()).toBe(19);
+    expect(cmp.quotePromoSavings()).toBe(19);
+    expect(cmp.freeShippingThreshold()).toBe(200);
+
+    quoteSig.set({
+      subtotal: 100,
+      fee: 0,
+      tax: 0,
+      shipping: 0,
+      total: 100,
+      currency: 'RON',
+      freeShippingThresholdRon: null,
+    });
+    expect(cmp.freeShippingThreshold()).toBeNull();
+    expect(cmp.quoteDiscount()).toBe(0);
+    expect(cmp.quotePromoSavings()).toBe(0);
+  });
+
+  it('displayProductPrice prefers finite sale below base; delivery estimate keys/params cover arms', () => {
+    const cmp = createCmp();
+    expect(cmp.displayProductPrice({ base_price: 40, sale_price: 25 } as any)).toBe(25);
+    expect(cmp.displayProductPrice({ base_price: 40, sale_price: 50 } as any)).toBe(40);
+    expect(cmp.displayProductPrice({ base_price: 40, sale_price: null } as any)).toBe(40);
+
+    cmp.courier = 'sameday';
+    cmp.deliveryType = 'home';
+    expect(cmp.deliveryEstimate()).toEqual({ min: 1, max: 2 });
+    expect(cmp.deliveryEstimateKey()).toBe('cart.deliveryEstimateRange');
+    expect(cmp.deliveryEstimateParams()).toEqual({ min: 1, max: 2 });
+
+    cmp.courier = 'fan_courier';
+    cmp.deliveryType = 'locker';
+    expect(cmp.deliveryEstimate()).toEqual({ min: 2, max: 4 });
+
+    // Force single-day by stubbing estimate
+    spyOn(cmp, 'deliveryEstimate').and.returnValue({ min: 2, max: 2 });
+    expect(cmp.deliveryEstimateKey()).toBe('cart.deliveryEstimateSingle');
+    expect(cmp.deliveryEstimateParams()).toEqual({ days: 2 });
+
+    (cmp.deliveryEstimate as jasmine.Spy).and.returnValue(null);
+    expect(cmp.deliveryEstimateKey()).toBeNull();
+    expect(cmp.deliveryEstimateParams()).toEqual({});
+  });
+
+  it('setDeliveryType and onCourierChanged persist prefs; freeShippingAppliedByCoupon gates coupon discount', () => {
+    const cmp = createCmp();
+    const prefs = TestBed.inject(CheckoutPrefsService) as any;
+    cmp.setDeliveryType('locker');
+    expect(cmp.deliveryType).toBe('locker');
+    expect(prefs.saveDeliveryPrefs).toHaveBeenCalled();
+
+    cmp.courier = 'fan_courier';
+    cmp.onCourierChanged();
+    expect(prefs.saveDeliveryPrefs).toHaveBeenCalledWith({
+      courier: 'fan_courier',
+      deliveryType: 'locker',
+    });
+
+    expect(cmp.freeShippingAppliedByCoupon()).toBeFalse();
+    (cmp as any).promo = 'FREE';
+    (cmp as any).appliedCouponOffer = {
+      eligible: true,
+      coupon: { code: 'FREE' },
+      estimated_shipping_discount_ron: '12.5',
+    };
+    expect(cmp.freeShippingAppliedByCoupon()).toBeTrue();
+    expect(cmp.quotePromoSavings()).toBeGreaterThanOrEqual(12.5);
+  });
+
+  it('suggestedAddOns picks products under remaining free-shipping amount', () => {
+    const cmp = createCmp();
+    quoteSig.set({
+      subtotal: 80,
+      fee: 0,
+      tax: 0,
+      shipping: 0,
+      total: 80,
+      currency: 'RON',
+      freeShippingThresholdRon: 100,
+    });
+    (cmp as any).recommendations = [
+      { id: 'a', base_price: 30, sale_price: null },
+      { id: 'b', base_price: 10, sale_price: null },
+      { id: 'c', base_price: 50, sale_price: null },
+    ];
+    const addOns = cmp.suggestedAddOns();
+    // remaining free-shipping = 20 → only product b (10) qualifies; a (30) does not
+    expect(addOns.map((p: any) => p.id)).toEqual(['b']);
+
+    quoteSig.set({
+      subtotal: 100,
+      fee: 0,
+      tax: 0,
+      shipping: 0,
+      total: 100,
+      currency: 'RON',
+      freeShippingThresholdRon: 100,
+    });
+    expect(cmp.suggestedAddOns()).toEqual([]);
+
+    // when nothing is under remaining, fall back to cheapest two overall
+    quoteSig.set({
+      subtotal: 95,
+      fee: 0,
+      tax: 0,
+      shipping: 0,
+      total: 95,
+      currency: 'RON',
+      freeShippingThresholdRon: 100,
+    });
+    (cmp as any).recommendations = [
+      { id: 'x', base_price: 40, sale_price: null },
+      { id: 'y', base_price: 25, sale_price: null },
+      { id: 'z', base_price: 60, sale_price: null },
+    ];
+    expect(cmp.suggestedAddOns().map((p: any) => p.id)).toEqual(['y', 'x']);
   });
 });
