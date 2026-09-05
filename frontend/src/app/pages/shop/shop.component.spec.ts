@@ -164,4 +164,47 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('filterChips uses category map name for non-sale category chips', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.activeCategorySlug = 'prints';
+    cmp.activeSubcategorySlug = '';
+    cmp.categoriesBySlug.clear();
+    cmp.categoriesBySlug.set('prints', { id: '1', slug: 'prints', name: 'Fine Prints' });
+    const chips = cmp.filterChips();
+    const cat = chips.find((c: any) => c.type === 'category');
+    expect(cat).toBeTruthy();
+    expect(cat.id).toBe('category:prints');
+    expect(cat.label).toBe('Fine Prints');
+    fixture.destroy();
+  });
+
+  it('filterChips falls back to category slug when the map misses', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.activeCategorySlug = 'ghost-cat';
+    cmp.activeSubcategorySlug = '';
+    cmp.categoriesBySlug.clear();
+    const chips = cmp.filterChips();
+    const cat = chips.find((c: any) => c.type === 'category');
+    expect(cat).toBeTruthy();
+    expect(cat.id).toBe('category:ghost-cat');
+    expect(cat.label).toBe('ghost-cat');
+    fixture.destroy();
+  });
+
+  it('filterChips omits category chips when activeCategorySlug is empty', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.activeCategorySlug = '';
+    cmp.activeSubcategorySlug = 'kids';
+    cmp.categoriesBySlug.clear();
+    cmp.categoriesBySlug.set('kids', { id: '2', slug: 'kids', name: 'Kids' });
+    const chips = cmp.filterChips();
+    expect(chips.some((c: any) => c.type === 'category')).toBe(false);
+    const sub = chips.find((c: any) => c.type === 'subcategory');
+    expect(sub?.label).toBe('Kids');
+    fixture.destroy();
+  });
 });
