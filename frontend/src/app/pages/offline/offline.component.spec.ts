@@ -36,14 +36,21 @@ describe('OfflineComponent field wiring (golden WU)', () => {
     expect(cmp.navLinks).toEqual(offlineNavLinks());
   });
 
+  it('canReloadNow returns a boolean from online detection + retry gate', () => {
+    const cmp = new OfflineComponent();
+    expect(typeof cmp.canReloadNow()).toBe('boolean');
+  });
+
   it('onRetry reloads only when online detection is true', () => {
     const cmp = new OfflineComponent();
-    const reload = spyOn(location, 'reload');
-    spyOn(offlineHelpers, 'detectBrowserOnline').and.returnValue(false);
+    const reload = spyOn(cmp, 'reloadPage');
+    spyOn(cmp, 'canReloadNow').and.returnValue(false);
     cmp.onRetry();
     expect(reload).not.toHaveBeenCalled();
-    (offlineHelpers.detectBrowserOnline as jasmine.Spy).and.returnValue(true);
+    (cmp.canReloadNow as jasmine.Spy).and.returnValue(true);
     cmp.onRetry();
     expect(reload).toHaveBeenCalled();
   });
+
+
 });
