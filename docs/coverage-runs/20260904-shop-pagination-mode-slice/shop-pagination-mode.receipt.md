@@ -6,11 +6,11 @@
 - risk: low
 - slice: setPaginationMode + loadMore early (N=3)
 - branch: cursor/golden-wu-shop-set-pagination-mode-coverage-4739
-- tip_impl: PENDING
+- tip_impl: 5f2bf642bd8e0a10f1e8a2abf4c60d911e8ac96f
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-shop
 SELECT: pagination mode after scroll/quickSelect CONDITIONAL
-IMPL: pending
+IMPL: pass
 DESLOP: pass
 INNER-STATUS: pending
 OUTER-STATUS: pending

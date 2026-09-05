@@ -1,1 +1,3 @@
 {"event":"ground_select","status":"pass","note":"shop pagination mode after scroll/quickSelect CONDITIONAL"}
+{"event":"impl","status":"pass","tip_impl":"5f2bf642bd8e0a10f1e8a2abf4c60d911e8ac96f","note":"+3 specs; focused 5 SUCCESS"}
+{"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
