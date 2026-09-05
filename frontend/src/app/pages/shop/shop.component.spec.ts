@@ -164,4 +164,36 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('cancelFilterDebounce is a no-op when no timer is pending', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.filterDebounce = undefined;
+    expect(() => cmp.cancelFilterDebounce()).not.toThrow();
+    expect(cmp.filterDebounce).toBeUndefined();
+    fixture.destroy();
+  });
+
+  it('cancelFilterDebounce clears a pending filterDebounce handle', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.filterDebounce = setTimeout(() => undefined, 60_000);
+    expect(cmp.filterDebounce).toBeDefined();
+    cmp.cancelFilterDebounce();
+    expect(cmp.filterDebounce).toBeUndefined();
+    fixture.destroy();
+  });
+
+  it('scheduleFilterApply resets page to 1 and arms debounce without loading yet', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const loadSpy = spyOn(cmp, 'loadProducts');
+    cmp.filters.page = 3;
+    cmp.scheduleFilterApply();
+    expect(cmp.filters.page).toBe(1);
+    expect(cmp.filterDebounce).toBeDefined();
+    expect(loadSpy).not.toHaveBeenCalled();
+    cmp.cancelFilterDebounce();
+    fixture.destroy();
+  });
 });
