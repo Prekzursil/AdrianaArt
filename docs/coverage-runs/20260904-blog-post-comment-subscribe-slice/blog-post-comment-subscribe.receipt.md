@@ -22,7 +22,7 @@ LANE_OUTER: Case B (expected)
 REPO-VERIFY: pass
 REPO-VERIFY-EVIDENCE: /tmp/blog12-verify-serial.log EXIT:0; backend 3993 passed + frontend 2138 SUCCESS
 REVIEW: pass
-REVIEW-SEAL: agent bc-c379abe0 (post-verify); prior bc-f0bd570e; verdict PASS after verify EXIT:0; N=3 subscribe gates; OUTER Case B honest
+REVIEW-SEAL: agent bc-c379abe0-5c9c-5514-ae54-b1667eb2b121 (post-verify); verdict PASS after verify EXIT:0; N=3 subscribe gates; OUTER Case B honest
 DRAFT-PR: FORBIDDEN
 DRAFT-PR-BLOCKER: createPullRequest 403; ManagePullRequest unavailable
 
