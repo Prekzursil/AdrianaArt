@@ -38,7 +38,13 @@ describe('ShopComponent i18n meta', () => {
             queryParams: of({}),
           },
         },
-        { provide: Router, useValue: { navigate: () => {} } },
+        {
+          provide: Router,
+          useValue: {
+            navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)),
+            url: '/shop',
+          },
+        },
         { provide: ToastService, useValue: { error: () => {} } },
         { provide: DOCUMENT, useValue: doc },
       ],
@@ -163,5 +169,44 @@ describe('ShopComponent i18n meta', () => {
 
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
+  });
+
+  it('pushUrlState navigates to /shop with replaceUrl when no category slug', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const router = TestBed.inject(Router) as any;
+    cmp.activeCategorySlug = '';
+    cmp.pushUrlState(true);
+    expect(router.navigate).toHaveBeenCalledWith(['/shop'], {
+      queryParams: jasmine.any(Object),
+      replaceUrl: true,
+    });
+    fixture.destroy();
+  });
+
+  it('pushUrlState navigates to /shop/:slug when category slug is set', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const router = TestBed.inject(Router) as any;
+    cmp.activeCategorySlug = 'prints';
+    cmp.pushUrlState(false);
+    expect(router.navigate).toHaveBeenCalledWith(['/shop', 'prints'], {
+      queryParams: jasmine.any(Object),
+      replaceUrl: false,
+    });
+    fixture.destroy();
+  });
+
+  it('pushUrlState forwards non-default search filter as q query param', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const router = TestBed.inject(Router) as any;
+    cmp.activeCategorySlug = '';
+    cmp.filters.search = 'oak';
+    cmp.pushUrlState(true);
+    const [, extras] = router.navigate.calls.mostRecent().args;
+    expect(extras.queryParams.q).toBe('oak');
+    expect(extras.replaceUrl).toBe(true);
+    fixture.destroy();
   });
 });
