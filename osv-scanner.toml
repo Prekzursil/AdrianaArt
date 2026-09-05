@@ -26,27 +26,33 @@
 # like these, never in extra keys. `ignoreUntil` is a bare TOML date, not a
 # quoted string.
 #
-# ── ENTRY 1/2: GHSA-5p2g-fcmc-qvqq + GHSA-w3rx-r6r6-pgpr (image-size DoS) ───
-# WHY IT EXISTS:
-#   * Advisories cover infinite-loop DoS in JXL/HEIF and ICNS parsers.
-#   * DEV + OPTIONAL ONLY. Lock row is image-size 0.5.5 under less (~0.5.0
-#     optionalDependencies); osv-scanner labels it (dev).
-#   * NO FIX EXISTS upstream. Both advisories list last_affected: 2.0.2, and
-#     2.0.2 is the newest published release on npm — there is no patched version
-#     to override to. Forcing a bump cannot clear the gate.
-#   * Not reachable in production: less's optional image-size is a build/CSS
-#     toolchain helper, not shipped to browsers or SSR request paths.
+# ── ENTRY 1: GHSA-5p2g-fcmc-qvqq + GHSA-w3rx-r6r6-pgpr (image-size DoS) ──────
+# WHY IT EXISTS, in full:
+#   * Both advisories cover image-size through 2.0.2 (infinite loop on crafted
+#     JXL/HEIF/ICNS buffers). osv-scanner reports FIXED VERSION as "--".
+#   * The claimed 2.0.3 patch is NOT on npm (latest published is 2.0.2;
+#     github/advisory-database#9028). There is no 0.5.x backport.
+#   * THIS COPY is image-size 0.5.5, an OPTIONAL dependency of less@4.4.2
+#     (less-loader via @angular-devkit/build-angular). Dev-toolchain only.
+#     Storefront image handling does not call less/image-size on user uploads.
+#   * Forcing image-size@2 onto less@4.4.2 is an untested major across a
+#     package that still requests ~0.5.0. less 4.4.2 is the latest 4.x
+#     Angular 21 pins; jumping less 5 is out of scope for this gate fix.
+#   * GHSA-mh99-v99m-4gvg (brace-expansion) is no longer present after
+#     pinning brace-expansion 1.1.18 / 2.1.4 / 5.0.9 — do not re-add it.
 #
-# RE-CHECK ON EXPIRY: has image-size published >2.0.2 with a fix range, or has
-# less dropped the optional image-size@~0.5.0 dependency? If either is true,
-# DELETE these entries rather than extending the date.
+# RE-CHECK ON EXPIRY: has less dropped image-size ~0.5, or has image-size
+# published a real 0.5.x/2.0.3+ fix? If yes, DELETE these two entries.
 
 [[IgnoredVulns]]
 id = "GHSA-5p2g-fcmc-qvqq"
-ignoreUntil = 2026-12-05
-reason = "image-size JXL/HEIF infinite-loop DoS, unfixable: advisories list last_affected 2.0.2 and 2.0.2 is the newest npm release (no fixed version). Lock row is optional/dev-only via less (~0.5.0 optionalDependencies); not on production request paths. Time-boxed to 2026-12-05; re-check for a patched release or less dropping the optional dep."
+ignoreUntil = 2026-11-19
+reason = "image-size 0.5.5 (dev, optional dep of less@4.4.2 via @angular-devkit/build-angular less-loader). Advisory has no published fix (FIXED VERSION --; claimed 2.0.3 is unpublished, latest npm is 2.0.2). Not reachable from storefront upload paths. Time-boxed; re-check less and image-size releases."
 
 [[IgnoredVulns]]
 id = "GHSA-w3rx-r6r6-pgpr"
-ignoreUntil = 2026-12-05
-reason = "image-size ICNS infinite-loop DoS, unfixable: advisories list last_affected 2.0.2 and 2.0.2 is the newest npm release (no fixed version). Lock row is optional/dev-only via less (~0.5.0 optionalDependencies); not on production request paths. Time-boxed to 2026-12-05; re-check for a patched release or less dropping the optional dep."
+ignoreUntil = 2026-11-19
+reason = "Same image-size 0.5.5 optional less@4.4.2 copy as GHSA-5p2g-fcmc-qvqq. No published fix. Dev-only, not used on untrusted image bytes. Time-boxed to 2026-11-19."
+
+# RETIRED 2026-08-19: GHSA-mh99-v99m-4gvg. Cleared by brace-expansion
+# 1.1.18 / 2.1.4 / 5.0.9. Do not re-add unless those pins regress.
