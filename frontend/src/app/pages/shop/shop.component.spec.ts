@@ -164,4 +164,45 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('setPaginationMode is a no-op when the mode is unchanged', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'pages';
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'loadProducts');
+    cmp.setPaginationMode('pages');
+    expect(cmp.cancelFilterDebounce).not.toHaveBeenCalled();
+    expect(cmp.loadProducts).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('setPaginationMode switches mode, resets page, and reloads products', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'pages';
+    cmp.filters.page = 4;
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'loadProducts');
+    cmp.setPaginationMode('load_more');
+    expect(cmp.cancelFilterDebounce).toHaveBeenCalled();
+    expect(cmp.paginationMode).toBe('load_more');
+    expect(cmp.filters.page).toBe(1);
+    expect(cmp.loadProducts).toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('loadMore returns early when paginationMode is pages', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.paginationMode = 'pages';
+    cmp.pageMeta = { page: 1, total_pages: 3, total_items: 30, limit: 10 };
+    spyOn(cmp, 'cancelFilterDebounce');
+    spyOn(cmp, 'fetchProducts');
+    cmp.loadMore();
+    expect(cmp.cancelFilterDebounce).not.toHaveBeenCalled();
+    expect(cmp.fetchProducts).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
 });
