@@ -122,10 +122,7 @@ describe('ContactComponent (extra branches)', () => {
     queryParams.next({ preview: '   \t  ' });
     build();
     expect(api.get).toHaveBeenCalledWith('/content/pages/contact', { lang: 'en' });
-    expect(api.get).not.toHaveBeenCalledWith(
-      '/content/pages/contact/preview',
-      jasmine.anything(),
-    );
+    expect(api.get).not.toHaveBeenCalledWith('/content/pages/contact/preview', jasmine.anything());
   });
 
   it('renders facebook avatar initials when the page has no thumbnail_url', () => {
