@@ -371,21 +371,26 @@ describe('BlogListComponent interactions', () => {
     expect(cmp.gridPosts.length).toBe(2);
   });
 
-  it('renders filter chips for active search/tag/series queries', () => {
-    const { fixture, cmp } = makeComponent();
-    fixture.detectChanges(); // ngOnInit clears queries from empty route
-    cmp.searchQuery = 'brosa';
-    cmp.tagQuery = 'macro';
-    cmp.seriesQuery = 'spring';
-    cmp.loading.set(false);
-    cmp.hasError.set(false);
-    fixture.detectChanges();
-
-    const text = (fixture.nativeElement.textContent || '').replace(/\s+/g, ' ');
-    expect(text).toContain('blog.chipSearch');
-    expect(text).toContain('blog.chipTag');
-    expect(text).toContain('blog.chipSeries');
-    expect(cmp.hasActiveFilters()).toBeTrue();
+  it('applyFilters preserves trimmed search and non-newest sort on series routes', () => {
+    const { cmp } = makeComponent();
+    const router = TestBed.inject(Router);
+    const nav = spyOn(router, 'navigate').and.resolveTo(true);
+    cmp.searchQuery = '  brosa  ';
+    cmp.sort = 'most_viewed';
+    cmp.seriesQuery = 'wedding';
+    cmp.tagQuery = 'ignored-when-series';
+    cmp.applyFilters();
+    expect(cmp.tagQuery).toBe('');
+    expect(nav).toHaveBeenCalledWith(
+      ['/blog/series', 'wedding'],
+      jasmine.objectContaining({
+        queryParams: jasmine.objectContaining({
+          q: 'brosa',
+          sort: 'most_viewed',
+          page: undefined,
+        }),
+      }),
+    );
   });
 
   it('applyFilters routes by series, tag, or the base blog route', () => {
