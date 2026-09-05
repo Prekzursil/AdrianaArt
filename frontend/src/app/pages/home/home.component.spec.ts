@@ -235,4 +235,86 @@ describe('HomeComponent', () => {
     expect(api.get).toHaveBeenCalledWith('/content/home.sections');
     expect(api.get).toHaveBeenCalledWith('/content/home.story', { lang: 'en' });
   });
+
+  function configureHomeHarness(): void {
+    const meta = jasmine.createSpyObj<Meta>('Meta', ['updateTag']);
+    const title = jasmine.createSpyObj<Title>('Title', ['setTitle']);
+    const api = jasmine.createSpyObj<ApiService>('ApiService', ['get']);
+    const catalog = jasmine.createSpyObj<CatalogService>('CatalogService', [
+      'listProducts',
+      'listFeaturedCollections',
+    ]);
+    const recentlyViewed = jasmine.createSpyObj<RecentlyViewedService>('RecentlyViewedService', [
+      'list',
+    ]);
+    const auth = {
+      user: () => null,
+      isAuthenticated: () => false,
+      isAdmin: () => false,
+    } as unknown as AuthService;
+    const markdown = { render: (s: string) => s } as unknown as MarkdownService;
+
+    api.get.and.returnValue(
+      of({
+        title: 'Home layout',
+        body_markdown: '',
+        meta: { sections: [] },
+        images: [],
+      } as any),
+    );
+    catalog.listProducts.and.returnValue(
+      of({ items: [], meta: { total_items: 0, total_pages: 1, page: 1, limit: 6 } }),
+    );
+    catalog.listFeaturedCollections.and.returnValue(of([]));
+    recentlyViewed.list.and.returnValue([]);
+
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule, HomeComponent, TranslateModule.forRoot()],
+      providers: [
+        { provide: Title, useValue: title },
+        { provide: Meta, useValue: meta },
+        { provide: ApiService, useValue: api },
+        { provide: CatalogService, useValue: catalog },
+        { provide: RecentlyViewedService, useValue: recentlyViewed },
+        { provide: AuthService, useValue: auth },
+        { provide: MarkdownService, useValue: markdown },
+      ],
+    });
+  }
+
+  it('asTextBlock returns the block only when type is text', () => {
+    configureHomeHarness();
+    const fixture = TestBed.createComponent(HomeComponent);
+    const cmp = fixture.componentInstance as any;
+    const textBlock = { type: 'text', id: 't1', body: 'Hello' };
+    const other = { type: 'banner', id: 'b1' };
+    expect(cmp.asTextBlock(textBlock)).toBe(textBlock);
+    expect(cmp.asTextBlock(other)).toBeNull();
+    fixture.destroy();
+  });
+
+  it('asBannerBlock returns the block only when type is banner', () => {
+    configureHomeHarness();
+    const fixture = TestBed.createComponent(HomeComponent);
+    const cmp = fixture.componentInstance as any;
+    const banner = { type: 'banner', id: 'b1', title: 'Sale' };
+    const other = { type: 'text', id: 't1' };
+    expect(cmp.asBannerBlock(banner)).toBe(banner);
+    expect(cmp.asBannerBlock(other)).toBeNull();
+    fixture.destroy();
+  });
+
+  it('isExternalHttpUrl accepts http(s) and rejects blanks/relative paths', () => {
+    configureHomeHarness();
+    const fixture = TestBed.createComponent(HomeComponent);
+    const cmp = fixture.componentInstance as any;
+    expect(cmp.isExternalHttpUrl('https://example.test/x')).toBeTrue();
+    expect(cmp.isExternalHttpUrl('HTTP://example.test/x')).toBeTrue();
+    expect(cmp.isExternalHttpUrl('  https://example.test  ')).toBeTrue();
+    expect(cmp.isExternalHttpUrl('/relative')).toBeFalse();
+    expect(cmp.isExternalHttpUrl('')).toBeFalse();
+    expect(cmp.isExternalHttpUrl(null)).toBeFalse();
+    expect(cmp.isExternalHttpUrl(undefined)).toBeFalse();
+    fixture.destroy();
+  });
 });
