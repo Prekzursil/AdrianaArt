@@ -1,6 +1,5 @@
 import { OfflineComponent } from './offline.component';
 import { detectBrowserOnline, offlineNavLinks, shouldReloadOnRetry } from './offline.helpers';
-import * as offlineHelpers from './offline.helpers';
 
 /**
  * Golden WU offline48 — first offline page specs.
