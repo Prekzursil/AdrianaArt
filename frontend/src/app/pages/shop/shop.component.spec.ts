@@ -164,4 +164,64 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('resolveActiveCategoryLabel returns null, sale label, mapped name, or title-case fallback', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', { shop: { sale: 'Sale deals' } }, true);
+    translate.use('en');
+
+    cmp.activeCategorySlug = '';
+    expect(cmp.resolveActiveCategoryLabel()).toBeNull();
+
+    cmp.activeCategorySlug = 'sale';
+    expect(cmp.resolveActiveCategoryLabel()).toBe('Sale deals');
+
+    cmp.categoriesBySlug.set('prints', { id: '1', slug: 'prints', name: 'Fine Prints', parent_id: null });
+    cmp.activeCategorySlug = 'prints';
+    expect(cmp.resolveActiveCategoryLabel()).toBe('Fine Prints');
+
+    cmp.activeCategorySlug = 'wall_art';
+    expect(cmp.resolveActiveCategoryLabel()).toBe('Wall Art');
+    fixture.destroy();
+  });
+
+  it('shouldKeepSubcategoryInCanonical requires matching parent/child relationship', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.activeCategorySlug = 'sale';
+    cmp.activeSubcategorySlug = 'kids';
+    expect(cmp.shouldKeepSubcategoryInCanonical()).toBe(false);
+
+    cmp.activeCategorySlug = 'prints';
+    cmp.activeSubcategorySlug = '';
+    expect(cmp.shouldKeepSubcategoryInCanonical()).toBe(false);
+
+    cmp.categoriesBySlug.set('prints', { id: 'p1', slug: 'prints', name: 'Prints', parent_id: null });
+    cmp.categoriesBySlug.set('kids', { id: 'c1', slug: 'kids', name: 'Kids', parent_id: 'p1' });
+    cmp.activeSubcategorySlug = 'kids';
+    expect(cmp.shouldKeepSubcategoryInCanonical()).toBe(true);
+
+    cmp.categoriesBySlug.set('kids', { id: 'c1', slug: 'kids', name: 'Kids', parent_id: 'other' });
+    expect(cmp.shouldKeepSubcategoryInCanonical()).toBe(false);
+    fixture.destroy();
+  });
+
+  it('rebuildCategoryTree indexes categories and sorts children by sort_order then name', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.categories = [
+      { id: 'p', slug: 'parent', name: 'Parent', parent_id: null, sort_order: 1 },
+      { id: 'b', slug: 'beta', name: 'Beta', parent_id: 'p', sort_order: 2 },
+      { id: 'a', slug: 'alpha', name: 'Alpha', parent_id: 'p', sort_order: 1 },
+      { id: 'c', slug: 'gamma', name: 'Gamma', parent_id: 'p', sort_order: 1 },
+    ];
+    cmp.rebuildCategoryTree();
+    expect(cmp.categoriesBySlug.get('parent')?.id).toBe('p');
+    expect(cmp.categoriesById.get('a')?.slug).toBe('alpha');
+    expect(cmp.rootCategories.map((c: any) => c.slug)).toEqual(['parent']);
+    expect(cmp.childrenByParentId.get('p').map((c: any) => c.slug)).toEqual(['alpha', 'gamma', 'beta']);
+    fixture.destroy();
+  });
 });
