@@ -13,7 +13,9 @@ describe('ShopComponent bulkCategoryLabel / bulkCategoryOptions (golden WU)', ()
         ['3', grand],
       ]),
       rootCategories: [root],
-      getDescendants: jasmine.createSpy('getDescendants').and.returnValue([child, grand, { id: '', name: '' }]),
+      getDescendants: jasmine
+        .createSpy('getDescendants')
+        .and.returnValue([child, grand, { id: '', name: '' }]),
     });
     return cmp;
   }
