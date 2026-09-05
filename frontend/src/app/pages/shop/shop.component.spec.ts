@@ -207,4 +207,50 @@ describe('ShopComponent i18n meta', () => {
     expect(sub?.label).toBe('Kids');
     fixture.destroy();
   });
+
+  it('activeLeafCategorySlug is null for empty or sale category', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.activeCategorySlug = '';
+    cmp.activeSubcategorySlug = '';
+    expect(cmp.activeLeafCategorySlug()).toBeNull();
+    cmp.activeCategorySlug = 'sale';
+    expect(cmp.activeLeafCategorySlug()).toBeNull();
+    fixture.destroy();
+  });
+
+  it('activeLeafCategorySlug prefers subcategory then leaf root without children', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.categoriesBySlug.clear();
+    cmp.childrenByParentId.clear();
+    cmp.categoriesBySlug.set('prints', { id: 'c1', slug: 'prints', name: 'Prints' });
+    cmp.categoriesBySlug.set('litho', { id: 'c2', slug: 'litho', name: 'Litho' });
+    cmp.childrenByParentId.set('c1', [{ id: 'c2', slug: 'litho', name: 'Litho' }]);
+
+    cmp.activeCategorySlug = 'prints';
+    cmp.activeSubcategorySlug = 'litho';
+    expect(cmp.activeLeafCategorySlug()).toBe('litho');
+
+    cmp.activeSubcategorySlug = '';
+    expect(cmp.activeLeafCategorySlug()).toBeNull();
+
+    cmp.childrenByParentId.clear();
+    expect(cmp.activeLeafCategorySlug()).toBe('prints');
+    fixture.destroy();
+  });
+
+  it('getDescendants flattens nested children under a root', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.childrenByParentId.clear();
+    const root = { id: 'r1', slug: 'root', name: 'Root' };
+    const child = { id: 'c1', slug: 'child', name: 'Child' };
+    const grand = { id: 'g1', slug: 'grand', name: 'Grand' };
+    cmp.childrenByParentId.set('r1', [child]);
+    cmp.childrenByParentId.set('c1', [grand]);
+    expect(cmp.getDescendants(root).map((c: any) => c.slug)).toEqual(['child', 'grand']);
+    expect(cmp.getDescendants({ id: 'missing', slug: 'x', name: 'X' })).toEqual([]);
+    fixture.destroy();
+  });
 });
