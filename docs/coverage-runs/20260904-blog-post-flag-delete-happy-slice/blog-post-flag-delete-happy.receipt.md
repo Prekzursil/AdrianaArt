@@ -12,7 +12,8 @@ GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-blog-post
 SELECT: flag/delete happy paths after early-return slice CONDITIONAL on DraftPR
 IMPL: pass
 DESLOP: pass
-INNER-STATUS: pending
+INNER-STATUS: pass
+INNER-EVIDENCE: /tmp/blog8-inner-serial.log EXIT:0; TOTAL 2138; diff-coverage OK 100%/0 source files
 DIFF-COVERAGE: enforced
 GITHUB_BASE_REF: main
 OUTER-STATUS: outer:blocked
