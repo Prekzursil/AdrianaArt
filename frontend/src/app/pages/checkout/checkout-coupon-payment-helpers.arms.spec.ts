@@ -182,7 +182,7 @@ describe('Checkout coupon/payment helpers (golden WU)', () => {
     const bare = offer({
       coupon: {
         id: 'c0',
-        promotion_id: null,
+        promotion_id: 'p0',
         code: 'BARE',
         visibility: 'public',
         is_active: true,
