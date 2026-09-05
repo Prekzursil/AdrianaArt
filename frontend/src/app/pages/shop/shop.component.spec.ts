@@ -164,4 +164,37 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('syncFiltersFromQuery applies allowed sort, page, and tags', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.syncFiltersFromQuery({ q: 'mug', sort: 'price_asc', page: '2', tags: 'ceramic,blue' });
+    expect(cmp.filters.search).toBe('mug');
+    expect(cmp.filters.sort).toBe('price_asc');
+    expect(cmp.filters.page).toBe(2);
+    expect(Array.from(cmp.filters.tags)).toEqual(['ceramic', 'blue']);
+    fixture.destroy();
+  });
+
+  it('syncFiltersFromQuery falls back to recommended for unknown sort', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.filters.sort = 'newest';
+    cmp.syncFiltersFromQuery({ sort: 'not-a-sort' });
+    expect(cmp.filters.sort).toBe('recommended');
+    expect(cmp.filters.page).toBe(1);
+    expect(cmp.filters.tags.size).toBe(0);
+    fixture.destroy();
+  });
+
+  it('parseBoolean and parsePrice coerce query primitives', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    expect(cmp.parseBoolean('true')).toBeTrue();
+    expect(cmp.parseBoolean('0')).toBeFalse();
+    expect(cmp.parseBoolean(['yes'])).toBeTrue();
+    expect(cmp.parsePrice('12.5')).toBe(12.5);
+    expect(cmp.parsePrice('nope')).toBeUndefined();
+    fixture.destroy();
+  });
 });
