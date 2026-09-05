@@ -52,10 +52,12 @@ describe('BlogPostComponent', () => {
       'listPosts',
       'listCommentThreads',
       'getCommentSubscription',
+      'deleteComment',
+      'flagComment',
     ]);
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success']);
     markdown = jasmine.createSpyObj<MarkdownService>('MarkdownService', ['render']);
-    auth = jasmine.createSpyObj<AuthService>('AuthService', ['isAuthenticated', 'user']);
+    auth = jasmine.createSpyObj<AuthService>('AuthService', ['isAuthenticated', 'user', 'isAdmin']);
     doc = document.implementation.createHTMLDocument('blog-post-test');
 
     blog.getPost.and.returnValue(of(post));
@@ -182,4 +184,51 @@ describe('BlogPostComponent', () => {
     expect(blog.getPreviewPost).toHaveBeenCalledWith('snapshot-post', 'preview-token', 'en');
     expect(blog.getPost).not.toHaveBeenCalled();
   });
+
+  it('flagComment prompts then calls blog.flagComment for a flaggable comment', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    const theirs = { id: 'c1', parent_id: null, is_deleted: false, is_hidden: false, author: { id: 'u-other' }, body: 'x' };
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ id: 'u-me' } as any);
+    spyOn(window, 'prompt').and.returnValue(' spam ');
+    blog.flagComment.and.returnValue(of({ ok: true } as any));
+    cmp.flagComment(theirs);
+    expect(window.prompt).toHaveBeenCalled();
+    expect(blog.flagComment).toHaveBeenCalledWith('c1', { reason: 'spam' });
+    fixture.destroy();
+  });
+
+  it('flagComment sends null reason when prompt is blank', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    const theirs = { id: 'c1', parent_id: null, is_deleted: false, is_hidden: false, author: { id: 'u-other' }, body: 'x' };
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ id: 'u-me' } as any);
+    spyOn(window, 'prompt').and.returnValue('   ');
+    blog.flagComment.and.returnValue(of({ ok: true } as any));
+    cmp.flagComment(theirs);
+    expect(blog.flagComment).toHaveBeenCalledWith('c1', { reason: null });
+    fixture.destroy();
+  });
+
+  it('deleteComment confirms then calls blog.deleteComment for an owned comment', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    const mine = { id: 'c2', parent_id: null, is_deleted: false, author: { id: 'u-me' }, body: 'y' };
+    auth.isAuthenticated.and.returnValue(true);
+    auth.user.and.returnValue({ id: 'u-me' } as any);
+    auth.isAdmin.and.returnValue(false);
+    spyOn(window, 'confirm').and.returnValue(true);
+    blog.deleteComment.and.returnValue(of({ ok: true } as any));
+    spyOn(cmp, 'loadComments');
+    cmp.deleteComment(mine);
+    expect(window.confirm).toHaveBeenCalled();
+    expect(blog.deleteComment).toHaveBeenCalledWith('c2');
+    fixture.destroy();
+  });
+
 });
