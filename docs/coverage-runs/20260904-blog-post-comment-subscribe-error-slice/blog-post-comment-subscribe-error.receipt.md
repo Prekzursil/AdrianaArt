@@ -6,11 +6,11 @@
 - risk: low
 - slice: loadCommentSubscription error; toggle early !slug; toggle setCommentSubscription error (N=3)
 - branch: cursor/golden-wu-blog-post-comment-subscribe-error-coverage-4739
-- tip_impl: pending
+- tip_impl: 8b5271a9bb2dcb2483193fe135613e9b9c7e346f
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-blog
 SELECT: blog subscribe error after shop5 CONDITIONAL
-IMPL: pending
+IMPL: pass
 DESLOP: pass
 INNER-STATUS: pending
 OUTER-STATUS: pending
