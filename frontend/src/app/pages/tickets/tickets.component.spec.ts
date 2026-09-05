@@ -100,15 +100,18 @@ describe('TicketsComponent filter / status helpers', () => {
 
     const a = order({ id: 'a', reference_code: 'ALPHA-1' });
     const b = order({ id: 'b', reference_code: 'BETA-9' });
-    cmp.orders.set([a, b]);
 
+    // orderQuery is a plain field; re-set orders() so the computed re-reads it
     cmp.orderQuery = '';
+    cmp.orders.set([a, b]);
     expect(cmp.filteredOrders()).toEqual([a, b]);
 
     cmp.orderQuery = '  beta  ';
+    cmp.orders.set([a, b]);
     expect(cmp.filteredOrders()).toEqual([b]);
 
     cmp.orderQuery = 'no-match';
+    cmp.orders.set([a, b]);
     expect(cmp.filteredOrders()).toEqual([]);
   });
 });
