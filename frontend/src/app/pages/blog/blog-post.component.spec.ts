@@ -182,4 +182,68 @@ describe('BlogPostComponent', () => {
     expect(blog.getPreviewPost).toHaveBeenCalledWith('snapshot-post', 'preview-token', 'en');
     expect(blog.getPost).not.toHaveBeenCalled();
   });
+
+  it('focalPosition clamps and defaults missing coordinates', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+
+    expect(cmp.focalPosition(null, null)).toBe('50% 50%');
+    expect(cmp.focalPosition(-10, 150)).toBe('0% 100%');
+    expect(cmp.focalPosition(25.6, 74.4)).toBe('26% 74%');
+  });
+
+  it('shareWhatsApp opens an encoded wa.me link for the current post', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    const open = jasmine.createSpy('open');
+    const win = {
+      open,
+      addEventListener: jasmine.createSpy('addEventListener'),
+      removeEventListener: jasmine.createSpy('removeEventListener'),
+      location: { origin: 'https://example.test', hash: '' },
+    };
+    spyOnProperty(cmp.document, 'defaultView').and.returnValue(win as any);
+    spyOn(cmp, 'buildShareUrl').and.returnValue('https://example.test/blog/first-post');
+    cmp.post.set({ ...post, title: 'Hello' });
+
+    cmp.shareWhatsApp();
+
+    expect(open).toHaveBeenCalled();
+    const [href, target, features] = open.calls.mostRecent().args;
+    expect(href).toContain('https://wa.me/?text=');
+    expect(decodeURIComponent(String(href).split('text=')[1])).toContain('Hello');
+    expect(decodeURIComponent(String(href).split('text=')[1])).toContain(
+      'https://example.test/blog/first-post',
+    );
+    expect(target).toBe('_blank');
+    expect(features).toContain('noopener');
+    fixture.destroy();
+  });
+
+  it('shareFacebook opens the Facebook sharer for the share URL', () => {
+    configure();
+    const fixture = TestBed.createComponent(BlogPostComponent);
+    const cmp = fixture.componentInstance as any;
+    const open = jasmine.createSpy('open');
+    const win = {
+      open,
+      addEventListener: jasmine.createSpy('addEventListener'),
+      removeEventListener: jasmine.createSpy('removeEventListener'),
+      location: { origin: 'https://example.test', hash: '' },
+    };
+    spyOnProperty(cmp.document, 'defaultView').and.returnValue(win as any);
+    spyOn(cmp, 'buildShareUrl').and.returnValue('https://example.test/blog/first-post');
+
+    cmp.shareFacebook();
+
+    expect(open).toHaveBeenCalledWith(
+      'https://www.facebook.com/sharer/sharer.php?u=' +
+        encodeURIComponent('https://example.test/blog/first-post'),
+      '_blank',
+      'noopener,noreferrer',
+    );
+    fixture.destroy();
+  });
 });
