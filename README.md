@@ -196,39 +196,16 @@ make docker-down
 make compose-smoke
 ```
 
-## Codacy coverage (local + GitHub CI)
+## Coverage reporting
 
-This repository now includes a dedicated `Codacy Coverage` GitHub workflow (`.github/workflows/codacy-coverage.yml`) that:
+Coverage is enforced in CI by the lean `quality` gate
+(`.github/workflows/quality.yml`), which is the only coverage check required by
+branch protection on `main`.
 
-- runs backend tests and writes `backend/coverage.xml`
-- runs frontend tests with `--code-coverage` and writes `frontend/coverage/app/lcov.info`
-- uploads both reports to Codacy
-
-Required GitHub secret:
-
-- `CODACY_API_TOKEN` (from Codacy coverage settings)
-
-Optional environment values (defaults are already set in workflow and Makefile):
-
-- `CODACY_ORGANIZATION_PROVIDER=gh`
-- `CODACY_USERNAME=Prekzursil`
-- `CODACY_PROJECT_NAME=AdrianaArt`
-
-Run the same flow locally:
-
-```bash
-export CODACY_API_TOKEN="<your_token>"
-export CODACY_ORGANIZATION_PROVIDER=gh
-export CODACY_USERNAME=Prekzursil
-export CODACY_PROJECT_NAME=AdrianaArt
-make coverage-codacy
-```
-
-## Codecov (GitHub App + uploads)
-
-- Install the Codecov GitHub App for this repository via https://github.com/settings/installations/110555522 (select the Prekzursil org and the `AdrianaArt` repo).
-- Ensure the repo is present in the Prekzursil Codecov org at https://app.codecov.io/gh/Prekzursil; if it is missing, add the repository from the dashboard and grab the repo upload token.
-- Add a GitHub Actions secret `CODECOV_TOKEN` (org- or repo-level). The token is required by `.github/workflows/codecov-analytics.yml` for coverage, test-results, and bundle analysis uploads; policy is in `codecov.yml`.
+The Codacy and Codecov upload workflows were removed on 2026-08-11 — both had
+been disabled since 2026-06-25, neither published a check run, and neither was a
+required status check. Local coverage reports are still produced by
+`make coverage` (`backend/coverage.xml` and `frontend/coverage/app/lcov.info`).
 
 ## Sameday mirror first sync (ops runbook)
 
