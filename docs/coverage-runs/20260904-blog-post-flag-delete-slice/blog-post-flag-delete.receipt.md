@@ -6,12 +6,12 @@
 - risk: low
 - slice: canFlag + flagComment early-return + deleteComment early-return/confirm-deny (N=3)
 - branch: cursor/golden-wu-blog-post-flag-delete-coverage-4739
-- tip_impl: TBD
+- tip_impl: fab0a38c96a457379756b217d2d1897a955d05be
 
 GROUND-SOURCE: agent-sort|momentstudio-frontend-pages-blog-post
 SELECT: blog-post flag/delete helpers (admin CMS avoided); parallel while reply/delete DraftPR FORBIDDEN
-IMPL: pending
-DESLOP: pending
+IMPL: pass
+DESLOP: pass
 INNER-STATUS: pending
 DIFF-COVERAGE: enforced
 GITHUB_BASE_REF: main
