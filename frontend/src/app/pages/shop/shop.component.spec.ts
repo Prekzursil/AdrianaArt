@@ -164,4 +164,58 @@ describe('ShopComponent i18n meta', () => {
     expect(cmp.products.length).toBe(1);
     expect(cmp.products[0].id).toBe('new');
   });
+
+  it('scrollToFilters scrolls the filters panel into view', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const el = document.createElement('div');
+    el.id = 'shop-filters';
+    (el as any).scrollIntoView = jasmine.createSpy('scrollIntoView');
+    document.body.appendChild(el);
+    cmp.scrollToFilters();
+    expect((el as any).scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    el.remove();
+    fixture.destroy();
+  });
+
+  it('scrollToSort scrolls actions and focuses the sort select', () => {
+    jasmine.clock().install();
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    const actions = document.createElement('div');
+    actions.id = 'shop-actions';
+    (actions as any).scrollIntoView = jasmine.createSpy('scrollIntoView');
+    document.body.appendChild(actions);
+    const select = document.createElement('select');
+    select.id = 'shop-sort-select';
+    spyOn(select, 'focus');
+    document.body.appendChild(select);
+    cmp.scrollToSort();
+    expect((actions as any).scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    jasmine.clock().tick(350);
+    expect(select.focus).toHaveBeenCalled();
+    jasmine.clock().uninstall();
+    actions.remove();
+    select.remove();
+    fixture.destroy();
+  });
+
+  it('quickSelectCategory applies the slug and scrolls to top', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    spyOn(cmp, 'onCategorySelected');
+    const scrollTo = jasmine.createSpy('scrollTo');
+    const original = window.scrollTo;
+    (window as any).scrollTo = scrollTo;
+    try {
+      cmp.quickSelectCategory('prints');
+      expect(cmp.categorySelection).toBe('prints');
+      expect(cmp.onCategorySelected).toHaveBeenCalled();
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+    } finally {
+      window.scrollTo = original;
+    }
+    fixture.destroy();
+  });
+
 });
