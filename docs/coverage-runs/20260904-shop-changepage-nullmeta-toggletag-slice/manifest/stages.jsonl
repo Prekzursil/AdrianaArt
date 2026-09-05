@@ -1,3 +1,8 @@
 {"event":"ground_select","status":"pass","note":"after shop9 CONDITIONAL"}
 {"event":"impl","status":"pass","tip_impl":"f48230bb08cb9d742c304b656fbfafa511b8f3d1","note":"+3 specs; focused 5 SUCCESS"}
 {"event":"deslop_artifact","status":"pass","artifact":"manifest/DESLOP.md"}
+{"event":"validate_inner","status":"pass","exit":0,"total":2138,"tip_impl":"f48230bb08cb9d742c304b656fbfafa511b8f3d1","ts":"2026-09-05T06:44:42Z"}
+{"event":"lane_outer","status":"outer:blocked","case":"B","blocker_id":"visual_secrets","ts":"2026-09-05T06:44:42Z"}
+{"event":"draft_pr","status":"forbidden","reason":"createPullRequest_403","ts":"2026-09-05T06:44:42Z"}
+{"event":"repo_verify","status":"pass","exit":0,"backend":3993,"frontend":2138,"ts":"2026-09-05T07:00:18Z"}
+{"event":"council","status":"conditional","seal":"bc-f986d903-9f9f-5bcd-a6b0-50b3ad58ea9e","ts":"2026-09-05T07:00:18Z"}
