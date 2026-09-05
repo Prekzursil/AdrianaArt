@@ -207,4 +207,88 @@ describe('ShopComponent i18n meta', () => {
     expect(sub?.label).toBe('Kids');
     fixture.destroy();
   });
+
+  it('canSaveCreateCategory is false while createSaving is true even with both names set', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.createSaving = true;
+    cmp.createNameRo = 'Nume';
+    cmp.createNameEn = 'Name';
+    expect(cmp.canSaveCreateCategory()).toBe(false);
+    fixture.destroy();
+  });
+
+  it('canSaveCreateCategory requires trimmed ro and en names when idle', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.createSaving = false;
+    cmp.createNameRo = '  ';
+    cmp.createNameEn = 'Name';
+    expect(cmp.canSaveCreateCategory()).toBe(false);
+    cmp.createNameRo = 'Nume';
+    cmp.createNameEn = '   ';
+    expect(cmp.canSaveCreateCategory()).toBe(false);
+    cmp.createNameRo = '  Nume  ';
+    cmp.createNameEn = '  Name  ';
+    expect(cmp.canSaveCreateCategory()).toBe(true);
+    fixture.destroy();
+  });
+
+  it('cancelCreateCategory clears create form state', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.creatingCategoryParentSlug = 'prints';
+    cmp.createSaving = true;
+    cmp.createError = 'boom';
+    cmp.createNameRo = 'Nume';
+    cmp.createNameEn = 'Name';
+    cmp.cancelCreateCategory();
+    expect(cmp.creatingCategoryParentSlug).toBeNull();
+    expect(cmp.createSaving).toBe(false);
+    expect(cmp.createError).toBe('');
+    expect(cmp.createNameRo).toBe('');
+    expect(cmp.createNameEn).toBe('');
+    fixture.destroy();
+  });
+
+  it('cancelRenameCategory clears rename, merge, and delete form state', () => {
+    const fixture = TestBed.createComponent(ShopComponent);
+    const cmp = fixture.componentInstance as any;
+    cmp.editingCategorySlug = 'prints';
+    cmp.renameLoading = true;
+    cmp.renameSaving = true;
+    cmp.renameError = 'rename-err';
+    cmp.renameNameRo = 'Nume';
+    cmp.renameNameEn = 'Name';
+    cmp.categoryImageSavingSlug = 'prints';
+    cmp.categoryImageError = 'img-err';
+    cmp.mergeTargetSlug = 'other';
+    cmp.mergePreviewLoading = true;
+    cmp.mergePreview = { ok: true } as any;
+    cmp.mergeSaving = true;
+    cmp.mergeError = 'merge-err';
+    cmp.deletePreviewLoading = true;
+    cmp.deletePreview = { ok: false } as any;
+    cmp.deleteSaving = true;
+    cmp.deleteError = 'delete-err';
+    cmp.cancelRenameCategory();
+    expect(cmp.editingCategorySlug).toBe('');
+    expect(cmp.renameLoading).toBe(false);
+    expect(cmp.renameSaving).toBe(false);
+    expect(cmp.renameError).toBe('');
+    expect(cmp.renameNameRo).toBe('');
+    expect(cmp.renameNameEn).toBe('');
+    expect(cmp.categoryImageSavingSlug).toBeNull();
+    expect(cmp.categoryImageError).toBe('');
+    expect(cmp.mergeTargetSlug).toBe('');
+    expect(cmp.mergePreviewLoading).toBe(false);
+    expect(cmp.mergePreview).toBeNull();
+    expect(cmp.mergeSaving).toBe(false);
+    expect(cmp.mergeError).toBe('');
+    expect(cmp.deletePreviewLoading).toBe(false);
+    expect(cmp.deletePreview).toBeNull();
+    expect(cmp.deleteSaving).toBe(false);
+    expect(cmp.deleteError).toBe('');
+    fixture.destroy();
+  });
 });
