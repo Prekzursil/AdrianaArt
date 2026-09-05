@@ -1,0 +1,4 @@
+# SELECT
+- canFlag
+- canSubscribeToComments
+- canReply
