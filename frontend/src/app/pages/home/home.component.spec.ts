@@ -304,17 +304,14 @@ describe('HomeComponent', () => {
     fixture.destroy();
   });
 
-  it('isExternalHttpUrl accepts http(s) and rejects blanks/relative paths', () => {
+  it('asCtaBlock returns the block only when type is cta', () => {
     configureHomeHarness();
     const fixture = TestBed.createComponent(HomeComponent);
     const cmp = fixture.componentInstance as any;
-    expect(cmp.isExternalHttpUrl('https://example.test/x')).toBeTrue();
-    expect(cmp.isExternalHttpUrl('HTTP://example.test/x')).toBeTrue();
-    expect(cmp.isExternalHttpUrl('  https://example.test  ')).toBeTrue();
-    expect(cmp.isExternalHttpUrl('/relative')).toBeFalse();
-    expect(cmp.isExternalHttpUrl('')).toBeFalse();
-    expect(cmp.isExternalHttpUrl(null)).toBeFalse();
-    expect(cmp.isExternalHttpUrl(undefined)).toBeFalse();
+    const cta = { type: 'cta', id: 'c1', cta_url: '/shop' };
+    const other = { type: 'text', id: 't1' };
+    expect(cmp.asCtaBlock(cta)).toBe(cta);
+    expect(cmp.asCtaBlock(other)).toBeNull();
     fixture.destroy();
   });
 });
