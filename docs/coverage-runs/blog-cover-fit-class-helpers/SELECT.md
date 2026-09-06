@@ -2,4 +2,4 @@
 ## Status
 SELECTED
 ## Focus
-BlogPostComponent.coverFitClass
+BlogPostComponent.coverImageClass
