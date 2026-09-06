@@ -1,0 +1,9 @@
+# SEAL — account-request-data-export-helpers
+
+## Status
+SEALED
+
+## Spec
+`frontend/src/app/pages/account/account.request-data-export.helpers.spec.ts`
+
+Spec-only tip golden WU; INNER deferred to CI.
