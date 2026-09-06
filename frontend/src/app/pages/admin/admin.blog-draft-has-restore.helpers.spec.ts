@@ -1,15 +1,34 @@
 import { AdminComponent } from './admin.component';
 
-/** Golden WU — blogDraftHasRestore when undo stack non-empty. */
+/** Golden WU — blogDraftHasRestore needs key + restorable clean draft. */
 describe('AdminComponent blogDraftHasRestore (golden WU)', () => {
-  function bare(len: number): AdminComponent {
+  function bare(opts: {
+    key: string | null;
+    hasRestorableAutosave: boolean;
+    dirty: boolean;
+  }): AdminComponent {
     const cmp = Object.create(AdminComponent.prototype) as AdminComponent;
-    (cmp as any).cmsBlogDraft = { undoStack: Array.from({ length: len }) };
+    (cmp as any).selectedBlogKey = opts.key;
+    (cmp as any).blogEditLang = 'en';
+    (cmp as any).ensureBlogDraft = () => ({
+      hasRestorableAutosave: opts.hasRestorableAutosave,
+      dirty: opts.dirty,
+    });
     return cmp;
   }
 
-  it('is true only when undo stack has entries', () => {
-    expect(bare(0).blogDraftHasRestore()).toBe(false);
-    expect(bare(2).blogDraftHasRestore()).toBe(true);
+  it('requires selected key, restorable autosave, and clean draft', () => {
+    expect(
+      bare({ key: null, hasRestorableAutosave: true, dirty: false }).blogDraftHasRestore(),
+    ).toBe(false);
+    expect(
+      bare({ key: 'blog.a', hasRestorableAutosave: false, dirty: false }).blogDraftHasRestore(),
+    ).toBe(false);
+    expect(
+      bare({ key: 'blog.a', hasRestorableAutosave: true, dirty: true }).blogDraftHasRestore(),
+    ).toBe(false);
+    expect(
+      bare({ key: 'blog.a', hasRestorableAutosave: true, dirty: false }).blogDraftHasRestore(),
+    ).toBe(true);
   });
 });
