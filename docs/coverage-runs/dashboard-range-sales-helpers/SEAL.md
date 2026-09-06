@@ -1,0 +1,1 @@
+# SEAL — dashboard-range-sales-helpers\n\n## Status\nSEALED\n\n## Spec\n`frontend/src/app/pages/admin/dashboard/admin-dashboard.range-sales.helpers.spec.ts`\n\nSpec-only tip golden WU; INNER deferred to CI.\n
