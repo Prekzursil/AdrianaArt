@@ -1,0 +1,1 @@
+# SEAL — checkout-quote-subtotal-helpers\n\n## Status\nSEALED\n\n## Spec\n`frontend/src/app/pages/checkout/checkout.quote-subtotal.helpers.spec.ts`\n\nSpec-only tip golden WU; INNER deferred to CI.\n
