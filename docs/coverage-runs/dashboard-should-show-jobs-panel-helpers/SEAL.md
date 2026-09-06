@@ -1,0 +1,1 @@
+# SEAL — dashboard-should-show-jobs-panel-helpers\n\n## Status\nSEALED\n\n## Spec\n`frontend/src/app/pages/admin/dashboard/admin-dashboard.should-show-jobs-panel.helpers.spec.ts`\n\nSpec-only tip golden WU; INNER deferred to CI.\n
