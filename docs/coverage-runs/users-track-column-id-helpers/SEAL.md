@@ -1,0 +1,1 @@
+# SEAL — users-track-column-id-helpers\n\n## Status\nSEALED\n\n## Spec\n`frontend/src/app/pages/admin/users/admin-users.track-column-id.helpers.spec.ts`\n\nSpec-only tip golden WU; INNER deferred to CI.\n
