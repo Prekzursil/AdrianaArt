@@ -2,4 +2,4 @@
 ## Status
 SELECTED
 ## Focus
-BlogPostComponent.focalPoint
+BlogPostComponent.focalPosition
