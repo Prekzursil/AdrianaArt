@@ -1,0 +1,5 @@
+# SEAL — asset-library-focal-object-position-helpers
+## Status
+SEALED
+## Spec
+`frontend/src/app/pages/admin/shared/asset-library.focal-object-position.helpers.spec.ts`
