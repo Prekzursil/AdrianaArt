@@ -1,0 +1,9 @@
+# SEAL — admin-favorites-toggle-helpers
+
+## Status
+SEALED
+
+## Spec
+`frontend/src/app/core/admin-favorites.toggle.helpers.spec.ts`
+
+Spec-only tip golden WU; INNER deferred to CI.
