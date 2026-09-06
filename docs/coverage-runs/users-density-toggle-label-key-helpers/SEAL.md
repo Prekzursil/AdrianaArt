@@ -1,0 +1,1 @@
+# SEAL — users-density-toggle-label-key-helpers\n\n## Status\nSEALED\n\n## Spec\n`frontend/src/app/pages/admin/users/admin-users.density-toggle-label-key.helpers.spec.ts`\n\nSpec-only tip golden WU; INNER deferred to CI.\n
