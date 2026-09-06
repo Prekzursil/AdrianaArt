@@ -1,0 +1,9 @@
+# SEAL — account-copy-two-factor-secret-helpers
+
+## Status
+SEALED
+
+## Spec
+`frontend/src/app/pages/account/account.copy-two-factor-secret.helpers.spec.ts`
+
+Spec-only tip golden WU; INNER deferred to CI.
