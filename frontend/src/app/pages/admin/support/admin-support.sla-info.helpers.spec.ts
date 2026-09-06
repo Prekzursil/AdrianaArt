@@ -5,7 +5,7 @@ describe('AdminSupportComponent slaInfo (golden WU)', () => {
   function bare(): AdminSupportComponent {
     const cmp = Object.create(AdminSupportComponent.prototype) as AdminSupportComponent;
     (cmp as any).slaFirstReplyHours = 24;
-    (cmp as any).slaResolveHours = 72;
+    (cmp as any).slaResolutionHours = 72;
     (cmp as any).formatDuration = (ms: number) => `${Math.round(ms / 3600000)}h`;
     (cmp as any).translate = {
       instant: (key: string, params?: any) =>
