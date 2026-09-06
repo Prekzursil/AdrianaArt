@@ -1,0 +1,9 @@
+# SEAL — wishlist-clear-selection-helpers
+
+## Status
+SEALED
+
+## Spec
+`frontend/src/app/pages/account/account-wishlist.clear-selection.helpers.spec.ts`
+
+Spec-only tip golden WU; INNER deferred to CI.
