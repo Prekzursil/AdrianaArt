@@ -8,6 +8,7 @@ describe('AdminOrderDetailComponent crumbs (golden WU)', () => {
     (cmp as any).orderRef = () => '';
     const emptyRef = cmp.crumbs();
     expect(emptyRef[0]).toEqual({ label: 'nav.home', url: '/' });
+    expect(emptyRef[1]).toEqual({ label: 'nav.admin', url: '/admin/dashboard' });
     expect(emptyRef[3].label).toBe('adminUi.orders.detailTitle');
     (cmp as any).orderRef = () => 'MS-9';
     expect(cmp.crumbs()[3].label).toBe('adminUi.orders.detailTitle: MS-9');
