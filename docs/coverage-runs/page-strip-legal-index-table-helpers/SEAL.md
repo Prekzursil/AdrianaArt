@@ -1,0 +1,9 @@
+# SEAL — page-strip-legal-index-table-helpers
+
+## Status
+SEALED
+
+## Spec
+`frontend/src/app/pages/page/page.strip-legal-index-table.helpers.spec.ts`
+
+Spec-only tip golden WU; INNER deferred to CI.
