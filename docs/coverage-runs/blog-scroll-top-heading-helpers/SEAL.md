@@ -1,0 +1,1 @@
+# SEAL — blog scroll helpers
