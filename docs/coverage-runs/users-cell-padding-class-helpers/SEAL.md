@@ -1,0 +1,1 @@
+# SEAL — users-cell-padding-class-helpers\n\n## Status\nSEALED\n\n## Spec\n`frontend/src/app/pages/admin/users/admin-users.cell-padding-class.helpers.spec.ts`\n\nSpec-only tip golden WU; INNER deferred to CI.\n
