@@ -1,0 +1,9 @@
+# SEAL — admin-theme-on-color-hex-helpers
+
+## Status
+SEALED
+
+## Spec
+`frontend/src/app/pages/admin/theme/admin-theme.on-color-hex.helpers.spec.ts`
+
+Spec-only tip golden WU; INNER deferred to CI.
