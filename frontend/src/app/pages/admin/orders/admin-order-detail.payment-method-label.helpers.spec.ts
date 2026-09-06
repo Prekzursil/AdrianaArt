@@ -7,16 +7,22 @@ describe('AdminOrderDetailComponent paymentMethodLabel (golden WU)', () => {
     (cmp as any).translate = {
       instant: (k: string) =>
         ({
-          'adminUi.orders.paymentMethods.stripe': 'Stripe',
-          'adminUi.orders.paymentMethods.paypal': 'PayPal',
+          'adminUi.orders.paymentCod': 'Cash on delivery',
+          'adminUi.orders.paymentPaypal': 'PayPal',
+          'adminUi.orders.paymentStripe': 'Stripe',
         })[k] || k,
     };
     (cmp as any).order = () => null;
     expect(cmp.paymentMethodLabel()).toBe('—');
     (cmp as any).order = () => ({ payment_method: 'stripe' });
     expect(cmp.paymentMethodLabel()).toBe('Stripe');
-    (cmp as any).order = () => ({ payment_method: 'weird' });
-    // falls back to raw or key depending on implementation — assert non-empty
-    expect(String(cmp.paymentMethodLabel()).length).toBeGreaterThan(0);
+    (cmp as any).order = () => ({ payment_method: 'paypal' });
+    expect(cmp.paymentMethodLabel()).toBe('PayPal');
+    (cmp as any).order = () => ({ payment_method: 'cod' });
+    expect(cmp.paymentMethodLabel()).toBe('Cash on delivery');
+    (cmp as any).order = () => ({ payment_method: 'wire' });
+    expect(cmp.paymentMethodLabel()).toBe('wire');
+    (cmp as any).order = () => ({ payment_method: '  ' });
+    expect(cmp.paymentMethodLabel()).toBe('—');
   });
 });
