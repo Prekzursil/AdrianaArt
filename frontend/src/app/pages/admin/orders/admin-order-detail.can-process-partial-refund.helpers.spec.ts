@@ -1,0 +1,66 @@
+import { AdminOrderDetailComponent } from './admin-order-detail.component';
+
+/** Golden WU admin-order-detail-can-process-partial-refund -- canProcessPartialRefund. */
+describe('AdminOrderDetailComponent canProcessPartialRefund (golden WU)', () => {
+  it('invokes without throwing when dependencies are stubbed', () => {
+    const cmp = Object.create(AdminOrderDetailComponent.prototype) as AdminOrderDetailComponent;
+    Object.assign(cmp as any, {
+      toast: { error: jasmine.createSpy('e'), success: jasmine.createSpy('s'), info: jasmine.createSpy('i') },
+      t: (k: string) => k,
+      translate: { instant: (k: string) => k },
+      load: jasmine.createSpy('load'),
+      save: jasmine.createSpy('save'),
+      router: { navigate: jasmine.createSpy('nav'), navigateByUrl: jasmine.createSpy('navUrl') },
+      cdr: { markForCheck: jasmine.createSpy('mfc'), detectChanges: jasmine.createSpy('dc') },
+      destroy$: { next: jasmine.createSpy('n'), complete: jasmine.createSpy('c') },
+      draft: jasmine.createSpy('draft').and.returnValue(null),
+      original: jasmine.createSpy('original').and.returnValue(null),
+      selectedIds: jasmine.createSpy('selectedIds').and.returnValue(new Set()),
+      items: jasmine.createSpy('items').and.returnValue([]),
+      busy: jasmine.createSpy('busy').and.returnValue(false),
+      loading: jasmine.createSpy('loading').and.returnValue(false),
+      notifications: jasmine.createSpy('notifications').and.returnValue([]),
+      density: jasmine.createSpy('density').and.returnValue('comfortable'),
+      columns: jasmine.createSpy('columns').and.returnValue([]),
+      views: jasmine.createSpy('views').and.returnValue([]),
+      currentView: jasmine.createSpy('currentView').and.returnValue(null),
+      promotions: jasmine.createSpy('promotions').and.returnValue([]),
+      selectedPromotion: jasmine.createSpy('selectedPromotion').and.returnValue(null),
+      wishlist: jasmine.createSpy('wishlist').and.returnValue([]),
+      assets: jasmine.createSpy('assets').and.returnValue([]),
+      page: jasmine.createSpy('page').and.returnValue(1),
+      posts: jasmine.createSpy('posts').and.returnValue([]),
+      tokenMap: jasmine.createSpy('tokenMap').and.returnValue({}),
+      schedule: jasmine.createSpy('schedule').and.returnValue([]),
+      order: jasmine.createSpy('order').and.returnValue(null),
+      cart: jasmine.createSpy('cart').and.returnValue({ items: [] }),
+      quote: jasmine.createSpy('quote').and.returnValue(null),
+      filters: jasmine.createSpy('filters').and.returnValue({}),
+      products: jasmine.createSpy('products').and.returnValue([]),
+      categories: jasmine.createSpy('categories').and.returnValue([]),
+      searchOpen: jasmine.createSpy('searchOpen').and.returnValue(false),
+      banner: jasmine.createSpy('banner').and.returnValue(null),
+      shipping: jasmine.createSpy('shipping').and.returnValue({}),
+      billing: jasmine.createSpy('billing').and.returnValue({}),
+      guestEmail: jasmine.createSpy('guestEmail').and.returnValue(''),
+      auth: { logout: jasmine.createSpy('logout'), isLoggedIn: jasmine.createSpy('il').and.returnValue(false) },
+      destroyRef: { onDestroy: jasmine.createSpy('od') },
+      filterApplyTimer: null,
+      createCategoryName: '',
+      renameCategoryName: '',
+      sameBilling: jasmine.createSpy('sameBilling').and.returnValue(true),
+      selected: jasmine.createSpy('selected').and.returnValue(new Set()),
+      selectedOrderIds: jasmine.createSpy('selectedOrderIds').and.returnValue(new Set()),
+      pageItems: jasmine.createSpy('pageItems').and.returnValue([]),
+      cannedResponses: jasmine.createSpy('cannedResponses').and.returnValue([]),
+      tickets: jasmine.createSpy('tickets').and.returnValue([]),
+      reservations: jasmine.createSpy('reservations').and.returnValue([]),
+      bulkTagIds: [],
+      bulkUpdate: {},
+      form: {},
+      images: jasmine.createSpy('images').and.returnValue([]),
+
+    });
+    expect(() => (cmp as any).canProcessPartialRefund()).not.toThrow();
+  });
+});
