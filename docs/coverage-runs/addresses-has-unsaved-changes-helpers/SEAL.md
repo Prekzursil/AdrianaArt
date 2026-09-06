@@ -1,0 +1,9 @@
+# SEAL — addresses-has-unsaved-changes-helpers
+
+## Status
+SEALED
+
+## Spec
+`frontend/src/app/pages/account/account-addresses.has-unsaved-changes.helpers.spec.ts`
+
+Spec-only tip golden WU; INNER deferred to CI.
