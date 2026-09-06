@@ -1,0 +1,9 @@
+# SEAL — admin-products-image-upload-status-label-key-helpers
+
+## Status
+SEALED
+
+## Spec
+`frontend/src/app/pages/admin/products/admin-products-image.upload-status-label-key.helpers.spec.ts`
+
+Spec-only tip golden WU; INNER deferred to CI.
