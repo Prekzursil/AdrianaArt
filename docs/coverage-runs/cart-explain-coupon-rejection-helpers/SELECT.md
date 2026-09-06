@@ -2,4 +2,4 @@
 ## Status
 SELECTED
 ## Focus
-CartComponent.explainCouponRejection
+CartComponent.describeCouponReasons
