@@ -1,0 +1,5 @@
+# SEAL — account-wishlist-all-selected-helpers
+## Status
+SEALED
+## Spec
+`frontend/src/app/pages/account/account-wishlist.all-selected.helpers.spec.ts`
