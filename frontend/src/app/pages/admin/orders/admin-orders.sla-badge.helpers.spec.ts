@@ -8,7 +8,7 @@ describe("AdminOrdersComponent slaBadge (golden WU)", () => {
     return cmp;
   }
 
-  it("returns null without kind/due; overdue/dueSoon/ok badges otherwise", () => {
+  it("returns null without kind/due; overdue/dueSoon badges; otherwise null", () => {
     const cmp = bare();
     expect(cmp.slaBadge({} as any)).toBeNull();
     expect(cmp.slaBadge({ sla_kind: "accept" } as any)).toBeNull();
@@ -25,11 +25,14 @@ describe("AdminOrdersComponent slaBadge (golden WU)", () => {
       sla_due_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
     } as any)!;
     expect(dueSoon.className).toContain("amber");
+    expect(dueSoon.label).toContain("dueSoon");
 
-    const ok = cmp.slaBadge({
-      sla_kind: "ship",
-      sla_due_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    } as any)!;
-    expect(ok.className).toContain("emerald");
+    // Not overdue and not within dueSoon window → null (no emerald "ok" badge)
+    expect(
+      cmp.slaBadge({
+        sla_kind: "ship",
+        sla_due_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      } as any),
+    ).toBeNull();
   });
 });
