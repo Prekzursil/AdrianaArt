@@ -5,12 +5,13 @@ describe('resolveRouteSeoDescription (golden WU)', () => {
     expect(resolveRouteSeoDescription('shop', 'en', '  Custom shop blurb  ')).toBe(
       'Custom shop blurb',
     );
+    // Unresolved i18n-looking keys and empty values are skipped.
     expect(resolveRouteSeoDescription('shop', 'en', 'shop.meta.description', '')).toContain(
       'Browse handmade',
     );
-    expect(resolveRouteSeoDescription('home', 'ro', null, undefined, 0)).toContain(
+    expect(resolveRouteSeoDescription('home', 'ro', null, undefined, { nope: true })).toContain(
       'Descopera',
     );
-    expect(resolveRouteSeoDescription('contact', 'en', { nope: true })).toContain('Contact');
+    expect(resolveRouteSeoDescription('contact', 'en')).toContain('Contact');
   });
 });
