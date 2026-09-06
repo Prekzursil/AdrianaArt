@@ -1,0 +1,23 @@
+import { BlogPostComponent } from './blog-post.component';
+
+/** Golden WU blog-post-scroll-to-heading -- scrollToHeading. */
+describe('BlogPostComponent scrollToHeading (golden WU)', () => {
+  it('invokes without throwing when dependencies are stubbed', () => {
+    const cmp = Object.create(BlogPostComponent.prototype) as BlogPostComponent;
+    Object.assign(cmp as any, {
+      toast: { error: jasmine.createSpy('e'), success: jasmine.createSpy('s'), info: jasmine.createSpy('i') },
+      t: (k: string) => k,
+      translate: { instant: (k: string) => k },
+      load: jasmine.createSpy('load'),
+      save: jasmine.createSpy('save'),
+      router: { navigate: jasmine.createSpy('nav'), navigateByUrl: jasmine.createSpy('navUrl') },
+      cdr: { markForCheck: jasmine.createSpy('mfc'), detectChanges: jasmine.createSpy('dc') },
+      destroy$: { next: jasmine.createSpy('n'), complete: jasmine.createSpy('c') },
+      http: { get: jasmine.createSpy('get'), post: jasmine.createSpy('post'), put: jasmine.createSpy('put'), delete: jasmine.createSpy('delete') },
+      api: {},
+      auth: { user: null },
+      ngOnDestroy: () => {},
+    });
+    expect(() => (cmp as any).scrollToHeading(null as any, '')).not.toThrow();
+  });
+});
