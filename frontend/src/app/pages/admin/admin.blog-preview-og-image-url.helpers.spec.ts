@@ -9,8 +9,8 @@ describe('AdminComponent blogPreviewOgImageUrl (golden WU)', () => {
     expect(cmp.blogPreviewOgImageUrl('en' as any)).toBeNull();
     (cmp as any).blogPreviewToken = 'tok123';
     const url = cmp.blogPreviewOgImageUrl('en' as any)!;
-    expect(url).toContain('/blog/posts/draft-post/og.png');
-    expect(url).toContain('preview=tok123');
+    expect(url).toContain('/blog/posts/draft-post/og-preview.png');
+    expect(url).toContain('token=tok123');
     expect(url).toContain('lang=en');
   });
 });
