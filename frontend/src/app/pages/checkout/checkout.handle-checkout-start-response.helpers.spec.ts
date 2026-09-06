@@ -1,0 +1,25 @@
+import { CheckoutComponent } from './checkout.component';
+
+/** Golden WU checkout-handle-checkout-start-response -- handleCheckoutStartResponse. */
+describe('CheckoutComponent handleCheckoutStartResponse (golden WU)', () => {
+  it('invokes without throwing when dependencies are stubbed', () => {
+    const cmp = Object.create(CheckoutComponent.prototype) as CheckoutComponent;
+    Object.assign(cmp as any, {
+      toast: { error: jasmine.createSpy('e'), success: jasmine.createSpy('s'), info: jasmine.createSpy('i') },
+      t: (k: string) => k,
+      translate: { instant: (k: string) => k },
+      load: jasmine.createSpy('load'),
+      save: jasmine.createSpy('save'),
+      router: { navigate: jasmine.createSpy('nav'), navigateByUrl: jasmine.createSpy('navUrl') },
+      cdr: { markForCheck: jasmine.createSpy('mfc'), detectChanges: jasmine.createSpy('dc') },
+      http: { get: jasmine.createSpy('get'), post: jasmine.createSpy('post'), put: jasmine.createSpy('put'), delete: jasmine.createSpy('delete') },
+      api: {},
+      auth: { user: null },
+      cart: { items: [], quote: null },
+      products: [],
+      categories: [],
+      ngOnDestroy: () => {},
+    });
+    expect(() => (cmp as any).handleCheckoutStartResponse(null as any)).not.toThrow();
+  });
+});
