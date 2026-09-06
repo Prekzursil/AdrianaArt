@@ -1,15 +1,15 @@
 import { AdminComponent } from './admin.component';
 
-/** Golden WU — pageDraftDirty mirrors cmsPageDraft.dirty. */
+/** Golden WU — pageDraftDirty reads ensurePageDraft(...).dirty. */
 describe('AdminComponent pageDraftDirty (golden WU)', () => {
   function bare(dirty: boolean): AdminComponent {
     const cmp = Object.create(AdminComponent.prototype) as AdminComponent;
-    (cmp as any).cmsPageDraft = { dirty };
+    (cmp as any).ensurePageDraft = () => ({ dirty });
     return cmp;
   }
 
-  it('reflects page draft dirty flag', () => {
-    expect(bare(true).pageDraftDirty()).toBe(true);
-    expect(bare(false).pageDraftDirty()).toBe(false);
+  it('reflects ensurePageDraft dirty flag', () => {
+    expect(bare(true).pageDraftDirty('home' as any)).toBe(true);
+    expect(bare(false).pageDraftDirty('about' as any)).toBe(false);
   });
 });
