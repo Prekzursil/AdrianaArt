@@ -1,7 +1,7 @@
 import { ProductComponent } from './product.component';
 
-/** Golden WU product-is-sold-out — isSoldOut. */
-describe('ProductComponent isSoldOut (golden WU)', () => {
+/** Golden WU product-is-sold-out — isOutOfStock. */
+describe('ProductComponent isOutOfStock (golden WU)', () => {
   function createCmp(product: any, selectedVariantId?: string) {
     const cmp = Object.create(ProductComponent.prototype) as ProductComponent;
     (cmp as any).product = product;
@@ -10,9 +10,9 @@ describe('ProductComponent isSoldOut (golden WU)', () => {
   }
 
   it('returns false without product or when backorder allowed', () => {
-    expect(createCmp(null).isSoldOut()).toBe(false);
+    expect(createCmp(null).isOutOfStock()).toBe(false);
     expect(
-      createCmp({ stock_quantity: 0, allow_backorder: true, variants: [] }).isSoldOut(),
+      createCmp({ stock_quantity: 0, allow_backorder: true, variants: [] }).isOutOfStock(),
     ).toBe(false);
   });
 
@@ -25,10 +25,10 @@ describe('ProductComponent isSoldOut (golden WU)', () => {
         { id: 'v2', stock_quantity: null },
       ],
     };
-    expect(createCmp(product, 'v1').isSoldOut()).toBe(true);
-    expect(createCmp(product, 'v2').isSoldOut()).toBe(false);
-    expect(createCmp({ stock_quantity: 0, allow_backorder: false, variants: [] }).isSoldOut()).toBe(
-      true,
-    );
+    expect(createCmp(product, 'v1').isOutOfStock()).toBe(true);
+    expect(createCmp(product, 'v2').isOutOfStock()).toBe(false);
+    expect(
+      createCmp({ stock_quantity: 0, allow_backorder: false, variants: [] }).isOutOfStock(),
+    ).toBe(true);
   });
 });

@@ -2,4 +2,4 @@
 ## Status
 SELECTED
 ## Focus
-ProductComponent.isSoldOut
+ProductComponent.isOutOfStock
