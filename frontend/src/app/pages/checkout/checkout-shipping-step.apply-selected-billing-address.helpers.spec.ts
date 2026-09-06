@@ -1,0 +1,15 @@
+import { CheckoutShippingStepComponent } from './checkout-shipping-step.component';
+
+/** Golden WU checkout-shipping-step-apply-selected-billing-address. */
+describe('CheckoutShippingStepComponent applySelectedBillingAddress (golden WU)', () => {
+  it('delegates to the checkout view-model', () => {
+    const cmp = Object.create(
+      CheckoutShippingStepComponent.prototype,
+    ) as CheckoutShippingStepComponent;
+    Object.assign(cmp as any, {
+      vm: { applySelectedBillingAddress: jasmine.createSpy('apply') },
+    });
+    cmp.applySelectedBillingAddress();
+    expect((cmp as any).vm.applySelectedBillingAddress).toHaveBeenCalled();
+  });
+});
