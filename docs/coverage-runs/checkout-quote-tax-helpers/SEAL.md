@@ -1,0 +1,1 @@
+# SEAL — checkout-quote-tax-helpers\n\n## Status\nSEALED\n\n## Spec\n`frontend/src/app/pages/checkout/checkout.quote-tax.helpers.spec.ts`\n\nSpec-only tip golden WU; INNER deferred to CI.\n
