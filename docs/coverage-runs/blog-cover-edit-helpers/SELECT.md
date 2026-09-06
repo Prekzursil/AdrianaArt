@@ -1,0 +1,1 @@
+# SELECT — blog coverImageClass / canEditBlog
