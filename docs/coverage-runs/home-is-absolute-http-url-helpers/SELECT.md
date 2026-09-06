@@ -2,4 +2,4 @@
 ## Status
 SELECTED
 ## Focus
-HomeComponent.isAbsoluteHttpUrl
+HomeComponent.isExternalHttpUrl
