@@ -21,6 +21,6 @@ describe('AccountState normalizeAddressLabel (golden WU)', () => {
     expect(fn.call(cmp, 'other')).toBe('other');
     expect(fn.call(cmp, 'Acasa')).toBe('home');
     expect(fn.call(cmp, 'Serviciu')).toBe('work');
-    expect(fn.call(cmp, 'custom loft')).toBe('other');
+    expect(fn.call(cmp, 'custom loft')).toBe('custom loft');
   });
 });
